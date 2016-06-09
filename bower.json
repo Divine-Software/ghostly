@@ -1,0 +1,29 @@
+{
+  "name": "ghostly-template",
+  "description": "Ghostly template/print formatter runtime support",
+  "main": "ghostly-template.js",
+  "authors": [
+    "Martin Blom <martin@blom.org>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "fop",
+    "xsl",
+    "xslt",
+    "template",
+    "print",
+    "formatter",
+    "html",
+    "css",
+    "pdf",
+    "phantomjs"
+  ],
+  "homepage": "https://github.com/LeviticusMB/ghostly-template",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

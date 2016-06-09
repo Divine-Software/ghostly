@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+
+<html xmlns='http://www.w3.org/1999/xhtml'>
+  <head>
+    <title>Demo Template</title>
+    <script src="ghostly-template.js"></script>
+    <script>
+      ghostly.template({
+          ghostlyInit: function(source) {
+              this.document = ghostly.parse(source);
+          },
+
+          ghostlyRender: function(view) {
+              function htmlize(text) {
+                  return String(text).replace(/[&<"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&apos;' }[c] });
+              }
+
+              function render(obj) {
+                  if (typeof obj == 'object') {
+                      var result = '<dl>';
+
+                      for (var key in obj) {
+                          result += '<dt>' + htmlize(key) + '</dt><dd>' + render(obj[key]) + '</dd>';
+                      }
+
+                      return result + '</dl>';
+                  }
+                  else {
+                      return htmlize(String(obj));
+                  }
+              }
+
+              document.getElementById('content').innerHTML = render(this.document);
+          },
+      });
+    </script>
+  </head>
+
+  <body>
+    <h1>Demo Template</h1>
+
+    <div id='content' />
+  </body>
+</html>
