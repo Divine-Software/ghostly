@@ -1,6 +1,6 @@
 {
   "name": "ghostly",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Ghostly template/print formatter engine",
   "keywords": [ "fop", "xsl", "xslt", "template", "print", "formatter", "html", "css", "pdf", "phantomjs" ],
   "homepage": "https://github.com/LeviticusMB/ghostly",
