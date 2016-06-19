@@ -28,12 +28,13 @@ exports.logger(null);
 class Engine {
     constructor(config) {
         this._config = Object.assign({
-            phantomPath:   'phantomjs',
-            portBase:      null,
-            relaunchDelay: 1,
-            tempDir:       os.tmpdir(),
-            workers:       1,
-            pageCache:     0,
+            templatePattern: /.*/,
+            phantomPath:     'phantomjs',
+            portBase:        null,
+            relaunchDelay:   1,
+            tempDir:         os.tmpdir(),
+            workers:         1,
+            pageCache:       0,
         }, config);
         this._workers = [];
     }
@@ -48,7 +49,253 @@ class Engine {
 //    }
 
     template(uri) {
-        return new Template(this, url.resolve(`file://${process.cwd()}/`, uri));
+        uri = url.resolve(`file://${process.cwd()}/`, uri);
+
+        if (!this._config.templatePattern.test(uri)) {
+            throw new Error(`Template URL is not allowed: ${uri} did not match ${this._config.templatePattern}`);
+        }
+
+        return new Template(this, uri);
+    }
+
+    // GET  http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}&document=...&contentType=mime/type
+    // POST http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}
+    // POST http://localhost:9999/
+    httpRequestHandler(request, response) {
+        let template, document, contentType, views;
+
+        Promise.resolve()
+            .then(() => {
+                let uri = url.parse(request.url, true);
+
+                if (uri.pathname === '/') {
+                    template    = uri.query.template;
+                    document    = uri.query.document;
+                    contentType = uri.query.contentType || 'application/json';
+
+                    let view    = uri.query.view;
+                    let params  = uri.query.params && JSON.parse(uri.query.params);
+
+                    if (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'POST') {
+                        throw [405, 'Only GET, HEAD and POST requests are accepted'];
+                    }
+
+                    if ((request.method === 'GET' || request.method === 'HEAD') && (!template || !document || !view)) {
+                        throw [400, `GET/HEAD requests must supply at least the 'template', 'document' and 'view' query params`];
+                    }
+
+                    if (request.method === 'POST' && document) {
+                        throw [400, `POST requests must not supply the 'document' query param`];
+                    }
+
+                    if (!!template !== !!view) {
+                        throw [400, `The 'template' and 'view' query params must be specified together`];
+                    }
+
+                    if (!template && params) {
+                        throw [400, `The 'params' query param may only be specified if 'template' is too`];
+                    }
+
+                    if (view) {
+                        views = [{ contentType: view, params: params }];
+                    }
+                }
+                else {
+                    throw [404, `Resource ${resource.pathname} not found`];
+                }
+
+                if (request.method === 'POST') {
+                    return request.body || new Promise((resolve, reject) => {
+                        let body = '';
+
+                        request.on('data', (data) => {
+                            body += data;
+                        });
+
+                        request.on('end', () => {
+                            resolve(body);
+                        });
+
+                        request.on('error', (error) => {
+                            reject(error);
+                        });
+                    });
+                }
+            })
+            .then((body) => {
+                let returnCT = template && views[0].contentType;
+
+                if (!document && !request.headers['content-type']) {
+                    throw [400, 'Missing Content-Type request header'];
+                }
+
+                if (template && !document) {
+                    document    = body;
+                    contentType = request.headers['content-type'];
+                }
+                else if (!template) {
+                    if (request.headers['content-type'] !== 'application/json') {
+                        throw [415, `Only application/json requests are accepted when the 'template' query param is missing`];
+                    }
+
+                    try {
+                        body = JSON.parse(body);
+                    }
+                    catch (ex) {
+                        throw [400, `Failed to parse body as JSON: ${ex}`];
+                    }
+
+                    if (typeof body !== 'object' || body instanceof Array) {
+                        throw [422, 'Expected a JSON object'];
+                    }
+
+                    if (typeof body.template !== 'string') {
+                        throw [422, `The 'template' JSON property is required and should be strings`];
+                    }
+                    else if (!(body.views instanceof Array)) {
+                        throw [422, `The 'views' JSON property is required and should be an array`];
+                    }
+
+                    template    = body.template;
+                    document    = body.document;
+                    contentType = body.contentType || 'application/json';
+                    views       = body.views.map((view) => ({ contentType: String(view.contentType), params: view.params }));
+                }
+
+                let $render;
+
+                try {
+                    let tpl = this.template(template);
+
+                    $render = () => tpl.$renderViews(document, contentType, views, null)
+                        .then((results) => {
+                            return Promise.all(results.map((result) => Template.$fileResultAsBuffer(result)));
+                        })
+                        .then((results) => {
+                            if (returnCT) {
+                                if (results.length !== 1) {
+                                    throw new Error(`Expected 1 result but got ${results.length}`);
+                                }
+
+                                return [200, results[0].data, { 'Content-Type': results[0].contentType }];
+                            }
+                            else {
+                                results.forEach((result) => {
+                                    result.data = result.data.toString('base64');
+                                });
+
+                                return [200, results];
+                            }
+                        });
+                }
+                catch (ex) {
+                    throw [403, ex.message];
+                }
+
+                if (views.some((view) => view.contentType === 'application/pdf')) {
+                    return Engine.$withTempDir(`${this._config.tempDir}/${packageJSON.name}-`, (tempDir) => {
+                        // PhantomJS can only render PDFs to disk
+                        views.forEach((view, idx) => {
+                            if (view.contentType === 'application/pdf') {
+                                view.output = `${tempDir}/${idx}.out`;
+                            }
+                        });
+
+                        return $render();
+                    });
+                }
+                else {
+                    return $render();
+                }
+            })
+            .catch((ex) => {
+                return ex instanceof Array ? ex : [500, ex.message || `Unknown error: ${ex}`];
+            })
+            .then((result) => {
+                if (typeof result[1] !== 'object') {
+                    result[1] = { message: String(result[1]) };
+                }
+
+                if (!(result[1] instanceof Buffer)) {
+                    result[1] = JSON.stringify(result[1]);
+                }
+
+                response.writeHead(result[0], Object.assign({ 'Content-Type': 'application/json' }, result[2]));
+                response.end(result[1]);
+            });
+    }
+
+    static $getRandomPort() {
+        return new Promise((resolve, reject) => {
+            let server = net.createServer()
+                .on('error', (error) => {
+                    reject();
+                });
+
+            server.listen(0, () => {
+                let port = server.address().port;
+
+                server.close(() => {
+                    resolve(port);
+                });
+            });
+        }).catch(() => {
+            return Engine.$getRandomPort(); // Try again
+        });
+    }
+
+    static $withTempDir(prefix, $fn) {
+        var tempDir;
+
+        return new Promise((resolve, reject) => {
+            fs.mkdtemp(prefix, (error, path) => {
+                if (error) {
+                    return reject(error);
+                }
+
+                resolve($fn(tempDir = path));
+            });
+        }).then((result) => { return Engine.$rmr(tempDir).then(() => { return result; }); },
+                (error)  => { return Engine.$rmr(tempDir).then(() => { throw error; }); });
+    }
+
+    static $rmr(node) {
+        return new Promise((resolve, reject) => {
+            if (!node) {
+                return resolve();
+            }
+
+            fs.stat(node, (error, stats) => {
+                if (error) {
+                    return reject(error);
+                }
+
+                if (stats.isDirectory()) {
+                    fs.readdir(node, (error, files) => {
+                        if (error) {
+                            return reject(error);
+                        }
+
+                        resolve(Promise.all(files.map((file) => Engine.$rmr(path.join(node, file))))
+                                .then(() => {
+                                    return new Promise((resolve, reject) => {
+                                        resolve();
+                                        fs.rmdir(node, (error) => {
+                                            error ? reject(error) : resolve();
+                                        });
+                                    });
+                                }));
+                    });
+                }
+                else {
+                    resolve();
+                    fs.unlink(node, (error) => {
+                        error ? reject(error) : resolve();
+                    });
+                }
+            })
+
+        });
     }
 
     _$sendMessage(worker, message) {
@@ -84,7 +331,7 @@ class Engine {
                 response.on('end', () => {
                     if (response.statusCode != 200) {
                         worker.process.kill();
-                        return reject(new Error(`Worker returned an unexpected error: ${response.statusCode} [${result}]`));
+                        return reject(new Error(`Worker returned an unexpected error: ${response.statusCode} - ${result}`));
                     }
 
                     try {
@@ -130,6 +377,11 @@ class Engine {
     }
 
     _$launchWorker(id) {
+        if (this._workers[id]) {
+            logger.info(`Worker ${id} already running as PID ${this._workers[id].process.pid}`);
+            return Promise.resolve(this._workers[id]);
+        }
+
         return (this._config.portBase && Promise.resolve(this._config.portBase + id) || Engine.$getRandomPort())
             .then((port) => {
                 let key  = crypto.randomBytes(24).toString('base64');
@@ -146,12 +398,12 @@ class Engine {
                 }
 
                 process.on('exit', cleanup_child);
-                
+
                 proc.on('exit', (code, signal) => {
                     delete this._workers[id];
 
                     process.removeListener('exit', cleanup_child);
-                    
+
                     if (signal) {
                         logger.error(`Worker ${id} was killed by signal ${signal}. Re-launching in ${this._config.relaunchDelay} seconds.`);
                         setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
@@ -164,9 +416,9 @@ class Engine {
                         logger.info(`Worker ${id} exited`);
                     }
                 });
-                
-                proc.stdout.on('data', (data) => { logger.info(`Worker ${id}: ${data.trim()}`); });
-                proc.stderr.on('data', (data) => { logger.warn(`Worker ${id}: ${data.trim()}`); });
+
+                proc.stdout.on('data', (data) => { logger.info(`Worker ${id}: ${String(data).trim()}`); });
+                proc.stderr.on('data', (data) => { logger.warn(`Worker ${id}: ${String(data).trim()}`); });
 
                 // Send key to phantomjs-renderer.js
                 proc.stdin.write(key + '\n');
@@ -189,82 +441,8 @@ class Engine {
                 });
             });
     }
-
-    static $getRandomPort() {
-        return new Promise((resolve, reject) => {
-            let server = net.createServer()
-                .on('error', (error) => {
-                    reject();
-                });
-
-            server.listen(0, () => {
-                let port = server.address().port;
-
-                server.close(() => {
-                    resolve(port);
-                });
-            });
-        }).catch(() => {
-            return Engine.$getRandomPort(); // Try again
-        });
-    }
-    
-    static $withTempDir(prefix, $fn) {
-        var tempDir;
-
-        return new Promise((resolve, reject) => {
-            fs.mkdtemp(prefix, (error, path) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                resolve($fn(tempDir = path));
-            });
-        }).then((result) => { return Engine.$rmr(tempDir).then(() => { return result; }); },
-                (error)  => { return Engine.$rmr(tempDir).then(() => { throw error; }); });
-    }
-    
-    static $rmr(node) {
-        return new Promise((resolve, reject) => {
-            if (!node) {
-                return resolve();
-            }
-
-            fs.stat(node, (error, stats) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                if (stats.isDirectory()) {
-                    fs.readdir(node, (error, files) => {
-                        if (error) {
-                            return reject(error);
-                        }
-
-                        resolve(Promise.all(files.map((file) => Engine.$rmr(path.join(node, file))))
-                                .then(() => {
-                                    return new Promise((resolve, reject) => {
-                                        resolve();
-                                        fs.rmdir(node, (error) => {
-                                            error && reject(error) || resolve();
-                                        });
-                                    });
-                                }));
-                    });
-                }
-                else {
-                    resolve();
-                    fs.unlink(node, (error) => {
-                        error && reject(error) || resolve();
-                    });
-                }
-            })
-
-        });
-    }
-
 }
-        
+
 class Template {
     constructor(engine, url) {
         this._engine = engine;
@@ -277,24 +455,10 @@ class Template {
                                      [ { contentType: format, params: params, output: `${tempDir}/default.out` } ],
                                      null)
                 .then((result) => {
-                    result = result[0];
-
-                    if (result.text) {
-                        return Buffer.from(result.text);
-                    }
-                    else if (result.binary) {
-                        return Buffer.from(result.binary, 'base64');
-                    }
-                    else if (result.file) {
-                        return new Promise((resolve, reject) => {
-                            fs.readFile(result.file, (error, data) => {
-                                error && reject(error) || resolve(data);
-                            });
-                        });
-                    }
-                    else {
-                        throw new Error(`Failed to parse $renderViews() response: ${JSON.stringify(result)}`);
-                    }
+                    return Template.$fileResultAsBuffer(result[0]);
+                })
+                .then((result) => {
+                    return result.data;
                 });
         });
     }
@@ -306,7 +470,38 @@ class Template {
             contentType, contentType,
             views:       views,
             attachments: attachments,
+        }).then((results) => {
+            results.forEach((result, idx) => {
+                result.contentType = views[idx].contentType;
+
+                if (result.text) {
+                    result.data = Buffer.from(result.text);
+                    delete result.text;
+                }
+                else if (result.binary) {
+                    result.data = Buffer.from(result.binary, 'base64');
+                    delete result.binary;
+                }
+            });
+
+            return results;
         });
+    }
+
+    static $fileResultAsBuffer(result) {
+        if (result.file) {
+            return new Promise((resolve, reject) => {
+                fs.readFile(result.file, (error, data) => {
+                    result.data = data;
+                    delete result.file;
+
+                    error ? reject(error) : resolve(result);
+                });
+            });
+        }
+        else {
+            return Promise.resolve(result);
+        }
     }
 }
 

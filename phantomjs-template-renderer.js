@@ -49,7 +49,7 @@ if (webserver.create().listen(port, function(request, response) {
                 if (!(result instanceof Array)) {
                     result = [500, result && result.message || ('Unknown renderer response: ' + result)];
                 }
-                
+
                 if (typeof result[1] === 'string') {
                     result[1] = { message: result[1] };
                 }
@@ -152,7 +152,7 @@ function $renderTemplate(cmd) {
         template = new GhostlyTemplate(cmd.template);
         console.info('Created template ' + template);
     }
-    
+
     return template.$load()
         .then(function() {
             return template.$init(cmd.document, cmd.contentType);
@@ -198,7 +198,7 @@ function GhostlyTemplate(url) {
     self.url    = url;
     self.page   = webpage.create();
     self.loaded = false;
-    
+
     self.page.onConsoleMessage = function(msg) {
         console.info(self + ': [CONSOLE] ' + msg);
     };
@@ -222,7 +222,7 @@ GhostlyTemplate.prototype._$sendMessage = function(msg, timeout) {
             self.page.close();
             reject([504, self + ': Timeout for request ' + JSON.stringify(msg)]);
         }, (timeout || 10) * 1000);
-        
+
         console.log(self + ': Request ' + JSON.stringify(msg));
 
         self.page.onCallback = function(res) {
@@ -285,7 +285,7 @@ GhostlyTemplate.prototype.$render = function(view) {
     };
 
     self.page.zoomFactor = view.zoomFactor || 1;
-                    
+
     return self._$sendMessage(['ghostlyRender', { contentType: view.contentType, params: view.params }])
         .then(function(res) {
             if (!res[0]) {

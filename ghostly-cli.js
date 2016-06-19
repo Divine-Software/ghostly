@@ -6,6 +6,7 @@ const commander   = require('commander');
 const daemon      = require('daemon');
 const fs          = require('fs');
 const ghostly     = require('./ghostly');
+const http        = require('http');
 const os          = require('os');
 const packageJSON = require('./package.json');
 const phantomjs   = require('phantomjs-prebuilt');
@@ -41,6 +42,7 @@ Promise.resolve().then(() => {
         .option('    --relaunch-delay <seconds>',         'delay in seconds before relaunching a crashed worker [1]', int)
         .option('    --temp-dir <dir>',                   'override default directory for temporary files')
         .option('-t, --template <url>',                   'execute this Ghostly template')
+        .option('-T, --template-pattern <regexp>',        'restrict template URIs to this regular expression')
         .option('-u, --user <user>',                      'run as this user')
         .option('    --workers <num>',                    'number of worker processes [1]', int)
         .parse(process.argv);
@@ -55,7 +57,7 @@ Promise.resolve().then(() => {
         check(!argv.format, '--format requires --template');
         check(!argv.output, '--output requires --template');
     }
-    
+
     if (argv.http) {
         argv.http = ['localhost'].concat(argv.http.split(':')).splice(-2);
         argv.http[0] = argv.http[0] || os.hostname();
@@ -66,7 +68,7 @@ Promise.resolve().then(() => {
     }
 
     check(argv.http || argv.template, 'Either --http or --template must be specified');
-    
+
     return $main(argv);
 }).catch((ex) => {
     process.stdout.write(ex + '\n');
@@ -77,15 +79,26 @@ Promise.resolve().then(() => {
     }, 100);
 });
 
-function $main(argv) {    
+function $main(argv) {
     if (argv.debug) {
         ghostly.logger(console);
     }
 
-    let engine = new ghostly.Engine(
-        ['pageCache', 'phantomPath', 'portBase', 'relaunchDelay', 'tempDir', 'workers']
-            .reduce((result, prop) => { argv[prop] !== undefined && (result[prop] = argv[prop]); return result; }, {})
-    );
+    let config = {};
+
+    function arg(name, type) {
+        if (argv[name] !== undefined) config[name] = type(argv[name]);
+    }
+
+    arg('templatePattern', RegExp);
+    arg('pageCache',       Number);
+    arg('phantomPath',     String);
+    arg('portBase',        Number);
+    arg('relaunchDelay',   Number);
+    arg('tempDir',         String);
+    arg('workers',         Number);
+
+    let engine = new ghostly.Engine(config);
 
     return engine.$start()
         .then((engine) => {
@@ -113,12 +126,27 @@ function $main(argv) {
         })
         .then(() => {
             if (argv.http) {
-                console.log("TODO: Start HTTP server...");
+                let server = http.createServer(engine.httpRequestHandler.bind(engine));
 
-                if (argv.pidfile) {
-                    daemon();
-                    fs.writeFileSync(argv.pidfile, process.pid);
-                }
+                return new Promise((resolve, reject) => {
+                    server.listen(argv.http[1], argv.http[0], () => {
+                        resolve(server.address());
+                    })
+                }).then((address) => {
+                    console.log(`Listening for requests on http://${address.address}:${address.port}/`);
+
+                    if (argv.pidfile) {
+                        daemon();
+                        fs.writeFileSync(argv.pidfile, process.pid);
+                    }
+
+                    if (argv.user) {
+                        process.setgid(Number(childProcess.execSync(`id -g ${argv.user}`)));
+                        process.setuid(argv.user);
+                    }
+
+                    return new Promise(() => {});
+                });
             }
         });
 }

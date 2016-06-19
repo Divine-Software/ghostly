@@ -23,7 +23,7 @@
 
               // iframe.src lacks error handling, so use XHR to check if resource exists :(
               var xhr = new XMLHttpRequest();
-              
+
               xhr.addEventListener('load', function() {
                   if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 0 /* file:// */) {
                       iframe.onload = function() {

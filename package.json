@@ -13,7 +13,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "engines" : { "node" : ">=5.10" },
+  "engines" : { "node" : ">=6" },
   "dependencies": {
     "commander": "^2.9.0",
     "daemon": "^1.1.0",
