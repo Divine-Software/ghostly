@@ -1,6 +1,15 @@
 var ghostly = {};
 
 (function() {
+    var events = [];
+    var handler = null;
+
+    window.addEventListener("message", function(event) {
+        if (event.data && /^ghostly[A-Z]/.test(event.data[0])) {
+            handler ? handler(event) : events.push(event);
+        }
+    });
+
     ghostly.defaults = {
         /** The default implmentation of ghostlyLoad removes all scripts and normalizes whitespace nodes to one single space */
         ghostlyLoad: function(template) {
@@ -24,26 +33,39 @@ var ghostly = {};
     };
 
     ghostly.template = function(impl) {
-        window.addEventListener("message", function(event) {
-            if (event.data && /^ghostly[A-Z]/.test(event.data[0])) {
-                Promise.resolve()
-                    .then(function() {
-                        return (impl[event.data[0]] || ghostly.defaults[event.data[0]]).call(impl, event.data[1]);
-                    })
-                    .then(function(res) {
-                        event.source.postMessage(['ghostlyACK',  res || null], event.origin);
-                    })
-                    .catch(function(err) {
-                        try {
-                            event.source.postMessage(['ghostlyNACK', err instanceof Error ? err.toString() : err || null], event.origin);
-                        }
-                        catch (ex) {
-                            event.source.postMessage(['ghostlyNACK', ex.message + ': ' + err.toString()], event.origin);
-                        }
-                    });
-            };
-        });
+        return ghostly.init(impl);
+    }
+
+    ghostly.init = function(impl) {
+        if (handler) {
+            throw new Error("Ghostly already initialized!");
+        }
+
+        handler = function(event) {
+            Promise.resolve()
+                .then(function() {
+                    return (impl[event.data[0]] || ghostly.defaults[event.data[0]]).call(impl, event.data[1]);
+                })
+                .then(function(res) {
+                    event.source.postMessage(['ghostlyACK',  res || null], event.origin);
+                })
+                .catch(function(err) {
+                    try {
+                        event.source.postMessage(['ghostlyNACK', err instanceof Error ? err.toString() : err || null], event.origin);
+                    }
+                    catch (ex) {
+                        event.source.postMessage(['ghostlyNACK', ex.message + ': ' + err.toString()], event.origin);
+                    }
+                });
+        };
+
+        events.forEach(handler);
+        events = [];
     };
+
+    ghostly.destroy = function(impl) {
+        handler = null;
+    }
 
     function name(namespaces, node) {
         var namespace = node.namespaceURI || '';
