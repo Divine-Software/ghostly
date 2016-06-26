@@ -467,7 +467,7 @@ class Template {
         return this._engine._$sendMessage(this._engine._selectWorker(), {
             template:    this._url,
             document:    document,
-            contentType, contentType,
+            contentType: contentType,
             views:       views,
             attachments: attachments,
         }).then((results) => {
