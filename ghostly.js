@@ -329,8 +329,11 @@ class Engine {
                 });
 
                 response.on('end', () => {
-                    if (response.statusCode != 200) {
+                    if (response.statusCode >= 400 && response.statusCode < 500) {
                         worker.process.kill();
+                        return reject(new Error(`Worker returned an unexpected error: ${response.statusCode} - ${result}`));
+                    }
+                    else if (response.statusCode < 200 || response.statusCode >= 300) {
                         return reject(new Error(`Worker returned an unexpected error: ${response.statusCode} - ${result}`));
                     }
 

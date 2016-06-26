@@ -184,6 +184,7 @@ function $renderTemplate(cmd) {
             for (var i = 0; i < cacheSize; ++i) {
                 if (!pageCache[i]) {
                     pageCache[i] = template;
+                    console.info('Returning template ' + template + ' to cache');
                     break;
                 }
             }
