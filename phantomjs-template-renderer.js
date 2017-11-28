@@ -181,12 +181,18 @@ function $renderTemplate(cmd) {
         })
         .then(function(res) {
             // Return template to page cache if there were no errors
+            var cached = false;
             for (var i = 0; i < cacheSize; ++i) {
                 if (!pageCache[i]) {
                     pageCache[i] = template;
+                    cached = true;
                     console.info('Returning template ' + template + ' to cache');
                     break;
                 }
+            }
+
+            if (!cached) {
+                template.close();
             }
 
             return [200, res];
@@ -214,6 +220,11 @@ function GhostlyTemplate(url) {
 GhostlyTemplate.prototype.toString = function() {
     return '<' + this.url + '>';
 }
+
+GhostlyTemplate.prototype.close = function() {
+    this.page.close();
+    this.page = null;
+};
 
 GhostlyTemplate.prototype._$sendMessage = function(msg, timeout) {
     var self = this;
