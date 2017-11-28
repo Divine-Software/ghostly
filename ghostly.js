@@ -334,7 +334,7 @@ class Engine {
                         return reject(new Error(`Worker returned an unexpected error: ${response.statusCode} - ${result}`));
                     }
                     else if (response.statusCode < 200 || response.statusCode >= 300) {
-                        return reject(new Error(`Worker returned an unexpected error: ${response.statusCode} - ${result}`));
+                        return reject(new Error(`Worker returned an error: ${response.statusCode} - ${result}`));
                     }
 
                     try {
