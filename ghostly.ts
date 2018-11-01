@@ -389,7 +389,7 @@ class Engine {
             .then((port) => {
                 let key  = crypto.randomBytes(24).toString('base64');
                 let proc = childProcess.execFile(this._config.phantomPath, [
-                    '--web-security=false', path.join(__dirname, 'phantomjs-template-renderer.js'), `127.0.0.1:${port}`, this._config.pageCache
+                    '--web-security=false', path.join(__dirname, '..', 'phantomjs-template-renderer.js'), `127.0.0.1:${port}`, this._config.pageCache
                 ]);
 
                 if (!proc.pid) {

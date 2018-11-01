@@ -3,7 +3,7 @@
 'use strict'
 
 const commander   = require('commander');
-const daemon      = require('daemon');
+const daemon      = require('daemonize-process');
 const fs          = require('fs');
 const ghostly     = require('./ghostly');
 const http        = require('http');
