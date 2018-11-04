@@ -92,10 +92,10 @@ export async function $main(): Promise<void> {
     arg('tempDir',         String);
     arg('workers',         Number);
 
-    let engine = await new Engine(config).$start();
+    let engine = new Engine(config);
 
     if (argv.template) {
-        let template = engine.template(argv.template);
+        let template = (await engine.$start()).template(argv.template);
 
         for (const file of argv.args) {
             const data   = await fs.readFile(file !== '-' ? file : '/dev/stdin');
@@ -128,6 +128,10 @@ export async function $main(): Promise<void> {
             process.setuid(argv.user);
         }
 
+        // Launch workers
+        await engine.$start();
+
+        // Wait for server to exit or fail
         await new Promise((resolve, reject) => server.once('close', resolve).once('error', reject));
     }
 }
