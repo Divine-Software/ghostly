@@ -1,54 +1,96 @@
+import childProcess from 'child_process';
+import crypto       from 'crypto';
+import fs           from 'mz/fs';
+import http         from 'http';
+import net          from 'net';
+import os           from 'os';
+import packageJSON  from './package.json';
+import path         from 'path';
+import stream       from 'stream';
+import url          from 'url';
 
-'use strict'
+const nullConsole = new console.Console(new stream.PassThrough());
+let log = nullConsole;
 
-const childProcess = require('child_process');
-const crypto       = require('crypto');
-const fs           = require('fs');
-const http         = require('http');
-const net          = require('net');
-const os           = require('os');
-const packageJSON  = require('./package.json');
-const path         = require('path');
-const stream       = require('stream');
-const url          = require('url');
+export interface EngineConfig {
+    templatePattern: RegExp;
+    phantomPath:     string;
+    portBase?:       number;
+    relaunchDelay:   number;
+    tempDir:         string;
+    workers:         number;
+    pageCache:       number;
+}
 
-var logger;
+export interface View {
+    contentType: string;
+    params:      unknown;
+}
 
-exports.logger = function(log) {
+export interface RenderResult {
+    contentType: string;
+    data: Buffer;
+}
+
+interface PhantomView extends View {
+    output?: string
+}
+
+interface PhantomRenderResult {
+    text?: string;
+    binary?: string; // Base64-encoded
+    file?: string;
+}
+
+type Response = [number, Buffer | RenderResult[], http.OutgoingHttpHeaders?];
+
+interface Worker {
+    counter: number;
+    id:      number;
+    key:     string;
+    load:    number;
+    port:    number;
+    process: childProcess.ChildProcess;
+}
+
+export function logger(newLog?: Console | null): Console {
     try {
-        return logger;
+        return console;
     }
     finally {
-        if (log !== undefined) logger = log || new console.Console(stream.PassThrough());
+        if (newLog !== undefined) log = newLog || nullConsole;
     }
 }
 
-exports.logger(null);
+export class Engine {
+    /* private/internal */ _config: EngineConfig;
+    private _workers: Worker[];
 
-class Engine {
-    constructor(config) {
-        this._config = Object.assign({
+    constructor(config: Partial<EngineConfig> = {}) {
+        this._config = {
             templatePattern: /.*/,
             phantomPath:     'phantomjs',
-            portBase:        null,
+            portBase:        undefined,
             relaunchDelay:   1,
             tempDir:         os.tmpdir(),
             workers:         1,
             pageCache:       0,
-        }, config);
+            ...config
+        };
+
         this._workers = [];
     }
 
-    $start() {
-        return this._$launchWorkers(this._config.workers)
-            .then(() => this);
+    async $start() {
+        await this._$launchWorkers(this._config.workers);
+        return this;
     }
 
 //    $stop() {
 //        this._workers.forEach((w) => w.process.kill());
 //    }
 
-    template(uri) {
+    template(uri: string) {
         uri = url.resolve(`file://${process.cwd()}/`, uri);
 
         if (!this._config.templatePattern.test(uri)) {
@@ -61,451 +103,374 @@ class Engine {
     // GET  http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}&document=...&contentType=mime/type
     // POST http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}
     // POST http://localhost:9999/
-    httpRequestHandler(request, response) {
-        let template, document, contentType, views;
+    async $httpRequestHandler(request: http.IncomingMessage, response: http.ServerResponse) {
+        let result: Response;
 
-        Promise.resolve()
-            .then(() => {
-                let uri = url.parse(request.url, true);
+        try {
+            result = await this._$handleRequest(request);
+        }
+        catch (ex) {
+            result = ex instanceof Array ? ex as Response : [500, ex.message || `Unknown error: ${ex}`];
+        }
 
-                if (uri.pathname === '/') {
-                    template    = uri.query.template;
-                    document    = uri.query.document;
-                    contentType = uri.query.contentType || 'application/json';
+        let body: object;
 
-                    let view    = uri.query.view;
-                    let params  = uri.query.params && JSON.parse(uri.query.params);
+        if (typeof result[1] !== 'object') {
+            body = { message: String(result[1]) };
+        }
+        else if (result[1] instanceof Array) {
+            body = result[1].map((rr) => ({ contentType: rr.contentType, data: rr.data.toString('base64') }));
+        }
+        else {
+            body = result[1];
+        }
 
-                    if (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'POST') {
-                        throw [405, 'Only GET, HEAD and POST requests are accepted'];
-                    }
-
-                    if ((request.method === 'GET' || request.method === 'HEAD') && (!template || !document || !view)) {
-                        throw [400, `GET/HEAD requests must supply at least the 'template', 'document' and 'view' query params`];
-                    }
-
-                    if (request.method === 'POST' && document) {
-                        throw [400, `POST requests must not supply the 'document' query param`];
-                    }
-
-                    if (!!template !== !!view) {
-                        throw [400, `The 'template' and 'view' query params must be specified together`];
-                    }
-
-                    if (!template && params) {
-                        throw [400, `The 'params' query param may only be specified if 'template' is too`];
-                    }
-
-                    if (view) {
-                        views = [{ contentType: view, params: params }];
-                    }
-                }
-                else {
-                    throw [404, `Resource ${resource.pathname} not found`];
-                }
-
-                if (request.method === 'POST') {
-                    return request.body || new Promise((resolve, reject) => {
-                        let body = '';
-
-                        request.on('data', (data) => {
-                            body += data;
-                        });
-
-                        request.on('end', () => {
-                            resolve(body);
-                        });
-
-                        request.on('error', (error) => {
-                            reject(error);
-                        });
-                    });
-                }
-            })
-            .then((body) => {
-                let returnCT = template && views[0].contentType;
-
-                if (!document && !request.headers['content-type']) {
-                    throw [400, 'Missing Content-Type request header'];
-                }
-
-                if (template && !document) {
-                    document    = body;
-                    contentType = request.headers['content-type'];
-                }
-                else if (!template) {
-                    if (request.headers['content-type'] !== 'application/json') {
-                        throw [415, `Only application/json requests are accepted when the 'template' query param is missing`];
-                    }
-
-                    try {
-                        body = JSON.parse(body);
-                    }
-                    catch (ex) {
-                        throw [400, `Failed to parse body as JSON: ${ex}`];
-                    }
-
-                    if (typeof body !== 'object' || body instanceof Array) {
-                        throw [422, 'Expected a JSON object'];
-                    }
-
-                    if (typeof body.template !== 'string') {
-                        throw [422, `The 'template' JSON property is required and should be strings`];
-                    }
-                    else if (!(body.views instanceof Array)) {
-                        throw [422, `The 'views' JSON property is required and should be an array`];
-                    }
-
-                    template    = body.template;
-                    document    = body.document;
-                    contentType = body.contentType || 'application/json';
-                    views       = body.views.map((view) => ({ contentType: String(view.contentType), params: view.params }));
-                }
-
-                let $render;
-
-                try {
-                    let tpl = this.template(template);
-
-                    $render = () => tpl.$renderViews(document, contentType, views, null)
-                        .then((results) => {
-                            return Promise.all(results.map((result) => Template.$fileResultAsBuffer(result)));
-                        })
-                        .then((results) => {
-                            if (returnCT) {
-                                if (results.length !== 1) {
-                                    throw new Error(`Expected 1 result but got ${results.length}`);
-                                }
-
-                                return [200, results[0].data, { 'Content-Type': results[0].contentType }];
-                            }
-                            else {
-                                results.forEach((result) => {
-                                    result.data = result.data.toString('base64');
-                                });
-
-                                return [200, results];
-                            }
-                        });
-                }
-                catch (ex) {
-                    throw [403, ex.message];
-                }
-
-                if (views.some((view) => view.contentType === 'application/pdf')) {
-                    return Engine.$withTempDir(`${this._config.tempDir}/${packageJSON.name}-`, (tempDir) => {
-                        // PhantomJS can only render PDFs to disk
-                        views.forEach((view, idx) => {
-                            if (view.contentType === 'application/pdf') {
-                                view.output = `${tempDir}/${idx}.out`;
-                            }
-                        });
-
-                        return $render();
-                    });
-                }
-                else {
-                    return $render();
-                }
-            })
-            .catch((ex) => {
-                return ex instanceof Array ? ex : [500, ex.message || `Unknown error: ${ex}`];
-            })
-            .then((result) => {
-                if (typeof result[1] !== 'object') {
-                    result[1] = { message: String(result[1]) };
-                }
-
-                if (!(result[1] instanceof Buffer)) {
-                    result[1] = JSON.stringify(result[1]);
-                }
-
-                response.writeHead(result[0], Object.assign({ 'Content-Type': 'application/json' }, result[2]));
-                response.end(result[1]);
-            });
+        response.writeHead(result[0], { 'Content-Type': 'application/json', ...result[2] });
+        response.end(body instanceof Buffer ? body : JSON.stringify(body));
     }
 
-    static $getRandomPort() {
-        return new Promise((resolve, reject) => {
-            let server = net.createServer()
-                .on('error', (error) => {
-                    reject();
-                });
+    private async _$handleRequest(request: http.IncomingMessage): Promise<Response> {
+        let body: string | undefined;
+        let views: PhantomView[];
 
-            server.listen(0, () => {
-                let port = server.address().port;
+        let uri = url.parse(request.url!, true);
 
-                server.close(() => {
-                    resolve(port);
-                });
-            });
-        }).catch(() => {
-            return Engine.$getRandomPort(); // Try again
-        });
-    }
+        if (uri.pathname !== '/') {
+            throw [404, `Resource ${uri.pathname} not found`];
+        }
 
-    static $withTempDir(prefix, $fn) {
-        var tempDir;
+        let template    = uri.query.template as string | undefined;
+        let document    = uri.query.document as unknown;
+        let contentType = (uri.query.contentType || 'application/json') as string;
+        let view        = uri.query.view as string | undefined;
+        let params      = uri.query.params && JSON.parse(uri.query.params) as unknown;
 
-        return new Promise((resolve, reject) => {
-            fs.mkdtemp(prefix, (error, path) => {
-                if (error) {
-                    return reject(error);
-                }
+        if (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'POST') {
+            throw [405, 'Only GET, HEAD and POST requests are accepted'];
+        }
 
-                resolve($fn(tempDir = path));
-            });
-        }).then((result) => { return Engine.$rmr(tempDir).then(() => { return result; }); },
-                (error)  => { return Engine.$rmr(tempDir).then(() => { throw error; }); });
-    }
+        if ((request.method === 'GET' || request.method === 'HEAD') && (!template || !document || !view)) {
+            throw [400, `GET/HEAD requests must supply at least the 'template', 'document' and 'view' query params`];
+        }
 
-    static $rmr(node) {
-        return new Promise((resolve, reject) => {
-            if (!node) {
-                return resolve();
+        if (request.method === 'POST' && document) {
+            throw [400, `POST requests must not supply the 'document' query param`];
+        }
+
+        if (!!template !== !!view) {
+            throw [400, `The 'template' and 'view' query params must be specified together`];
+        }
+
+        if (!template && params) {
+            throw [400, `The 'params' query param may only be specified if 'template' is too`];
+        }
+
+        if (request.method === 'POST') {
+            contentType = request.headers['content-type'] as string;
+
+            if (!contentType) {
+                throw [400, 'Missing Content-Type request header'];
             }
 
-            fs.stat(node, (error, stats) => {
-                if (error) {
-                    return reject(error);
-                }
+            body = await new Promise<string>((resolve, reject) => {
+                let data = '';
 
-                if (stats.isDirectory()) {
-                    fs.readdir(node, (error, files) => {
-                        if (error) {
-                            return reject(error);
-                        }
+                request.on('data', (chunk) => {
+                    data += chunk;
+                });
 
-                        resolve(Promise.all(files.map((file) => Engine.$rmr(path.join(node, file))))
-                                .then(() => {
-                                    return new Promise((resolve, reject) => {
-                                        resolve();
-                                        fs.rmdir(node, (error) => {
-                                            error ? reject(error) : resolve();
-                                        });
-                                    });
-                                }));
-                    });
-                }
-                else {
-                    resolve();
-                    fs.unlink(node, (error) => {
-                        error ? reject(error) : resolve();
-                    });
-                }
-            })
+                request.on('end', () => {
+                    resolve(data);
+                });
 
-        });
+                request.on('error', (error) => {
+                    reject(error);
+                });
+            });
+        }
+
+        if (template) {
+            document = document || body;
+            views    = [{ contentType: view!, params: params }];
+        }
+        else {
+            let message;
+
+            if (contentType !== 'application/json') {
+                throw [415, `Only application/json requests are accepted when the 'template' query param is missing`];
+            }
+
+            try {
+                message = JSON.parse(body as string);
+            }
+            catch (ex) {
+                throw [400, `Failed to parse body as JSON: ${ex}`];
+            }
+
+            if (typeof message !== 'object' || message instanceof Array) {
+                throw [422, 'Expected a JSON object'];
+            }
+
+            if (typeof message.template !== 'string') {
+                throw [422, `The 'template' JSON property is required and should be a string`];
+            }
+            else if (!(message.views instanceof Array)) {
+                throw [422, `The 'views' JSON property is required and should be an array`];
+            }
+
+            template    = message.template as string;
+            document    = message.document as unknown;
+            contentType = message.contentType || 'application/json';
+            views       = message.views.map((view: View) => ({ contentType: String(view.contentType), params: view.params }));
+        }
+
+        let tpl: Template;
+        let results: RenderResult[];
+
+        try {
+            tpl = this.template(template);
+        }
+        catch (ex) {
+            throw [403, ex.message];
+        }
+
+        if (views.some((view) => view.contentType === 'application/pdf')) { // PhantomJS can only render PDFs to disk
+            results = await Engine.$withTempDir(`${this._config.tempDir}/${packageJSON.name}-`, (tempDir) => {
+                views.forEach((view, idx) => {
+                    if (view.contentType === 'application/pdf') {
+                        view.output = `${tempDir}/${idx}.out`;
+                    }
+                });
+
+                return tpl.$renderViews(document, contentType, views, null);
+            });
+        }
+        else {
+            results = await tpl.$renderViews(document, contentType, views, null);
+        }
+
+        if (view) {
+            if (results.length !== 1) {
+                throw new Error(`Expected 1 result but got ${results.length}`);
+            }
+
+            return [200, results[0].data, { 'Content-Type': results[0].contentType }];
+        }
+        else {
+            return [200, results];
+        }
     }
 
-    _$sendMessage(worker, message) {
-        message = JSON.stringify(message);
+    static async $getRandomPort(): Promise<number> {
+        try {
+            return await new Promise<number>((resolve, reject) => {
+                const server = net.createServer()
+                    .on('error', (error) => {
+                        reject(error);
+                    });
 
-        return new Promise((resolve, reject) => {
+                server.listen(0, () => {
+                    let port = server.address().port;
+
+                    server.close(() => {
+                        resolve(port);
+                    });
+                });
+            });
+        }
+        catch (_ex) {
+            return Engine.$getRandomPort(); // Try again
+        };
+    }
+
+    static async $withTempDir<T>(prefix: string, $fn: (path: string) => Promise<T>): Promise<T> {
+        let tempDir = await fs.mkdtemp(prefix, 'utf8');
+
+        try {
+            return $fn(tempDir);
+        }
+        finally {
+            await Engine.$rmr(tempDir);
+        }
+    }
+
+    static async $rmr(node?: string): Promise<void> {
+        if (node) {
+            if ((await fs.stat(node)).isDirectory()) {
+                for (const file of await fs.readdir(node)) {
+                    await Engine.$rmr(path.join(node, file));
+                }
+
+                await fs.rmdir(node);
+            }
+            else {
+                await fs.unlink(node);
+            }
+        }
+    }
+
+    /* private/internal */ async _$sendMessage(worker: Worker, message: unknown): Promise<unknown> {
+        const payload = Buffer.from(JSON.stringify(message));
+
+        try {
             ++worker.load;
             ++worker.counter;
 
-            let hmac = crypto.createHmac("sha256", worker.key)
-                .update([worker.counter, 'POST', '/', `localhost:${worker.port}`, 'application/json', message].join('\n'))
-                .digest('hex');
+            const [response, result] = await new Promise<[http.IncomingMessage, string]>((resolve, reject) => {
+                const hmac = crypto.createHmac("sha256", worker.key)
+                    .update([worker.counter, 'POST', '/', `localhost:${worker.port}`, 'application/json', payload].join('\n'))
+                    .digest('hex');
 
-            let request = http.request({
-                port:    worker.port,
-                method:  'POST',
-                auth:    worker.counter + ':' + hmac,
-                headers: {
-                    'Content-Type':   'application/json',
-                    'Content-Length': Buffer(message).length,
-                },
-            }, (response) => {
-                let result = '';
+                http.request({
+                    port:    worker.port,
+                    method:  'POST',
+                    auth:    worker.counter + ':' + hmac,
+                    headers: {
+                        'Content-Type':   'application/json',
+                        'Content-Length': payload.length,
+                    },
+                }, (response) => {
+                    let result = '';
 
-                response.on('error', (error) => {
+                    response.on('error', (error) => {
+                        reject(error);
+                    });
+
+                    response.on('data', (data) => {
+                        result += data;
+                    });
+
+                    response.on('end', () => {
+                        resolve([response, result]);
+                    });
+                })
+                .on('error', (error) => {
                     reject(error);
-                });
-
-                response.on('data', (data) => {
-                    result += data;
-                });
-
-                response.on('end', () => {
-                    if (response.statusCode >= 400 && response.statusCode < 500) {
-                        worker.process.kill();
-                        return reject(new Error(`Worker returned an unexpected error: ${response.statusCode} - ${result}`));
-                    }
-                    else if (response.statusCode < 200 || response.statusCode >= 300) {
-                        return reject(new Error(`Worker returned an error: ${response.statusCode} - ${result}`));
-                    }
-
-                    try {
-                        if (response.headers['content-type'] == 'application/json') {
-                            result = JSON.parse(result);
-                        }
-
-                        resolve(result);
-                    }
-                    catch (ex) {
-                        reject(ex);
-                    }
-                });
+                })
+                .end(payload);
             });
 
-            request.on('error', (error) => {
-                reject(error);
-            })
-
-            request.write(message);
-            request.end();
-
-            --worker.load;
-        }).then(
-            (result) => {
-                --worker.load;
-                return result;
-            },
-            (error) => {
-                --worker.load;
-                logger.error(`Failed to send request to worker ${worker.id}: ${error.message}`);
-                throw error;
+            if (!response.statusCode || response.statusCode >= 400 && response.statusCode < 500) {
+                worker.process.kill();
+                throw new Error(`Worker returned an unexpected error: ${response.statusCode} - ${result}`);
             }
-        );
+            else if (response.statusCode < 200 || response.statusCode >= 300) {
+                throw new Error(`Worker returned an error: ${response.statusCode} - ${result}`);
+            }
+
+            return response.headers['content-type'] == 'application/json' ? JSON.parse(result) : result;
+        }
+        catch (ex) {
+            log.error(`Failed to send request to worker ${worker.id}: ${ex.message}`);
+            throw ex;
+        }
+        finally {
+            --worker.load;
+        }
     }
 
-    _selectWorker() {
+    /* private/internal */ _selectWorker() {
         return this._workers.reduce((best, worker) => worker.load < best.load ? worker : best, this._workers[0]);
     }
 
-    _$launchWorkers(count) {
-        return Promise.all(Array(count).fill().map((unused, id) => this._$launchWorker(id)));
+    private async _$launchWorkers(count: number): Promise<Worker[]> {
+        return Promise.all(Array(count).fill(null).map((_unused, id) => this._$launchWorker(id)));
     }
 
-    _$launchWorker(id) {
+    private async _$launchWorker(id: number): Promise<Worker> {
         if (this._workers[id]) {
-            logger.info(`Worker ${id} already running as PID ${this._workers[id].process.pid}`);
-            return Promise.resolve(this._workers[id]);
+            log.info(`Worker ${id} already running as PID ${this._workers[id].process.pid}`);
+            return this._workers[id];
         }
 
-        return (this._config.portBase && Promise.resolve(this._config.portBase + id) || Engine.$getRandomPort())
-            .then((port) => {
-                let key  = crypto.randomBytes(24).toString('base64');
-                let proc = childProcess.execFile(this._config.phantomPath, [
-                    '--web-security=false', path.join(__dirname, '..', 'phantomjs-template-renderer.js'), `127.0.0.1:${port}`, this._config.pageCache
-                ]);
+        const port = this._config.portBase ? this._config.portBase + id : await Engine.$getRandomPort();
+        const key  = crypto.randomBytes(24).toString('base64');
+        const proc = childProcess.execFile(this._config.phantomPath, [
+            '--web-security=false', path.join(__dirname, '..', 'phantomjs-template-renderer.js'), `127.0.0.1:${port}`, String(this._config.pageCache)
+        ]);
 
-                if (!proc.pid) {
-                    throw new Error(`Failed to launch ${this._config.phantomPath}`);
-                }
+        if (!proc.pid) {
+            throw new Error(`Failed to launch ${this._config.phantomPath}`);
+        }
 
-                function cleanup_child() {
-                    proc.kill()
-                }
+        function cleanup_child() {
+            proc.kill()
+        }
 
-                process.on('exit', cleanup_child);
+        process.on('exit', cleanup_child);
 
-                proc.on('exit', (code, signal) => {
-                    delete this._workers[id];
+        proc.on('exit', (code, signal) => {
+            delete this._workers[id];
 
-                    process.removeListener('exit', cleanup_child);
+            process.removeListener('exit', cleanup_child);
 
-                    if (signal) {
-                        logger.error(`Worker ${id} was killed by signal ${signal}. Re-launching in ${this._config.relaunchDelay} seconds.`);
-                        setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
-                    }
-                    else if (code != 0) {
-                        logger.warn(`Worker ${id} exitied with status ${code}. Re-launching in ${this._config.relaunchDelay} seconds.`);
-                        setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
-                    }
-                    else {
-                        logger.info(`Worker ${id} exited`);
-                    }
-                });
+            if (signal) {
+                log.error(`Worker ${id} was killed by signal ${signal}. Re-launching in ${this._config.relaunchDelay} seconds.`);
+                setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
+            }
+            else if (code != 0) {
+                log.warn(`Worker ${id} exitied with status ${code}. Re-launching in ${this._config.relaunchDelay} seconds.`);
+                setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
+            }
+            else {
+                log.info(`Worker ${id} exited`);
+            }
+        });
 
-                proc.stdout.on('data', (data) => { logger.info(`Worker ${id}: ${String(data).trim()}`); });
-                proc.stderr.on('data', (data) => { logger.warn(`Worker ${id}: ${String(data).trim()}`); });
+        proc.stdout.on('data', (data) => { log.info(`Worker ${id}: ${String(data).trim()}`); });
+        proc.stderr.on('data', (data) => { log.warn(`Worker ${id}: ${String(data).trim()}`); });
 
-                // Send key to phantomjs-renderer.js
-                proc.stdin.write(key + '\n');
+        // Send key to phantomjs-renderer.js
+        proc.stdin.write(key + '\n');
+        await new Promise((resolve) => proc.stdout.once('data', resolve));
 
-                this._workers[id] = {
-                    counter: 0,
-                    id:      id,
-                    key:     key,
-                    load:    0,
-                    port:    port,
-                    process: proc,
-                };
+        log.info(`Spawned worker ${id} as PID ${proc.pid}`);
 
-                return new Promise((resolve, reject) => {
-                    logger.info(`Spawned worker ${id} as PID ${proc.pid}`);
-
-                    proc.stdout.once('data', () => {
-                        resolve(this._workers[id]);
-                    });
-                });
-            });
+        return this._workers[id] = {
+            counter: 0,
+            id:      id,
+            key:     key,
+            load:    0,
+            port:    port,
+            process: proc,
+        };
     }
 }
 
 class Template {
-    constructor(engine, url) {
-        this._engine = engine;
-        this._url    = url;
+    constructor(private _engine: Engine, private _url: string) {
     }
 
-    $render(document, contentType, format, params) {
-        return Engine.$withTempDir(`${this._engine._config.tempDir}/${packageJSON.name}-`, (tempDir) => {
-            return this.$renderViews(document, contentType,
-                                     [ { contentType: format, params: params, output: `${tempDir}/default.out` } ],
-                                     null)
-                .then((result) => {
-                    return Template.$fileResultAsBuffer(result[0]);
-                })
-                .then((result) => {
-                    return result.data;
-                });
+    async $render(document: unknown, contentType: string, format: string, params: unknown): Promise<Buffer> {
+        return Engine.$withTempDir(`${this._engine._config.tempDir}/${packageJSON.name}-`, async (tempDir) => {
+            return (await this.$renderViews(document, contentType, [{ contentType: format, params: params, output: `${tempDir}/default.out` }], null))[0].data;
         });
     }
 
-    $renderViews(document, contentType, views, attachments) {
-        return this._engine._$sendMessage(this._engine._selectWorker(), {
-            template:    this._url,
-            document:    document,
+    async $renderViews(document: unknown, contentType: string, views: PhantomView[], attachments: unknown): Promise<RenderResult[]> {
+        const results = await this._engine._$sendMessage(this._engine._selectWorker(), {
+            template: this._url,
+            document: document,
             contentType: contentType,
-            views:       views,
+            views: views,
             attachments: attachments,
-        }).then((results) => {
-            results.forEach((result, idx) => {
-                result.contentType = views[idx].contentType;
+        }) as PhantomRenderResult[];
 
-                if (result.text) {
-                    result.data = Buffer.from(result.text);
-                    delete result.text;
-                }
-                else if (result.binary) {
-                    result.data = Buffer.from(result.binary, 'base64');
-                    delete result.binary;
-                }
-            });
+        return await Promise.all(results.map(async (result, idx) => {
+            const contentType = views[idx].contentType;
 
-            return results;
-        });
-    }
-
-    static $fileResultAsBuffer(result) {
-        if (result.file) {
-            return new Promise((resolve, reject) => {
-                fs.readFile(result.file, (error, data) => {
-                    result.data = data;
-                    delete result.file;
-
-                    error ? reject(error) : resolve(result);
-                });
-            });
-        }
-        else {
-            return Promise.resolve(result);
-        }
+            if (result.text) {
+                return { contentType, data: Buffer.from(result.text) };
+            }
+            else if (result.binary) {
+                return { contentType, data: Buffer.from(result.binary, 'base64') };
+            }
+            else if (result.file) {
+                return { contentType, data: await fs.readFile(result.file) };
+            }
+            else {
+                throw new Error(`Incomplete result from PhantomJS: ${result}`);
+            }
+        }));
     }
 }
-
-exports.Engine = Engine;

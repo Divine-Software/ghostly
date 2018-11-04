@@ -19,8 +19,8 @@
   "repository": "LeviticusMB/ghostly",
   "license": "MIT",
   "author": "Martin Blom <martin@blom.org>",
-  "main": "ghostly.js",
-  "bin": "ghostly-cli.js",
+  "main": "dist/ghostly.js",
+  "bin": "ghostly-cli",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -30,9 +30,11 @@
   "dependencies": {
     "commander": "^2.19.0",
     "daemonize-process": "^2.0.0",
+    "mz": "^2.7.0",
     "phantomjs-prebuilt": "^2.1.16"
   },
   "devDependencies": {
+    "@types/mz": "^0.0.32",
     "@types/node": "^6.0.118",
     "typescript": "^3.1.3"
   }

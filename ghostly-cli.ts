@@ -1,30 +1,28 @@
-#!/usr/bin/env node
+import commander    from 'commander';
+import childProcess from 'child_process';
+import daemon       from 'daemonize-process';
+import fs           from 'mz/fs';
+import http         from 'http';
+import os           from 'os';
+import packageJSON  from './package.json';
+import phantomjs    from 'phantomjs-prebuilt';
 
-'use strict'
+import { logger, Engine, EngineConfig } from './ghostly';
 
-const commander   = require('commander');
-const daemon      = require('daemonize-process');
-const fs          = require('fs');
-const ghostly     = require('./ghostly');
-const http        = require('http');
-const os          = require('os');
-const packageJSON = require('./package.json');
-const phantomjs   = require('phantomjs-prebuilt');
-
-Promise.resolve().then(() => {
-    let argv = commander
+function parseArgs(): commander.Command {
+    const argv = commander
         .usage('[options] [document]')
         .description('Render a Ghostly template or start a Ghostly HTTP server.')
         .version(packageJSON.version);
 
-    function check(cond, message) {
+    function check(cond: boolean, message: string) {
         if (!cond) {
             argv.outputHelp();
-            throw `Argument error: ${message}`;
+            throw `Argument error: ${message}.`;
         }
     }
 
-    function int(arg) {
+    function int(arg: string) {
         let rc = parseInt(arg);
         check(!isNaN(rc), `${arg} is not a number`);
         return rc;
@@ -64,29 +62,25 @@ Promise.resolve().then(() => {
         check(!!Number(argv.http[1]), 'Invalid --http argument');
     }
     else {
+        check(!argv.user,    '--user can only be used in --http mode');
         check(!argv.pidfile, '--pidfile can only be used in --http mode');
     }
 
-    check(argv.http || argv.template, 'Either --http or --template must be specified');
+    check(!!argv.http != !!argv.template, 'Either --http or --template must be specified, but not both');
 
-    return $main(argv);
-}).catch((ex) => {
-    process.stdout.write(ex + '\n');
-    return 64;
-}).then((rc) => {
-    setTimeout(() => {
-        process.exit(rc || 0)
-    }, 100);
-});
+    return argv;
+}
 
-function $main(argv) {
+export async function $main(): Promise<void> {
+    const argv = parseArgs()
+
     if (argv.debug) {
-        ghostly.logger(console);
+        logger(console);
     }
 
-    let config = {};
+    let config: Partial<EngineConfig> = {};
 
-    function arg(name, type) {
+    function arg(name: keyof EngineConfig, type: Function) {
         if (argv[name] !== undefined) config[name] = type(argv[name]);
     }
 
@@ -98,55 +92,42 @@ function $main(argv) {
     arg('tempDir',         String);
     arg('workers',         Number);
 
-    let engine = new ghostly.Engine(config);
+    let engine = await new Engine(config).$start();
 
-    return engine.$start()
-        .then((engine) => {
-            if (argv.template) {
-                let template = engine.template(argv.template);
+    if (argv.template) {
+        let template = engine.template(argv.template);
 
-                return Promise.all(argv.args.map((file) => { // OK to use sync APIs here
-                    let data = fs.readFileSync(file !== '-' ? file : process.stdin.fd).toString();
+        for (const file of argv.args) {
+            const data   = await fs.readFile(file !== '-' ? file : '/dev/stdin');
+            const result = await template.$render(data.toString(), argv.contentType || 'application/json', argv.format || 'text/html', null);
 
-                    return template.$render(data, argv.contentType || 'application/json', argv.format || 'text/html', null)
-                        .then((result) => {
-                            return new Promise((resolve, reject) => {
-                                if (argv.output) {
-                                    fs.writeFile(argv.output, result, (error) => {
-                                        error && reject(error) || resolve();
-                                    });
-                                }
-                                else {
-                                    process.stdout.write(result) ? resolve() : process.stdout.once('drain', resolve);
-                                }
-                            });
-                        });
-                }));
+            if (argv.output) {
+                await fs.writeFile(argv.output, result);
             }
-        })
-        .then(() => {
-            if (argv.http) {
-                let server = http.createServer(engine.httpRequestHandler.bind(engine));
-
-                return new Promise((resolve, reject) => {
-                    server.listen(argv.http[1], argv.http[0], () => {
-                        resolve(server.address());
-                    })
-                }).then((address) => {
-                    console.log(`Listening for requests on http://${address.address}:${address.port}/`);
-
-                    if (argv.pidfile) {
-                        daemon();
-                        fs.writeFileSync(argv.pidfile, process.pid);
-                    }
-
-                    if (argv.user) {
-                        process.setgid(Number(childProcess.execSync(`id -g ${argv.user}`)));
-                        process.setuid(argv.user);
-                    }
-
-                    return new Promise(() => {});
-                });
+            else {
+                await new Promise((resolve, reject) => process.stdout.write(result) ? resolve() : process.stdout.once('drain', resolve).once('error', reject));
             }
+        }
+    }
+    else if (argv.http) {
+        let server = http.createServer((request, response) => engine.$httpRequestHandler(request, response));
+
+        const address = await new Promise<{port: number, address: string}>((resolve, _reject) => {
+            server.listen(argv.http[1], argv.http[0], () => resolve(server.address()));
         });
+
+        console.log(`Listening for requests on http://${address.address}:${address.port}/`);
+
+        if (argv.pidfile) {
+            daemon();
+            fs.writeFileSync(argv.pidfile, process.pid);
+        }
+
+        if (argv.user) {
+            process.setgid(Number(childProcess.execSync(`id -g ${argv.user}`)));
+            process.setuid(argv.user);
+        }
+
+        await new Promise((resolve, reject) => server.once('close', resolve).once('error', reject));
+    }
 }

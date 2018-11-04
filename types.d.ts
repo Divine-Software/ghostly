@@ -4,3 +4,7 @@ declare module 'daemonize-process' {
     function daemonizeProcess(opts?: SpawnOptions): void
     export = daemonizeProcess;
 }
+
+declare module 'phantomjs-prebuilt' {
+    export var path: string;
+}
