@@ -64,7 +64,7 @@ export function logger(newLog?: Console | null): Console {
 
 export class Engine {
     /* private/internal */ _config: EngineConfig;
-    private _workers: Worker[];
+    private _workers: (Worker | undefined)[];
 
     constructor(config: Partial<EngineConfig> = {}) {
         this._config = {
@@ -369,8 +369,20 @@ export class Engine {
         }
     }
 
-    /* private/internal */ _selectWorker() {
-        return this._workers.reduce((best, worker) => worker.load < best.load ? worker : best, this._workers[0]);
+    /* private/internal */ _selectWorker(): Worker {
+        let best: Worker | null = null;
+
+        for (const worker of this._workers) {
+            if (worker && (!best || worker.load < best.load)) {
+                best = worker;
+            }
+        }
+
+        if (!best) {
+            throw new Error(`No workers alive`);
+        }
+
+        return best;
     }
 
     private async _$launchWorkers(count: number): Promise<Worker[]> {
@@ -379,8 +391,8 @@ export class Engine {
 
     private async _$launchWorker(id: number): Promise<Worker> {
         if (this._workers[id]) {
-            log.info(`Worker ${id} already running as PID ${this._workers[id].process.pid}`);
-            return this._workers[id];
+            log.info(`Worker ${id} already running as PID ${this._workers[id]!.process.pid}`);
+            return this._workers[id]!;
         }
 
         const port = this._config.portBase ? this._config.portBase + id : await Engine.$getRandomPort();
