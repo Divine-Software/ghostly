@@ -20,6 +20,7 @@
   "license": "MIT",
   "author": "Martin Blom <martin@blom.org>",
   "main": "dist/ghostly.js",
+  "types": "dist/ghostly.d.ts",
   "bin": "ghostly-cli",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

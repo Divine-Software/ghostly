@@ -22,18 +22,20 @@ export interface EngineConfig {
     pageCache:       number;
 }
 
-export interface View {
+interface SafeView {
     contentType: string;
     params:      unknown;
 }
 
-export interface RenderResult {
+export interface View {
     contentType: string;
-    data: Buffer;
+    params:      unknown;
+    output?:     string
 }
 
-interface PhantomView extends View {
-    output?: string
+export interface RenderedView {
+    contentType: string;
+    data: Buffer;
 }
 
 interface PhantomRenderResult {
@@ -42,7 +44,7 @@ interface PhantomRenderResult {
     file?: string;
 }
 
-type Response = [number, Buffer | RenderResult[], http.OutgoingHttpHeaders?];
+type Response = [number, Buffer | RenderedView[], http.OutgoingHttpHeaders?];
 
 interface Worker {
     counter: number;
@@ -137,7 +139,7 @@ export class Engine {
 
     private async _$handleRequest(request: http.IncomingMessage): Promise<Response> {
         let body: string | undefined;
-        let views: PhantomView[];
+        let views: View[];
 
         let uri = url.parse(request.url!, true);
 
@@ -227,11 +229,11 @@ export class Engine {
             template    = message.template as string;
             document    = message.document as unknown;
             contentType = message.contentType || 'application/json';
-            views       = message.views.map((view: View) => ({ contentType: String(view.contentType), params: view.params }));
+            views       = message.views.map((view: SafeView) => ({ contentType: String(view.contentType), params: view.params }));
         }
 
         let tpl: Template;
-        let results: RenderResult[];
+        let results: RenderedView[];
 
         try {
             tpl = this.template(template);
@@ -471,7 +473,7 @@ class Template {
         });
     }
 
-    async $renderViews(document: unknown, contentType: string, views: PhantomView[], attachments: unknown): Promise<RenderResult[]> {
+    async $renderViews(document: unknown, contentType: string, views: View[], attachments: unknown): Promise<RenderedView[]> {
         const results = await this._engine._$sendMessage(this._engine._selectWorker(), {
             template: this._url,
             document: document,
