@@ -81,16 +81,22 @@ export class Engine {
         this._workers = [];
     }
 
-    async $start() {
+    async $start(): Promise<this> {
         await this._$launchWorkers(this._config.workers);
         return this;
     }
 
-//    $stop() {
-//        this._workers.forEach((w) => w.process.kill());
-//    }
+    async $stop(): Promise<this> {
+        for (const worker of this._workers) {
+            if (worker) {
+                worker.process.kill();
+            }
+        }
 
-    template(uri: string) {
+        return this;
+    }
+
+    template(uri: string): Template {
         uri = url.resolve(`file://${process.cwd()}/`, uri);
 
         if (!this._config.templatePattern.test(uri)) {
@@ -103,7 +109,7 @@ export class Engine {
     // GET  http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}&document=...&contentType=mime/type
     // POST http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}
     // POST http://localhost:9999/
-    async $httpRequestHandler(request: http.IncomingMessage, response: http.ServerResponse) {
+    async $httpRequestHandler(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
         let result: Response;
 
         try {
@@ -386,7 +392,13 @@ export class Engine {
     }
 
     private async _$launchWorkers(count: number): Promise<Worker[]> {
-        return Promise.all(Array(count).fill(null).map((_unused, id) => this._$launchWorker(id)));
+        const workers: Promise<Worker>[] = [];
+
+        for (let id = 0; id < count; ++id) {
+            workers.push(this._$launchWorker(id));
+        }
+
+        return await Promise.all(workers);
     }
 
     private async _$launchWorker(id: number): Promise<Worker> {

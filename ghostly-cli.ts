@@ -128,10 +128,19 @@ export async function $main(): Promise<void> {
             process.setuid(argv.user);
         }
 
-        // Launch workers
-        await engine.$start();
+        process.once('SIGINT', () => server.close());
+        process.once('SIGTERM', () => server.close());
 
-        // Wait for server to exit or fail
-        await new Promise((resolve, reject) => server.once('close', resolve).once('error', reject));
+        try {
+            // Launch workers
+            await engine.$start();
+
+            // Wait for server to exit or fail
+            await new Promise((resolve, reject) => server.once('close', resolve).once('error', reject));
+        }
+        finally {
+            // Shut down workers
+            await engine.$stop();
+        }
     }
 }
