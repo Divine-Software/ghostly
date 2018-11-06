@@ -438,16 +438,16 @@ export class Engine {
 
             process.removeListener('exit', cleanup_child);
 
-            if (signal) {
+            if (signal && signal !== 'SIGINT' && signal !== 'SIGTERM' && signal !== 'SIGBREAK') {
                 log.error(`Worker ${id} was killed by signal ${signal}. Re-launching in ${this._config.relaunchDelay} seconds.`);
                 setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
             }
-            else if (code != 0) {
+            else if (code) {
                 log.warn(`Worker ${id} exitied with status ${code}. Re-launching in ${this._config.relaunchDelay} seconds.`);
                 setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
             }
             else {
-                log.info(`Worker ${id} exited`);
+                log.info(`Worker ${id} exited.`);
             }
         });
 

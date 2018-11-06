@@ -130,6 +130,7 @@ export async function $main(): Promise<void> {
 
         process.once('SIGINT', () => server.close());
         process.once('SIGTERM', () => server.close());
+        process.once('SIGBREAK', () => server.close());
 
         try {
             // Launch workers
