@@ -23,9 +23,9 @@
   "types": "dist/ghostly.d.ts",
   "bin": "ghostly-cli",
   "files": [
-    "/dist",
-    "/ghostly-cli",
-    "/phantomjs*"
+    "dist",
+    "ghostly-cli",
+    "phantomjs*"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
