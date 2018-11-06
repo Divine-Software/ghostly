@@ -93,7 +93,7 @@ export class Engine {
     async $stop(): Promise<this> {
         for (const worker of this._workers) {
             if (worker) {
-                worker.process.kill();
+                worker.process.kill('SIGINT');
             }
         }
 
@@ -428,7 +428,7 @@ export class Engine {
         }
 
         function cleanup_child() {
-            proc.kill()
+            proc.kill('SIGINT');
         }
 
         process.on('exit', cleanup_child);
@@ -438,7 +438,7 @@ export class Engine {
 
             process.removeListener('exit', cleanup_child);
 
-            if (signal && signal !== 'SIGINT' && signal !== 'SIGTERM' && signal !== 'SIGBREAK') {
+            if (signal && signal !== 'SIGINT') {
                 log.error(`Worker ${id} was killed by signal ${signal}. Re-launching in ${this._config.relaunchDelay} seconds.`);
                 setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
             }
@@ -447,7 +447,7 @@ export class Engine {
                 setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
             }
             else {
-                log.info(`Worker ${id} exited.`);
+                log.info(`Worker ${id} ${signal === 'SIGINT' ? 'interrupted': 'exited'}.`);
             }
         });
 
