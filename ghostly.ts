@@ -38,15 +38,17 @@ export interface RenderedView {
     data: Buffer;
 }
 
+export class Response {
+    constructor(public status: number, public body: string | Buffer | RenderedView[], public headers?: http.OutgoingHttpHeaders) {}
+}
+
 interface PhantomRenderResult {
     text?: string;
     binary?: string; // Base64-encoded
     file?: string;
 }
 
-export class Response {
-    constructor(public status: number, public body: string | Buffer | RenderedView[], public headers?: http.OutgoingHttpHeaders) {}
-}
+type PhantomResult = [http.IncomingMessage, string];
 
 interface Worker {
     counter: number;
@@ -55,6 +57,7 @@ interface Worker {
     load:    number;
     port:    number;
     process: childProcess.ChildProcess;
+    request: Promise<PhantomResult> | null;
 }
 
 export function logger(newLog?: Console | null): Console {
@@ -93,7 +96,7 @@ export class Engine {
     async $stop(): Promise<this> {
         for (const worker of this._workers) {
             if (worker) {
-                worker.process.kill();
+                worker.process.kill('SIGINT');
             }
         }
 
@@ -330,9 +333,19 @@ export class Engine {
 
         try {
             ++worker.load;
+
+            // Wait until no request is in progress
+            while (worker.request) {
+                try {
+                    await worker.request;
+                } catch (_ignored) {
+                    // Just ignore this
+                }
+            }
+
             ++worker.counter;
 
-            const [response, result] = await new Promise<[http.IncomingMessage, string]>((resolve, reject) => {
+            worker.request = new Promise<PhantomResult>((resolve, reject) => {
                 const hmac = crypto.createHmac("sha256", worker.key)
                     .update([worker.counter, 'POST', '/', `localhost:${worker.port}`, 'application/json', payload].join('\n'))
                     .digest('hex');
@@ -366,6 +379,8 @@ export class Engine {
                 .end(payload);
             });
 
+            const [response, result] = await worker.request;
+
             if (!response.statusCode || response.statusCode >= 400 && response.statusCode < 500) {
                 worker.process.kill();
                 throw new Error(`Worker returned an unexpected error: ${response.statusCode} - ${result}`);
@@ -382,6 +397,7 @@ export class Engine {
         }
         finally {
             --worker.load;
+            worker.request = null;
         }
     }
 
@@ -428,7 +444,7 @@ export class Engine {
         }
 
         function cleanup_child() {
-            proc.kill()
+            proc.kill('SIGINT');
         }
 
         process.on('exit', cleanup_child);
@@ -438,7 +454,7 @@ export class Engine {
 
             process.removeListener('exit', cleanup_child);
 
-            if (signal && signal !== 'SIGINT' && signal !== 'SIGTERM' && signal !== 'SIGBREAK') {
+            if (signal && signal !== 'SIGINT') {
                 log.error(`Worker ${id} was killed by signal ${signal}. Re-launching in ${this._config.relaunchDelay} seconds.`);
                 setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
             }
@@ -447,7 +463,7 @@ export class Engine {
                 setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
             }
             else {
-                log.info(`Worker ${id} exited.`);
+                log.info(`Worker ${id} ${signal === 'SIGINT' ? 'interrupted': 'exited'}.`);
             }
         });
 
@@ -467,6 +483,7 @@ export class Engine {
             load:    0,
             port:    port,
             process: proc,
+            request: null,
         };
     }
 }

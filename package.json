@@ -1,6 +1,6 @@
 {
   "name": "ghostly",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Ghostly template/print formatter engine",
   "keywords": [
     "fop",
@@ -22,6 +22,11 @@
   "main": "dist/ghostly.js",
   "types": "dist/ghostly.d.ts",
   "bin": "ghostly-cli",
+  "files": [
+    "/dist",
+    "/ghostly-cli",
+    "/phantomjs*"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
