@@ -1,0 +1,10 @@
+#!/usr/bin/env node
+
+require('./dist/ghostly-cli').$main()
+    .catch((ex) => {
+        process.stdout.write('\n' + ex + '\n');
+        return 64;
+    })
+    .then((rc) => {
+        setTimeout(() => process.exit(rc || 0), 100);
+    });
