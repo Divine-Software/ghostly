@@ -110,7 +110,7 @@ export async function $main(): Promise<void> {
         }
     }
     else if (argv.http) {
-        let server = http.createServer((request, response) => engine.$httpRequestHandler(request, response));
+        let server = http.createServer((request, response) => engine.httpRequestHandler(request, response));
 
         const address = await new Promise<{port: number, address: string}>((resolve, _reject) => {
             server.listen(argv.http[1], argv.http[0], () => resolve(server.address()));

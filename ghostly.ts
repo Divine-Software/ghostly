@@ -44,7 +44,9 @@ interface PhantomRenderResult {
     file?: string;
 }
 
-type Response = [number, Buffer | RenderedView[], http.OutgoingHttpHeaders?];
+export class Response {
+    constructor(public status: number, public body: string | Buffer | RenderedView[], public headers?: http.OutgoingHttpHeaders) {}
+}
 
 interface Worker {
     counter: number;
@@ -111,40 +113,46 @@ export class Engine {
     // GET  http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}&document=...&contentType=mime/type
     // POST http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}
     // POST http://localhost:9999/
-    async $httpRequestHandler(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    httpRequestHandler(request: http.IncomingMessage, response: http.ServerResponse) {
+        this.$httpRequestHandler(request, response);
+    }
+
+    async $httpRequestHandler(request: http.IncomingMessage, response: http.ServerResponse): Promise<Response> {
         let result: Response;
 
         try {
-            result = await this._$handleRequest(request);
+            result = await this.$handleRequest(request);
         }
         catch (ex) {
-            result = ex instanceof Array ? ex as Response : [500, ex.message || `Unknown error: ${ex}`];
+            result = ex instanceof Response ? ex : new Response(500, ex.message || `Unknown error: ${ex}`);
         }
 
         let body: object;
 
-        if (typeof result[1] !== 'object') {
-            body = { message: String(result[1]) };
+        if (typeof result.body !== 'object') {
+            body = { message: String(result.body) };
         }
-        else if (result[1] instanceof Array) {
-            body = result[1].map((rr) => ({ contentType: rr.contentType, data: rr.data.toString('base64') }));
+        else if (result.body instanceof Array) {
+            body = result.body.map((rr) => ({ contentType: rr.contentType, data: rr.data.toString('base64') }));
         }
         else {
-            body = result[1];
+            body = result.body;
         }
 
-        response.writeHead(result[0], { 'Content-Type': 'application/json', ...result[2] });
+        response.writeHead(result.status, { 'Content-Type': 'application/json', ...result.headers });
         response.end(body instanceof Buffer ? body : JSON.stringify(body));
+
+        return result;
     }
 
-    private async _$handleRequest(request: http.IncomingMessage): Promise<Response> {
+    async $handleRequest(request: http.IncomingMessage): Promise<Response> {
         let body: string | undefined;
         let views: View[];
 
         let uri = url.parse(request.url!, true);
 
         if (uri.pathname !== '/') {
-            throw [404, `Resource ${uri.pathname} not found`];
+            throw new Response(404, `Resource ${uri.pathname} not found`);
         }
 
         let template    = uri.query.template as string | undefined;
@@ -154,30 +162,30 @@ export class Engine {
         let params      = uri.query.params && JSON.parse(uri.query.params) as unknown;
 
         if (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'POST') {
-            throw [405, 'Only GET, HEAD and POST requests are accepted'];
+            throw new Response(405, 'Only GET, HEAD and POST requests are accepted');
         }
 
         if ((request.method === 'GET' || request.method === 'HEAD') && (!template || !document || !view)) {
-            throw [400, `GET/HEAD requests must supply at least the 'template', 'document' and 'view' query params`];
+            throw new Response(400, `GET/HEAD requests must supply at least the 'template', 'document' and 'view' query params`);
         }
 
         if (request.method === 'POST' && document) {
-            throw [400, `POST requests must not supply the 'document' query param`];
+            throw new Response(400, `POST requests must not supply the 'document' query param`);
         }
 
         if (!!template !== !!view) {
-            throw [400, `The 'template' and 'view' query params must be specified together`];
+            throw new Response(400, `The 'template' and 'view' query params must be specified together`);
         }
 
         if (!template && params) {
-            throw [400, `The 'params' query param may only be specified if 'template' is too`];
+            throw new Response(400, `The 'params' query param may only be specified if 'template' is too`);
         }
 
         if (request.method === 'POST') {
             contentType = request.headers['content-type'] as string;
 
             if (!contentType) {
-                throw [400, 'Missing Content-Type request header'];
+                throw new Response(400, 'Missing Content-Type request header');
             }
 
             body = await new Promise<string>((resolve, reject) => {
@@ -205,25 +213,25 @@ export class Engine {
             let message;
 
             if (contentType !== 'application/json') {
-                throw [415, `Only application/json requests are accepted when the 'template' query param is missing`];
+                throw new Response(415, `Only application/json requests are accepted when the 'template' query param is missing`);
             }
 
             try {
                 message = JSON.parse(body as string);
             }
             catch (ex) {
-                throw [400, `Failed to parse body as JSON: ${ex}`];
+                throw new Response(400, `Failed to parse body as JSON: ${ex}`);
             }
 
             if (typeof message !== 'object' || message instanceof Array) {
-                throw [422, 'Expected a JSON object'];
+                throw new Response(422, 'Expected a JSON object');
             }
 
             if (typeof message.template !== 'string') {
-                throw [422, `The 'template' JSON property is required and should be a string`];
+                throw new Response(422, `The 'template' JSON property is required and should be a string`);
             }
             else if (!(message.views instanceof Array)) {
-                throw [422, `The 'views' JSON property is required and should be an array`];
+                throw new Response(422, `The 'views' JSON property is required and should be an array`);
             }
 
             template    = message.template as string;
@@ -239,7 +247,7 @@ export class Engine {
             tpl = this.template(template);
         }
         catch (ex) {
-            throw [403, ex.message];
+            throw new Response(403, ex.message);
         }
 
         if (views.some((view) => view.contentType === 'application/pdf')) { // PhantomJS can only render PDFs to disk
@@ -262,10 +270,10 @@ export class Engine {
                 throw new Error(`Expected 1 result but got ${results.length}`);
             }
 
-            return [200, results[0].data, { 'Content-Type': results[0].contentType }];
+            return new Response(200, results[0].data, { 'Content-Type': results[0].contentType });
         }
         else {
-            return [200, results];
+            return new Response(200, results);
         }
     }
 
