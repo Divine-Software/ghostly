@@ -11,6 +11,6 @@ build:		prepare
 
 publish:	clean build
 	@[[ -z "$$(git status --porcelain)" && "$$(git describe)" =~ ^v[0-9]+\.[0-9]+\.[0-9]$$ ]] || (git describe; git status; false)
-	npm publish --access publish
+	yarn publish --non-interactive --access public
 
 .PHONY:		all clean prepare build publish
