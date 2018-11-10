@@ -5,7 +5,7 @@ import fs           from 'mz/fs';
 import http         from 'http';
 import os           from 'os';
 import packageJSON  from '../package.json';
-import phantomjs    from 'phantomjs-prebuilt';
+import phantomjs    from 'phantomjs-bin';
 
 import { logger, Engine, EngineConfig } from './ghostly';
 

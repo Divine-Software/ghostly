@@ -5,6 +5,6 @@ declare module 'daemonize-process' {
     export = daemonizeProcess;
 }
 
-declare module 'phantomjs-prebuilt' {
+declare module 'phantomjs-bin' {
     export var path: string;
 }

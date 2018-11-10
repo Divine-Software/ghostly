@@ -37,7 +37,7 @@
     "commander": "^2.19.0",
     "daemonize-process": "^2.0.0",
     "mz": "^2.7.0",
-    "phantomjs-prebuilt": "^2.1.16"
+    "phantomjs-bin": "^2.1.1"
   },
   "devDependencies": {
     "@types/mz": "^0.0.32",
