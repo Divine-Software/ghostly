@@ -4,7 +4,7 @@ import fs           from 'mz/fs';
 import http         from 'http';
 import net          from 'net';
 import os           from 'os';
-import packageJSON  from './package.json';
+import packageJSON  from '../package.json';
 import path         from 'path';
 import stream       from 'stream';
 import url          from 'url';
@@ -436,7 +436,7 @@ export class Engine {
         const port = this._config.portBase ? this._config.portBase + id : await Engine.$getRandomPort();
         const key  = crypto.randomBytes(24).toString('base64');
         const proc = childProcess.execFile(this._config.phantomPath, [
-            '--web-security=false', path.join(__dirname, '..', 'phantomjs-template-renderer.js'), `127.0.0.1:${port}`, String(this._config.pageCache)
+            '--web-security=false', path.join(__dirname, '../..', 'phantomjs-template-renderer.js'), `127.0.0.1:${port}`, String(this._config.pageCache)
         ]);
 
         if (!proc.pid) {

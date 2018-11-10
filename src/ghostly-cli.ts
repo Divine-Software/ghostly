@@ -4,7 +4,7 @@ import daemon       from 'daemonize-process';
 import fs           from 'mz/fs';
 import http         from 'http';
 import os           from 'os';
-import packageJSON  from './package.json';
+import packageJSON  from '../package.json';
 import phantomjs    from 'phantomjs-prebuilt';
 
 import { logger, Engine, EngineConfig } from './ghostly';

@@ -19,11 +19,11 @@
   "repository": "LeviticusMB/ghostly",
   "license": "MIT",
   "author": "Martin Blom <martin@blom.org>",
-  "main": "dist/ghostly.js",
-  "types": "dist/ghostly.d.ts",
+  "main": "lib/src/ghostly.js",
+  "types": "lib/src/ghostly.d.ts",
   "bin": "ghostly-cli",
   "files": [
-    "dist",
+    "lib",
     "ghostly-cli",
     "phantomjs*"
   ],
