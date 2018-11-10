@@ -34,6 +34,7 @@
     "node": ">=6"
   },
   "dependencies": {
+    "@divine/sysconsole": "^1.1.0",
     "commander": "^2.19.0",
     "daemonize-process": "^2.0.0",
     "mz": "^2.7.0",

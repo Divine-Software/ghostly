@@ -1,11 +1,14 @@
-import commander    from 'commander';
-import childProcess from 'child_process';
-import daemon       from 'daemonize-process';
-import fs           from 'mz/fs';
-import http         from 'http';
-import os           from 'os';
-import packageJSON  from '../package.json';
-import phantomjs    from 'phantomjs-bin';
+import commander      from 'commander';
+import childProcess   from 'child_process';
+import daemon         from 'daemonize-process';
+import fs             from 'mz/fs';
+import http           from 'http';
+import os             from 'os';
+import packageJSON    from '../package.json';
+import phantomjs      from 'phantomjs-bin';
+import { SysConsole } from '@divine/sysconsole';
+
+const sysconsole = new SysConsole({ syslog: false, showFile: false });
 
 import { logger, Engine, EngineConfig } from './ghostly';
 
@@ -75,7 +78,7 @@ export async function $main(): Promise<void> {
     const argv = parseArgs()
 
     if (argv.debug) {
-        logger(console);
+        logger(sysconsole);
     }
 
     let config: Partial<EngineConfig> = {};
@@ -116,7 +119,7 @@ export async function $main(): Promise<void> {
             server.listen(argv.http[1], argv.http[0], () => resolve(server.address()));
         });
 
-        console.log(`Listening for requests on http://${address.address}:${address.port}/`);
+        sysconsole.log(`Listening for requests on http://${address.address}:${address.port}/`);
 
         if (argv.pidfile) {
             daemon();

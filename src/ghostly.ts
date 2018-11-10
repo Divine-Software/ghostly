@@ -62,7 +62,7 @@ interface Worker {
 
 export function logger(newLog?: Console | null): Console {
     try {
-        return console;
+        return log;
     }
     finally {
         if (newLog !== undefined) log = newLog || nullConsole;

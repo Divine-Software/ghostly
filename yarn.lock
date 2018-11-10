@@ -2,6 +2,14 @@
 # yarn lockfile v1
 
 
+"@divine/sysconsole@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@divine/sysconsole/-/sysconsole-1.1.0.tgz#2d652b4f1c8e5cddb336a913d1e124c984b9ce58"
+  integrity sha512-lVPO9sqojENnl4Yfw8LO/yVXSlvydGwdRhHP3vj74ht4kIdixPnDYw3lf0XTJSKQuothmLDvO3y51n6Lnt6Vug==
+  dependencies:
+    stack-trace "^0.0.10"
+    syslog-client "1.1.1"
+
 "@types/mz@^0.0.32":
   version "0.0.32"
   resolved "https://registry.yarnpkg.com/@types/mz/-/mz-0.0.32.tgz#e8248b4e41424c052edc1725dd33650c313a3659"
@@ -52,6 +60,16 @@ phantomjs-bin@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/phantomjs-bin/-/phantomjs-bin-2.1.1.tgz#6df251a781728819171aa0d656d6fa93241486bd"
   integrity sha1-bfJRp4FyiBkXGqDWVtb6kyQUhr0=
+
+stack-trace@^0.0.10:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/stack-trace/-/stack-trace-0.0.10.tgz#547c70b347e8d32b4e108ea1a2a159e5fdde19c0"
+  integrity sha1-VHxws0fo0ytOEI6hoqFZ5f3eGcA=
+
+syslog-client@1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/syslog-client/-/syslog-client-1.1.1.tgz#bdb28de3b5b7eb28a11352ec3eb78e55aed2ab6b"
+  integrity sha1-vbKN47W36yihE1LsPreOVa7Sq2s=
 
 thenify-all@^1.0.0:
   version "1.6.0"
