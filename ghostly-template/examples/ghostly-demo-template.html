@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+<html xmlns='http://www.w3.org/1999/xhtml'>
+  <head>
+    <title>Demo Template</title>
+    <style>/*<![CDATA[*/
+
+@media print {
+    body {
+        height:  297mm;
+        width:   210mm;
+    }
+}
+
+body {
+    font-family: Helvetica;
+    margin:  5mm;
+}
+
+h1 {
+    text-align: center;
+    border-bottom: 2px solid black;
+}
+
+td,th {
+    border: 1px solid #ccc;
+    text-align: center;
+}
+
+/*]]>*/</style>
+    <script src="../ghostly-template.js"></script>
+    <script>//<![CDATA[
+      ghostly.template({
+          ghostlyInit: function(source) {
+              this.document = ghostly.parse(source);
+          },
+
+          ghostlyRender: function(view) {
+              function htmlize(text) {
+                  return String(text).replace(/[&<"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&apos;' }[c] });
+              }
+
+              function maxDepth(obj) {
+                  var depth = 1;
+
+                  if (typeof obj == 'object') {
+                      for (var key in obj) {
+                          depth = Math.max(depth, maxDepth(obj[key]) + 1);
+                      }
+                  }
+
+                  return depth;
+              }
+
+              function renderTableCells(obj, depth, maxDepth) {
+                  if (typeof obj == 'object' && Object.keys(obj).length) {
+                      var height = 0;
+                      var cells  = depth == 0 ? '<tr>' : '';
+
+                      for (var key in obj) {
+                          var result = renderTableCells(obj[key], depth + 1, maxDepth);
+
+                          height += result[0];
+
+                          cells += '<th rowspan="' + result[0] + '">' + htmlize(key) + '</th>' + result[1];
+                      }
+
+                      return [height, cells];
+                  }
+                  else {
+                      return [1, '<td colspan="' + (maxDepth - depth) + '">' + htmlize(JSON.stringify(obj)) + '</td></tr>'];
+                  }
+              }
+
+              document.documentElement['class'] = view.contentType.split('/')[1];
+              document.getElementById('content').innerHTML = renderTableCells(this.document, 0, maxDepth(this.document))[1];
+          },
+      });
+//]]></script>
+  </head>
+
+  <body>
+    <h1>Demo Template</h1>
+
+    <h2>Structure of incoming data source</h2>
+    <table>
+      <tbody id='content' />
+    </table>
+  </body>
+</html>
