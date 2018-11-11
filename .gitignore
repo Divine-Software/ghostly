@@ -1,3 +1,5 @@
 node_modules
+yarn-error.log
 .vscode
-/lib
+/ghostly/lib
+/ghostly-cli/lib

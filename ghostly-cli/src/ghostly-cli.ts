@@ -10,7 +10,7 @@ import { SysConsole } from '@divine/sysconsole';
 
 const sysconsole = new SysConsole({ syslog: false, showFile: false });
 
-import { logger, Engine, EngineConfig } from './ghostly';
+import { logger, Engine, EngineConfig } from '@divine/ghostly';
 
 function parseArgs(): commander.Command {
     const argv = commander

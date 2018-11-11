@@ -1,16 +1,10 @@
 all:		build
 
-clean:
-	rm -rf lib node_modules
+clean prepare build publish::
+	make -C ghostly $@
+	make -C ghostly-cli $@
 
-prepare:
-	yarn
-
-build:		prepare
-	yarn run tsc
-
-publish:	clean build
-	@[[ -z "$$(git status --porcelain)" && "$$(git describe)" =~ ^v[0-9]+\.[0-9]+\.[0-9]$$ ]] || (git describe; git status; false)
-	yarn publish --non-interactive --access public
+clean::
+	rm -rf node_modules
 
 .PHONY:		all clean prepare build publish
