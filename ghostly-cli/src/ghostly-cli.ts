@@ -5,12 +5,12 @@ import fs             from 'mz/fs';
 import http           from 'http';
 import os             from 'os';
 import packageJSON    from '../package.json';
-import phantomjs      from 'phantomjs-bin';
+import puppeteer      from 'puppeteer';
 import { SysConsole } from '@divine/sysconsole';
 
-const sysconsole = new SysConsole({ syslog: false, showFile: false });
-
 import { logger, Engine, EngineConfig } from '@divine/ghostly';
+
+const sysconsole = new SysConsole({ syslog: false, showFile: false });
 
 function parseArgs(): commander.Command {
     const argv = commander
@@ -37,9 +37,8 @@ function parseArgs(): commander.Command {
         .option('-H, --http <host:port>',                 'run an HTTP server on this host and port')
         .option('-o  --output <file>',                    'template output filename [standard output]')
         .option('    --page-cache <num>',                 'each worker keeps <num> pages cached [0]', int)
-        .option('    --phantom-path <file>',              'override PhantomJS/SlimerJS path', phantomjs.path)
+        .option('    --chromium-path <file>',             'override Chromium/Chrome path', puppeteer.executablePath())
         .option('    --pidfile <file>',                   'fork and write PID to this file')
-        .option('    --port-base <port>',                 'first localhost port to use for workers [use random ports]', int)
         .option('    --relaunch-delay <seconds>',         'delay in seconds before relaunching a crashed worker [1]', int)
         .option('    --temp-dir <dir>',                   'override default directory for temporary files')
         .option('-t, --template <url>',                   'execute this Ghostly template')
@@ -89,8 +88,7 @@ export async function $main(): Promise<void> {
 
     arg('templatePattern', RegExp);
     arg('pageCache',       Number);
-    arg('phantomPath',     String);
-    arg('portBase',        Number);
+    arg('chromiumPath',    String);
     arg('relaunchDelay',   Number);
     arg('tempDir',         String);
     arg('workers',         Number);

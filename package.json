@@ -11,6 +11,9 @@
     "packages": [
       "ghostly",
       "ghostly-cli"
+    ],
+    "nohoist": [
+      "**/puppeteer"
     ]
   }
 }

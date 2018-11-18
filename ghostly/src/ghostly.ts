@@ -1,11 +1,9 @@
-import childProcess from 'child_process';
-import crypto       from 'crypto';
-import fs           from 'mz/fs';
 import http         from 'http';
-import net          from 'net';
+import fs           from 'mz/fs';
 import os           from 'os';
 import packageJSON  from '../package.json';
 import path         from 'path';
+import puppeteer    from 'puppeteer-core';
 import stream       from 'stream';
 import url          from 'url';
 
@@ -14,8 +12,7 @@ let log = nullConsole;
 
 export interface EngineConfig {
     templatePattern: RegExp;
-    phantomPath:     string;
-    portBase?:       number;
+    chromiumPath:    string;
     relaunchDelay:   number;
     tempDir:         string;
     workers:         number;
@@ -42,22 +39,11 @@ export class Response {
     constructor(public status: number, public body: string | Buffer | RenderedView[], public headers?: http.OutgoingHttpHeaders) {}
 }
 
-interface PhantomRenderResult {
-    text?: string;
-    binary?: string; // Base64-encoded
-    file?: string;
-}
-
-type PhantomResult = [http.IncomingMessage, string];
-
 interface Worker {
-    counter: number;
-    id:      number;
-    key:     string;
-    load:    number;
-    port:    number;
-    process: childProcess.ChildProcess;
-    request: Promise<PhantomResult> | null;
+    id:        number;
+    load:      number;
+    browser:   puppeteer.Browser;
+    pageCache: (puppeteer.Page | undefined)[];
 }
 
 export function logger(newLog?: Console | null): Console {
@@ -76,8 +62,7 @@ export class Engine {
     constructor(config: Partial<EngineConfig> = {}) {
         this._config = {
             templatePattern: /.*/,
-            phantomPath:     'phantomjs',
-            portBase:        undefined,
+            chromiumPath:    puppeteer.executablePath(),
             relaunchDelay:   1,
             tempDir:         os.tmpdir(),
             workers:         1,
@@ -96,7 +81,12 @@ export class Engine {
     async $stop(): Promise<this> {
         for (const worker of this._workers) {
             if (worker) {
-                worker.process.kill('SIGINT');
+                try {
+                    await worker.browser.close();
+                }
+                catch (err) {
+                    log.warn(`Failed to close worker ${worker.id}: ${err}.`);
+                }
             }
         }
 
@@ -254,7 +244,7 @@ export class Engine {
         }
 
         if (views.some((view) => view.contentType === 'application/pdf')) { // PhantomJS can only render PDFs to disk
-            results = await Engine.$withTempDir(`${this._config.tempDir}/${packageJSON.name}-`, (tempDir) => {
+            results = await Engine.$withTempDir(`${this._config.tempDir}/ghostly-`, (tempDir) => {
                 views.forEach((view, idx) => {
                     if (view.contentType === 'application/pdf') {
                         view.output = `${tempDir}/${idx}.out`;
@@ -280,28 +270,6 @@ export class Engine {
         }
     }
 
-    static async $getRandomPort(): Promise<number> {
-        try {
-            return await new Promise<number>((resolve, reject) => {
-                const server = net.createServer()
-                    .on('error', (error) => {
-                        reject(error);
-                    });
-
-                server.listen(0, () => {
-                    let port = server.address().port;
-
-                    server.close(() => {
-                        resolve(port);
-                    });
-                });
-            });
-        }
-        catch (_ex) {
-            return Engine.$getRandomPort(); // Try again
-        };
-    }
-
     static async $withTempDir<T>(prefix: string, $fn: (path: string) => Promise<T>): Promise<T> {
         let tempDir = await fs.mkdtemp(prefix, 'utf8');
 
@@ -325,79 +293,6 @@ export class Engine {
             else {
                 await fs.unlink(node);
             }
-        }
-    }
-
-    /* private/internal */ async _$sendMessage(worker: Worker, message: unknown): Promise<unknown> {
-        const payload = Buffer.from(JSON.stringify(message));
-
-        try {
-            ++worker.load;
-
-            // Wait until no request is in progress
-            while (worker.request) {
-                try {
-                    await worker.request;
-                } catch (_ignored) {
-                    // Just ignore this
-                }
-            }
-
-            ++worker.counter;
-
-            worker.request = new Promise<PhantomResult>((resolve, reject) => {
-                const hmac = crypto.createHmac("sha256", worker.key)
-                    .update([worker.counter, 'POST', '/', `localhost:${worker.port}`, 'application/json', payload].join('\n'))
-                    .digest('hex');
-
-                http.request({
-                    port:    worker.port,
-                    method:  'POST',
-                    auth:    worker.counter + ':' + hmac,
-                    headers: {
-                        'Content-Type':   'application/json',
-                        'Content-Length': payload.length,
-                    },
-                }, (response) => {
-                    let result = '';
-
-                    response.on('error', (error) => {
-                        reject(error);
-                    });
-
-                    response.on('data', (data) => {
-                        result += data;
-                    });
-
-                    response.on('end', () => {
-                        resolve([response, result]);
-                    });
-                })
-                .on('error', (error) => {
-                    reject(error);
-                })
-                .end(payload);
-            });
-
-            const [response, result] = await worker.request;
-
-            if (!response.statusCode || response.statusCode >= 400 && response.statusCode < 500) {
-                worker.process.kill();
-                throw new Error(`Worker returned an unexpected error: ${response.statusCode} - ${result}`);
-            }
-            else if (response.statusCode < 200 || response.statusCode >= 300) {
-                throw new Error(`Worker returned an error: ${response.statusCode} - ${result}`);
-            }
-
-            return response.headers['content-type'] == 'application/json' ? JSON.parse(result) : result;
-        }
-        catch (ex) {
-            log.error(`Failed to send request to worker ${worker.id}: ${ex.message}`);
-            throw ex;
-        }
-        finally {
-            --worker.load;
-            worker.request = null;
         }
     }
 
@@ -429,30 +324,18 @@ export class Engine {
 
     private async _$launchWorker(id: number): Promise<Worker> {
         if (this._workers[id]) {
-            log.info(`Worker ${id} already running as PID ${this._workers[id]!.process.pid}`);
+            log.info(`Worker ${id} already running as PID ${this._workers[id]!.browser.process().pid}`);
             return this._workers[id]!;
         }
 
-        const port = this._config.portBase ? this._config.portBase + id : await Engine.$getRandomPort();
-        const key  = crypto.randomBytes(24).toString('base64');
-        const proc = childProcess.execFile(this._config.phantomPath, [
-            '--web-security=false', path.join(__dirname, '../..', 'phantomjs-template-renderer.js'), `127.0.0.1:${port}`, String(this._config.pageCache)
-        ]);
+        const browser = await puppeteer.launch({
+            executablePath: this._config.chromiumPath,
+        });
 
-        if (!proc.pid) {
-            throw new Error(`Failed to launch ${this._config.phantomPath}`);
-        }
-
-        function cleanup_child() {
-            proc.kill('SIGINT');
-        }
-
-        process.on('exit', cleanup_child);
+        const proc = browser.process();
 
         proc.on('exit', (code, signal) => {
             delete this._workers[id];
-
-            process.removeListener('exit', cleanup_child);
 
             if (signal && signal !== 'SIGINT') {
                 log.error(`Worker ${id} was killed by signal ${signal}. Re-launching in ${this._config.relaunchDelay} seconds.`);
@@ -468,22 +351,15 @@ export class Engine {
         });
 
         proc.stdout.on('data', (data) => { log.info(`Worker ${id}: ${String(data).trim()}`); });
-        proc.stderr.on('data', (data) => { log.warn(`Worker ${id}: ${String(data).trim()}`); });
-
-        // Send key to phantomjs-renderer.js
-        proc.stdin.write(key + '\n');
-        await new Promise((resolve) => proc.stdout.once('data', resolve));
+        //proc.stderr.on('data', (data) => { log.warn(`Worker ${id}: ${String(data).trim()}`); });
 
         log.info(`Spawned worker ${id} as PID ${proc.pid}`);
 
         return this._workers[id] = {
-            counter: 0,
-            id:      id,
-            key:     key,
-            load:    0,
-            port:    port,
-            process: proc,
-            request: null,
+            id:        id,
+            load:      0,
+            browser:   browser,
+            pageCache: [],
         };
     }
 }
@@ -493,35 +369,219 @@ class Template {
     }
 
     async $render(document: unknown, contentType: string, format: string, params: unknown): Promise<Buffer> {
-        return Engine.$withTempDir(`${this._engine._config.tempDir}/${packageJSON.name}-`, async (tempDir) => {
+        return Engine.$withTempDir(`${this._engine._config.tempDir}/ghostly-`, async (tempDir) => {
             return (await this.$renderViews(document, contentType, [{ contentType: format, params: params, output: `${tempDir}/default.out` }], null))[0].data;
         });
     }
 
-    async $renderViews(document: unknown, contentType: string, views: View[], attachments: unknown): Promise<RenderedView[]> {
-        const results = await this._engine._$sendMessage(this._engine._selectWorker(), {
-            template: this._url,
-            document: document,
-            contentType: contentType,
-            views: views,
-            attachments: attachments,
-        }) as PhantomRenderResult[];
+    async $renderViews(document: unknown, contentType: string, views: View[], _attachments: unknown): Promise<RenderedView[]> {
+        const worker = this._engine._selectWorker();
+        const result = [] as RenderedView[];
 
-        return await Promise.all(results.map(async (result, idx) => {
-            const contentType = views[idx].contentType;
+        try {
+            ++worker.load;
 
-            if (result.text) {
-                return { contentType, data: Buffer.from(result.text) };
+            // Find a cached template ...
+            let page = worker.pageCache.find((page) => !!page && page.url() === this._url);
+
+            try {
+                if (page) {
+                    log.info(`Using cached template ${this._url}.`);
+                    delete worker.pageCache[worker.pageCache.indexOf(page)];
+                }
+                else {
+                    // ... or create a new one
+                    log.info(`Creating template ${this._url}.`);
+                    page = await this._$createPage(worker);
+                    log.info(`Created template ${this._url}.`);
+                }
+
+                // Render all views
+                await this._$sendMessage(page, 'ghostlyInit', { document, contentType });
+
+                for (const view of views) {
+                    let buffer = await this._$sendMessage(page, 'ghostlyRender', { contentType: view.contentType, params: view.params });
+
+                    if (!buffer && (view.contentType === 'text/html' || view.contentType === 'text/plain')) {
+                        const iframe = await page.evaluateHandle(() => {
+                            return (document as any).body.removeChild((document as any).getElementById('__ghostly-message-proxy__'))
+                        });
+
+                        try {
+                            if (view.contentType === 'text/html') {
+                                buffer = Buffer.from(await page.content());
+                            }
+                            else {
+                                for (const text of await page.$x('//text()')) {
+                                    console.log(`text: '${text}'`, text);
+                                }
+                            }
+                        }
+                        finally {
+                            await page.evaluate((iframe) => {
+                                (document as any).body.appendChild(iframe);
+                            }, iframe);
+                        }
+                    }
+
+                    if (!buffer) {
+                        // if (view.contentType === 'application/pdf') {
+                        //     buffer = await page.pdf({margin: })
+                        // }˙
+                        throw new Error('Template ${page!.url()} did not return a result fo r')
+                    }
+
+                    result.push({ contentType: view.contentType, data: buffer });
+                }
+
+                console.log(result);
+
+                // Return template to page cache if there were no errors
+                for (let i = 0; i < this._engine._config.pageCache; ++i) {
+                    if (!worker.pageCache[i]) {
+                        log.info(`Returning template ${page!.url()} to page cache.`);
+                        worker.pageCache[i] = page;
+                        page = undefined;
+                        break;
+                    }
+                }
             }
-            else if (result.binary) {
-                return { contentType, data: Buffer.from(result.binary, 'base64') };
+            finally {
+                if (page) {
+                    await page.close();
+                }
             }
-            else if (result.file) {
-                return { contentType, data: await fs.readFile(result.file) };
+        }
+        finally {
+            --worker.load;
+        }
+
+        return result;
+
+        // const results = await this._engine._$sendMessage(this._engine._selectWorker(), {
+        //     template: this._url,
+        //     document: document,
+        //     contentType: contentType,
+        //     views: views,
+        //     attachments: attachments,
+        // }) as PhantomRenderResult[];
+
+        // return await Promise.all(results.map(async (result, idx) => {
+        //     const contentType = views[idx].contentType;
+
+        //     if (result.text) {
+        //         return { contentType, data: Buffer.from(result.text) };
+        //     }
+        //     else if (result.binary) {
+        //         return { contentType, data: Buffer.from(result.binary, 'base64') };
+        //     }
+        //     else if (result.file) {
+        //         return { contentType, data: await fs.readFile(result.file) };
+        //     }
+        //     else {
+        //         throw new Error(`Incomplete result from PhantomJS: ${result}`);
+        //     }
+        // }));
+    }
+
+    private async _$createPage(worker: Worker) {
+        const page = await (await worker.browser.createIncognitoBrowserContext()).newPage();
+
+        page.setUserAgent(`${packageJSON.name}/${packageJSON.version}`);
+        page.setRequestInterception(true);
+
+        page.on('request', (req) => {
+            log.debug(`${this._url}: Loading ${req.url()}`);
+
+            if (this._engine._config.templatePattern.test(req.url())) {
+                req.continue();
             }
             else {
-                throw new Error(`Incomplete result from PhantomJS: ${result}`);
+                log.error(`${this._url}: Template accessed a disallowed URL: ${req.url()} did not match ${this._engine._config.templatePattern}`);
+                req.abort();
             }
-        }));
+        });
+
+        page.on('dialog', (dialog) => {
+            log.warn(`${this._url}: [${dialog.type()}] ${dialog.message()}`)
+            dialog.dismiss();
+        });
+
+        page.on('console', msg => {
+            const method: Function = (log as any)[msg.type()];
+            (typeof method === 'function' ? method : log.warn).call(log, `${this._url}: ${msg.text()}`);
+        });
+
+        await page.goto(this._url);
+
+        // Inject the message proxy iframe
+        await page.evaluateHandle(`(() => {
+            return new Promise((resolve) => {
+                const iframe  = document.body.appendChild(document.createElement('iframe'));
+                iframe.id     = '__ghostly-message-proxy__'
+                iframe.onload = () => resolve(iframe);
+                iframe.style  = 'display:none';
+                iframe.srcdoc = \`<script type='text/javascript'>
+                    function sendMessage(message, timeout) {
+                        return new Promise((resolve, reject) => {
+                            const watchdog = setTimeout(() => reject('Ghostly command ' + message[0] + ' timed out'), (timeout || 10) * 1000);
+
+                            window.onmessage = (event) => {
+                                clearTimeout(watchdog);
+                                window.onmessage = null;
+
+                                if (event.data && event.data[1] instanceof Uint8Array) { // No Uint8Array support in Puppeteer
+                                    let buffer = '';
+
+                                    for (let i = 0, data = event.data[1]; i < data.length; ++i) {
+                                        buffer += String.fromCharCode(data[i]);
+                                    }
+
+                                    resolve([event.data[0], buffer, 'Uint8Array'])
+                                }
+                                else {
+                                    resolve(event.data);
+                                }
+                            };
+
+                            window.parent.postMessage(message, '*');
+                        });
+                    }
+                    </script>\`;
+            });
+        })()`)
+
+        // const window = await page.evaluateHandle(`() => {
+        //     const win = window.open('', '', 'width=0,height=0');
+        //     win.document.write('alert(window.opener)');
+        //     return win;
+        // }`);
+
+        // console.log('opened window!', window);
+
+        await this._$sendMessage(page, 'ghostlyLoad', this._url);
+
+        return page;
+    }
+
+    private async _$sendMessage(page: puppeteer.Page, command: string, data: object | string): Promise<Buffer | null> {
+        const response = await page.evaluate((command, data) => {
+            try {
+                return (document as any).getElementById('__ghostly-message-proxy__').contentWindow.sendMessage([command, data]);
+            }
+            catch (_ignored) {
+                throw 'Ghostly message proxy frame not found!';
+            }
+        } , command, data) as ['ghostlyACK' | 'ghostlyNACK', string | null, 'Uint8Array'? ];
+
+        if (response[0] !== 'ghostlyACK') {
+            throw new Error(`${command} failed: ${response[1]}`);
+        }
+        else if (typeof response[1] === 'string' && response[2] === 'Uint8Array') {
+            return Buffer.from(response[1], 'latin1');
+        }
+        else {
+            return response[1] ? Buffer.from(response[1]) : null;
+        }
     }
 }

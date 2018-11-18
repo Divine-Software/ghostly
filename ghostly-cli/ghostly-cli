@@ -2,7 +2,7 @@
 
 require('./lib/src/ghostly-cli').$main()
     .catch((ex) => {
-        process.stdout.write('\n' + ex + '\n');
+        process.stdout.write('\n' + (ex && ex.stack || ex) + '\n');
         return 64;
     })
     .then((rc) => {

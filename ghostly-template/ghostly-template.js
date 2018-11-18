@@ -47,14 +47,14 @@ var ghostly = {};
                     return (impl[event.data[0]] || ghostly.defaults[event.data[0]]).call(impl, event.data[1]);
                 })
                 .then(function(res) {
-                    event.source.postMessage(['ghostlyACK',  res || null], event.origin);
+                    event.source.postMessage(['ghostlyACK',  res || null], "*");
                 })
                 .catch(function(err) {
                     try {
-                        event.source.postMessage(['ghostlyNACK', err instanceof Error ? err.toString() : err || null], event.origin);
+                        event.source.postMessage(['ghostlyNACK', err instanceof Error ? err.toString() : err || null], "*");
                     }
                     catch (ex) {
-                        event.source.postMessage(['ghostlyNACK', ex.message + ': ' + err.toString()], event.origin);
+                        event.source.postMessage(['ghostlyNACK', ex.message + ': ' + String(err)], "*");
                     }
                 });
         };
