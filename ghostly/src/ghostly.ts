@@ -432,7 +432,7 @@ class Template {
                                 break;
 
                             default:
-                                throw new Error(`Template ${page!.url()} did not return a result for`)
+                                throw new Error(`Template ${page!.url()} did not return a result for view ${view.contentType}`)
                         }
                     }
 
