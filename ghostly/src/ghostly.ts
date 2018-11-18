@@ -46,6 +46,16 @@ interface Worker {
     pageCache: (puppeteer.Page | undefined)[];
 }
 
+type GhostlyResponse = ['ghostlyACK' | 'ghostlyNACK', string | null, 'Uint8Array'? ];
+
+interface GhostlyProxyWindow extends Window {
+    sendMessage(command: string, data: unknown, timeout?: number): Promise<GhostlyResponse>;
+}
+
+interface GhostlyWindow extends Window {
+    __ghostly_message_proxy__: GhostlyProxyWindow
+}
+
 export function logger(newLog?: Console | null): Console {
     try {
         return log;
@@ -396,45 +406,38 @@ class Template {
                     log.info(`Created template ${this._url}.`);
                 }
 
-                // Render all views
+                // Send document/model to template
                 await this._$sendMessage(page, 'ghostlyInit', { document, contentType });
 
+                // Render all views
                 for (const view of views) {
                     let buffer = await this._$sendMessage(page, 'ghostlyRender', { contentType: view.contentType, params: view.params });
 
-                    if (!buffer && (view.contentType === 'text/html' || view.contentType === 'text/plain')) {
-                        const iframe = await page.evaluateHandle(() => {
-                            return (document as any).body.removeChild((document as any).getElementById('__ghostly-message-proxy__'))
-                        });
-
-                        try {
-                            if (view.contentType === 'text/html') {
-                                buffer = Buffer.from(await page.content());
-                            }
-                            else {
-                                for (const text of await page.$x('//text()')) {
-                                    console.log(`text: '${text}'`, text);
-                                }
-                            }
-                        }
-                        finally {
-                            await page.evaluate((iframe) => {
-                                (document as any).body.appendChild(iframe);
-                            }, iframe);
-                        }
-                    }
-
                     if (!buffer) {
-                        // if (view.contentType === 'application/pdf') {
-                        //     buffer = await page.pdf({margin: })
-                        // }˙
-                        throw new Error('Template ${page!.url()} did not return a result fo r')
+                        switch (view.contentType) {
+                            case 'text/html':
+                                buffer = Buffer.from(await page.content());
+                                break;
+
+                            case 'application/pdf':
+                                buffer = await page.pdf({format: "A4", preferCSSPageSize: true, });
+                                break;
+
+                            case 'image/jpeg':
+                                buffer = await page.screenshot({ fullPage: true, type: 'jpeg' });
+                                break;
+
+                            case 'image/png':
+                                buffer = await page.screenshot({ fullPage: true, type: 'png' });
+                                break;
+
+                            default:
+                                throw new Error(`Template ${page!.url()} did not return a result for`)
+                        }
                     }
 
                     result.push({ contentType: view.contentType, data: buffer });
                 }
-
-                console.log(result);
 
                 // Return template to page cache if there were no errors
                 for (let i = 0; i < this._engine._config.pageCache; ++i) {
@@ -484,7 +487,7 @@ class Template {
         // }));
     }
 
-    private async _$createPage(worker: Worker) {
+    private async _$createPage(worker: Worker): Promise<puppeteer.Page> {
         const page = await (await worker.browser.createIncognitoBrowserContext()).newPage();
 
         page.setUserAgent(`${packageJSON.name}/${packageJSON.version}`);
@@ -514,65 +517,67 @@ class Template {
 
         await page.goto(this._url);
 
-        // Inject the message proxy iframe
-        await page.evaluateHandle(`(() => {
-            return new Promise((resolve) => {
-                const iframe  = document.body.appendChild(document.createElement('iframe'));
-                iframe.id     = '__ghostly-message-proxy__'
-                iframe.onload = () => resolve(iframe);
-                iframe.style  = 'display:none';
-                iframe.srcdoc = \`<script type='text/javascript'>
-                    function sendMessage(message, timeout) {
+        // Create the Ghostly message proxy
+        await ((window: GhostlyWindow, document: Document) => page.evaluate(() => {
+            try {
+                window.__ghostly_message_proxy__ = window.open('', '', 'width=0,height=0') as GhostlyProxyWindow;
+                window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>${
+                    function sendMessage(command: string, data: unknown, timeout?: number): Promise<GhostlyResponse> {
                         return new Promise((resolve, reject) => {
-                            const watchdog = setTimeout(() => reject('Ghostly command ' + message[0] + ' timed out'), (timeout || 10) * 1000);
+                            const watchdog = setTimeout(() => {
+                                window.onmessage = null;
+                                reject(`Ghostly command ${command} timed out`);
+                            }, (timeout || 10) * 1000);
 
                             window.onmessage = (event) => {
+                                const response = event.data as GhostlyResponse | [GhostlyResponse[0], Uint8Array];
+
                                 clearTimeout(watchdog);
                                 window.onmessage = null;
 
-                                if (event.data && event.data[1] instanceof Uint8Array) { // No Uint8Array support in Puppeteer
+                                if (response && response[1] instanceof Uint8Array) {
+                                    // No Uint8Array support in Puppeteer
                                     let buffer = '';
 
-                                    for (let i = 0, data = event.data[1]; i < data.length; ++i) {
-                                        buffer += String.fromCharCode(data[i]);
+                                    for (let i = 0, array = response[1]; i < array.length; ++i) {
+                                        buffer += String.fromCharCode(array[i]);
                                     }
 
-                                    resolve([event.data[0], buffer, 'Uint8Array'])
+                                    resolve([response[0], buffer, 'Uint8Array']);
+                                }
+                                else if (response && !response[1] && command === 'ghostlyRender' && (data as View).contentType === 'text/plain') {
+                                    // No easy way to get document as text in Puppeteer
+                                    resolve([response[0], document.body.innerText]);
                                 }
                                 else {
-                                    resolve(event.data);
+                                    resolve(response as GhostlyResponse);
                                 }
                             };
 
-                            window.parent.postMessage(message, '*');
+                            window.opener.postMessage([command, data], '*');
                         });
                     }
-                    </script>\`;
-            });
-        })()`)
-
-        // const window = await page.evaluateHandle(`() => {
-        //     const win = window.open('', '', 'width=0,height=0');
-        //     win.document.write('alert(window.opener)');
-        //     return win;
-        // }`);
-
-        // console.log('opened window!', window);
+                }</script>`);
+                window.__ghostly_message_proxy__.document.close();
+            }
+            catch (_ignored) {
+                throw 'Failed to create Ghostly message proxy!'
+            }
+        }))(null!, null!);
 
         await this._$sendMessage(page, 'ghostlyLoad', this._url);
-
         return page;
     }
 
-    private async _$sendMessage(page: puppeteer.Page, command: string, data: object | string): Promise<Buffer | null> {
-        const response = await page.evaluate((command, data) => {
+    private async _$sendMessage(page: puppeteer.Page, command: string, data: object | string, timeout?: number): Promise<Buffer | null> {
+        const response = await ((window: GhostlyWindow) => page.evaluate((command, data, timeout) => {
             try {
-                return (document as any).getElementById('__ghostly-message-proxy__').contentWindow.sendMessage([command, data]);
+                return window.__ghostly_message_proxy__.sendMessage(command, data, timeout);
             }
             catch (_ignored) {
-                throw 'Ghostly message proxy frame not found!';
+                throw 'Ghostly message proxy not found!';
             }
-        } , command, data) as ['ghostlyACK' | 'ghostlyNACK', string | null, 'Uint8Array'? ];
+        }, command, data, timeout))(null!) as GhostlyResponse;
 
         if (response[0] !== 'ghostlyACK') {
             throw new Error(`${command} failed: ${response[1]}`);
