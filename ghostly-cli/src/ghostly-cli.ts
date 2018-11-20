@@ -40,7 +40,6 @@ function parseArgs(): commander.Command {
         .option('    --chromium-path <file>',             'override Chromium/Chrome path', puppeteer.executablePath())
         .option('    --pidfile <file>',                   'fork and write PID to this file')
         .option('    --relaunch-delay <seconds>',         'delay in seconds before relaunching a crashed worker [1]', int)
-        .option('    --temp-dir <dir>',                   'override default directory for temporary files')
         .option('-t, --template <url>',                   'execute this Ghostly template')
         .option('-T, --template-pattern <regexp>',        'restrict template URIs to this regular expression')
         .option('-u, --user <user>',                      'run as this user')
@@ -90,7 +89,6 @@ export async function $main(): Promise<void> {
     arg('pageCache',       Number);
     arg('chromiumPath',    String);
     arg('relaunchDelay',   Number);
-    arg('tempDir',         String);
     arg('workers',         Number);
 
     let engine = new Engine(config);

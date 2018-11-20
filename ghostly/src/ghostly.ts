@@ -1,8 +1,5 @@
 import http         from 'http';
-import fs           from 'mz/fs';
-import os           from 'os';
 import packageJSON  from '../package.json';
-import path         from 'path';
 import puppeteer    from 'puppeteer-core';
 import stream       from 'stream';
 import url          from 'url';
@@ -14,7 +11,6 @@ export interface EngineConfig {
     templatePattern: RegExp;
     chromiumPath:    string;
     relaunchDelay:   number;
-    tempDir:         string;
     workers:         number;
     pageCache:       number;
 }
@@ -27,7 +23,6 @@ interface SafeView {
 export interface View {
     contentType: string;
     params:      unknown;
-    output?:     string
 }
 
 export interface RenderedView {
@@ -74,7 +69,6 @@ export class Engine {
             templatePattern: /.*/,
             chromiumPath:    puppeteer.executablePath(),
             relaunchDelay:   1,
-            tempDir:         os.tmpdir(),
             workers:         1,
             pageCache:       0,
             ...config
@@ -244,7 +238,6 @@ export class Engine {
         }
 
         let tpl: Template;
-        let results: RenderedView[];
 
         try {
             tpl = this.template(template);
@@ -253,20 +246,7 @@ export class Engine {
             throw new Response(403, ex.message);
         }
 
-        if (views.some((view) => view.contentType === 'application/pdf')) { // PhantomJS can only render PDFs to disk
-            results = await Engine.$withTempDir(`${this._config.tempDir}/ghostly-`, (tempDir) => {
-                views.forEach((view, idx) => {
-                    if (view.contentType === 'application/pdf') {
-                        view.output = `${tempDir}/${idx}.out`;
-                    }
-                });
-
-                return tpl.$renderViews(document, contentType, views, null);
-            });
-        }
-        else {
-            results = await tpl.$renderViews(document, contentType, views, null);
-        }
+        const results = await tpl.$renderViews(document, contentType, views, null);
 
         if (view) {
             if (results.length !== 1) {
@@ -277,32 +257,6 @@ export class Engine {
         }
         else {
             return new Response(200, results);
-        }
-    }
-
-    static async $withTempDir<T>(prefix: string, $fn: (path: string) => Promise<T>): Promise<T> {
-        let tempDir = await fs.mkdtemp(prefix, 'utf8');
-
-        try {
-            return $fn(tempDir);
-        }
-        finally {
-            await Engine.$rmr(tempDir);
-        }
-    }
-
-    static async $rmr(node?: string): Promise<void> {
-        if (node) {
-            if ((await fs.stat(node)).isDirectory()) {
-                for (const file of await fs.readdir(node)) {
-                    await Engine.$rmr(path.join(node, file));
-                }
-
-                await fs.rmdir(node);
-            }
-            else {
-                await fs.unlink(node);
-            }
         }
     }
 
@@ -379,9 +333,7 @@ class Template {
     }
 
     async $render(document: unknown, contentType: string, format: string, params: unknown): Promise<Buffer> {
-        return Engine.$withTempDir(`${this._engine._config.tempDir}/ghostly-`, async (tempDir) => {
-            return (await this.$renderViews(document, contentType, [{ contentType: format, params: params, output: `${tempDir}/default.out` }], null))[0].data;
-        });
+        return (await this.$renderViews(document, contentType, [{ contentType: format, params: params }], null))[0].data;
     }
 
     async $renderViews(document: unknown, contentType: string, views: View[], _attachments: unknown): Promise<RenderedView[]> {
@@ -460,31 +412,6 @@ class Template {
         }
 
         return result;
-
-        // const results = await this._engine._$sendMessage(this._engine._selectWorker(), {
-        //     template: this._url,
-        //     document: document,
-        //     contentType: contentType,
-        //     views: views,
-        //     attachments: attachments,
-        // }) as PhantomRenderResult[];
-
-        // return await Promise.all(results.map(async (result, idx) => {
-        //     const contentType = views[idx].contentType;
-
-        //     if (result.text) {
-        //         return { contentType, data: Buffer.from(result.text) };
-        //     }
-        //     else if (result.binary) {
-        //         return { contentType, data: Buffer.from(result.binary, 'base64') };
-        //     }
-        //     else if (result.file) {
-        //         return { contentType, data: await fs.readFile(result.file) };
-        //     }
-        //     else {
-        //         throw new Error(`Incomplete result from PhantomJS: ${result}`);
-        //     }
-        // }));
     }
 
     private async _$createPage(worker: Worker): Promise<puppeteer.Page> {
