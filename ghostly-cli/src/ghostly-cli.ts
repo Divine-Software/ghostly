@@ -1,14 +1,14 @@
-import commander      from 'commander';
-import childProcess   from 'child_process';
-import daemon         from 'daemonize-process';
-import fs             from 'mz/fs';
-import http           from 'http';
-import os             from 'os';
-import packageJSON    from '../package.json';
-import puppeteer      from 'puppeteer';
+import { Engine, EngineConfig, logger, View } from '@divine/ghostly-core';
 import { SysConsole } from '@divine/sysconsole';
-
-import { logger, Engine, EngineConfig } from '@divine/ghostly';
+import childProcess from 'child_process';
+import commander from 'commander';
+import daemon from 'daemonize-process';
+import { promises as fs, writeFileSync } from 'fs';
+import http from 'http';
+import { AddressInfo } from 'net';
+import os from 'os';
+import puppeteer from 'puppeteer';
+import packageJSON from '../package.json';
 
 const sysconsole = new SysConsole({ syslog: false, showFile: false });
 
@@ -25,25 +25,37 @@ function parseArgs(): commander.Command {
         }
     }
 
+    function float(arg: string) {
+        let rc = parseFloat(arg);
+        check(!isNaN(rc), `${arg} is not a number`);
+        return rc;
+    }
+
     function int(arg: string) {
         let rc = parseInt(arg);
         check(!isNaN(rc), `${arg} is not a number`);
         return rc;
     }
 
-    argv.option('    --content-type <content-type>',      'input document format [application/json]')
-        .option('-d, --debug',                            'enable debug logging')
-        .option('    --format <content-type>',            'template output format [text/html]')
-        .option('-H, --http <host:port>',                 'run an HTTP server on this host and port')
-        .option('-o  --output <file>',                    'template output filename [standard output]')
-        .option('    --page-cache <num>',                 'each worker keeps <num> pages cached [0]', int)
-        .option('    --chromium-path <file>',             'override Chromium/Chrome path', puppeteer.executablePath())
-        .option('    --pidfile <file>',                   'fork and write PID to this file')
-        .option('    --relaunch-delay <seconds>',         'delay in seconds before relaunching a crashed worker [1]', int)
-        .option('-t, --template <url>',                   'execute this Ghostly template')
-        .option('-T, --template-pattern <regexp>',        'restrict template URIs to this regular expression')
-        .option('-u, --user <user>',                      'run as this user')
-        .option('    --workers <num>',                    'number of worker processes [1]', int)
+    argv.option('    --content-type <content-type>',             'input document format [application/json]')
+        .option('-d, --debug',                                   'enable debug logging')
+        .option('    --format <content-type>',                   'template output format [text/html]')
+        .option('    --render-dpi <dpi>',                        'dots per inch when rendering images [96]', int)
+        .option('    --render-zoom <ratio>',                     'zoom factor when rendering images', float)
+        .option('    --render-width <pixels>',                   'width of rendered image in pixels', int)
+        .option('    --render-height <pixels>',                  'height of rendered image in pixels', int)
+        .option('    --render-format <paper-size>',              'physical size of rendered PDF [A4]')
+        .option('    --render-orientation <portrait|landscape>', 'whether to render in portrait or landscape mode [portrait]')
+        .option('-H, --http <host:port>',                        'run an HTTP server on this host and port')
+        .option('-o  --output <file>',                           'template output filename [standard output]')
+        .option('    --page-cache <num>',                        'each worker keeps <num> pages cached [0]', int)
+        .option('    --chromium-path <file>',                    'override Chromium/Chrome path', puppeteer.executablePath())
+        .option('    --pidfile <file>',                          'fork and write PID to this file')
+        .option('    --relaunch-delay <seconds>',                'delay in seconds before relaunching a crashed worker [1]', int)
+        .option('-t, --template <url>',                          'execute this Ghostly template')
+        .option('-T, --template-pattern <regexp>',               'restrict template URIs to this regular expression')
+        .option('-u, --user <user>',                             'run as this user')
+        .option('    --workers <num>',                           'number of worker processes [1]', int)
         .parse(process.argv);
 
     if (argv.template) {
@@ -51,10 +63,16 @@ function parseArgs(): commander.Command {
         check(argv.args.length <= 1, 'Only one input document may be specified');
     }
     else {
-        check(!argv.args.length, 'Cannot specify document without --template');
-        check(!argv.contentType, '--content-type requires --template');
-        check(!argv.format, '--format requires --template');
-        check(!argv.output, '--output requires --template');
+        check(!argv.args.length,       'Cannot specify document without --template');
+        check(!argv.contentType,       '--content-type requires --template');
+        check(!argv.format,            '--format requires --template');
+        check(!argv.renderDpi,         '--render-dpi requires --template');
+        check(!argv.renderZoom,        '--render-zoom requires --template');
+        check(!argv.renderWidth,       '--render-width requires --template');
+        check(!argv.renderHeight,      '--render-height requires --template');
+        check(!argv.renderFormat,      '--render-format requires --template');
+        check(!argv.renderOrientation, '--render-orientation requires --template');
+        check(!argv.output,            '--output requires --template');
     }
 
     if (argv.http) {
@@ -97,14 +115,23 @@ export async function $main(): Promise<void> {
         let template = (await engine.$start()).template(argv.template);
 
         for (const file of argv.args) {
+            const view: View = {
+                contentType:  argv.format || 'text/html',
+                dpi:          argv.renderDpi,
+                zoomFactor:   argv.renderZoom,
+                paperSize:    { format: argv.renderFormat, orientation: argv.renderOrientation },
+                viewportSize: { width: argv.renderWidth, height: argv.renderHeight },
+                params:       null
+            };
+
             const data   = await fs.readFile(file !== '-' ? file : '/dev/stdin');
-            const result = await template.$render(data.toString(), argv.contentType || 'application/json', argv.format || 'text/html', null);
+            const result = (await template.$renderViews(data.toString(), argv.contentType || 'application/json', [ view ], null))[0].data;
 
             if (argv.output) {
                 await fs.writeFile(argv.output, result);
             }
             else {
-                await new Promise((resolve, reject) => process.stdout.write(result) ? resolve() : process.stdout.once('drain', resolve).once('error', reject));
+                await new Promise<void>((resolve, reject) => process.stdout.write(result) ? resolve() : process.stdout.once('drain', resolve).once('error', reject));
             }
         }
     }
@@ -112,14 +139,14 @@ export async function $main(): Promise<void> {
         let server = http.createServer((request, response) => engine.httpRequestHandler(request, response));
 
         const address = await new Promise<{port: number, address: string}>((resolve, _reject) => {
-            server.listen(argv.http[1], argv.http[0], () => resolve(server.address()));
+            server.listen(argv.http[1], argv.http[0], () => resolve(server.address() as AddressInfo));
         });
 
         sysconsole.log(`Listening for requests on http://${address.address}:${address.port}/`);
 
         if (argv.pidfile) {
             daemon();
-            fs.writeFileSync(argv.pidfile, process.pid);
+            writeFileSync(argv.pidfile, process.pid);
         }
 
         if (argv.user) {

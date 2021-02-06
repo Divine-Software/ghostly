@@ -1,10 +1,24 @@
 all:		build
 
-clean prepare build publish::
-	make -C ghostly $@
-	make -C ghostly-cli $@
+prepare:
+	yarn
+
+build::		prepare
+	yarn run tsc --build
+
+docs::		build
+
+test::		build
+	yarn run jest
 
 clean::
+	rm -rf coverage
+
+distclean::
 	rm -rf node_modules
 
-.PHONY:		all clean prepare build publish
+docs clean distclean::
+	$(MAKE) -C ghostly-cli $@
+	$(MAKE) -C ghostly-core $@
+
+.PHONY:		all prepare build docs test clean distclean

@@ -5,13 +5,6 @@
     <title>Demo Template</title>
     <style>/*<![CDATA[*/
 
-@media print {
-    body {
-        height:  297mm;
-        width:   210mm;
-    }
-}
-
 body {
     font-family: Helvetica;
     margin:  5mm;
@@ -74,6 +67,9 @@ td,th {
 
               document.documentElement['class'] = view.contentType.split('/')[1];
               document.getElementById('content').innerHTML = renderTableCells(this.document, 0, maxDepth(this.document))[1];
+
+              document.getElementById('width').innerText       = window.innerWidth;
+              document.getElementById('height').innerText      = window.innerHeight;
           },
       });
 //]]></script>
@@ -81,6 +77,18 @@ td,th {
 
   <body>
     <h1>Demo Template</h1>
+
+    <h2>Viewport</h2>
+    <table>
+        <tr>
+            <td>Width</td>
+            <td id='width'></td>
+        </tr>
+        <tr>
+            <td>Height</td>
+            <td id='height'></td>
+        </tr>
+    </table>
 
     <h2>Structure of incoming data source</h2>
     <table>

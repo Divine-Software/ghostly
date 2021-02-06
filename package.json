@@ -1,19 +1,33 @@
 {
-  "name": "ghostly",
-  "version": "1.3.0",
-  "private": true,
-  "homepage": "https://github.com/LeviticusMB/ghostly",
-  "bugs": "https://github.com/LeviticusMB/ghostly/issues",
-  "repository": "LeviticusMB/ghostly",
-  "license": "MIT",
-  "author": "Martin Blom <martin@blom.org>",
-  "workspaces": {
-    "packages": [
-      "ghostly",
-      "ghostly-cli"
-    ],
-    "nohoist": [
-      "**/puppeteer"
-    ]
-  }
+    "name": "ghostly",
+    "version": "0.0.0",
+    "private": true,
+    "homepage": "https://github.com/LeviticusMB/ghostly",
+    "bugs": "https://github.com/LeviticusMB/ghostly/issues",
+    "repository": "LeviticusMB/ghostly",
+    "license": "Apache-2.0",
+    "author": "Martin Blom <martin@blom.org>",
+    "workspaces": {
+        "packages": [
+            "ghostly-cli",
+            "ghostly-core",
+            "ghostly-template"
+        ],
+        "nohoist": [
+            "**"
+        ]
+    },
+    "devDependencies": {
+        "@types/jest": "^26.0.20",
+        "@typescript-eslint/eslint-plugin": "^4.14.1",
+        "@typescript-eslint/parser": "^4.14.1",
+        "eslint": "^7.18.0",
+        "eslint-import-resolver-node": "^0.3.4",
+        "eslint-plugin-import": "^2.22.1",
+        "eslint-plugin-jest": "^24.1.3",
+        "eslint-plugin-jsdoc": "^31.3.3",
+        "jest": "^26.6.3",
+        "jest-cli": "^26.6.3",
+        "typescript": "^4.1.3"
+    }
 }

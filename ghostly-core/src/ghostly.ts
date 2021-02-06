@@ -1,8 +1,8 @@
-import http         from 'http';
-import packageJSON  from '../package.json';
-import puppeteer    from 'puppeteer-core';
-import stream       from 'stream';
-import url          from 'url';
+import http from 'http';
+import puppeteer, { SerializableOrJSHandle } from 'puppeteer-core';
+import stream from 'stream';
+import url from 'url';
+import packageJSON from '../package.json';
 
 const nullConsole = new console.Console(new stream.PassThrough());
 let log = nullConsole;
@@ -15,14 +15,18 @@ export interface EngineConfig {
     pageCache:       number;
 }
 
-interface SafeView {
-    contentType: string;
-    params:      unknown;
-}
+// This should be the same as puppeteer.PDFFormat
+export type PaperFormat  = "A0" | "A1" | "A2" | "A3" | "A4" | "A5" | "Letter" | "Legal" | "Tabloid" | "Ledger";
+export type PaperSize    = { format: PaperFormat, orientation: 'portrait' | 'landscape' };
+export type ViewportSize = { width: number, height: number };
 
 export interface View {
-    contentType: string;
-    params:      unknown;
+    contentType:   string;
+    params:        unknown;
+    dpi?:          number;
+    viewportSize?: ViewportSize
+    paperSize?:    PaperSize
+    zoomFactor?:   number;
 }
 
 export interface RenderedView {
@@ -60,8 +64,21 @@ export function logger(newLog?: Console | null): Console {
     }
 }
 
+function deleteUndefined<T extends object>(obj: T): T {
+    for (const prop in obj) {
+        if (obj[prop] === undefined) {
+            delete obj[prop];
+        }
+        else if (typeof obj[prop] === 'object') {
+            deleteUndefined(obj[prop] as unknown as object);
+        }
+    }
+
+    return obj;
+}
+
 export class Engine {
-    /* private/internal */ _config: EngineConfig;
+    private _config: EngineConfig;
     private _workers: (Worker | undefined)[];
 
     constructor(config: Partial<EngineConfig> = {}) {
@@ -156,7 +173,7 @@ export class Engine {
         let document    = uri.query.document as unknown;
         let contentType = (uri.query.contentType || 'application/json') as string;
         let view        = uri.query.view as string | undefined;
-        let params      = uri.query.params && JSON.parse(uri.query.params) as unknown;
+        let params      = uri.query.params && JSON.parse(uri.query.params as string) as unknown;
 
         if (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'POST') {
             throw new Response(405, 'Only GET, HEAD and POST requests are accepted');
@@ -234,7 +251,10 @@ export class Engine {
             template    = message.template as string;
             document    = message.document as unknown;
             contentType = message.contentType || 'application/json';
-            views       = message.views.map((view: SafeView) => ({ contentType: String(view.contentType), params: view.params }));
+            views       = message.views.map((view: View) => {
+                const { contentType, params, dpi, paperSize, viewportSize, zoomFactor } = view;
+                return { contentType, params, dpi, paperSize, viewportSize, zoomFactor };
+            });
         }
 
         let tpl: Template;
@@ -260,7 +280,7 @@ export class Engine {
         }
     }
 
-    /* private/internal */ _selectWorker(): Worker {
+    private _selectWorker(): Worker {
         let best: Worker | null = null;
 
         for (const worker of this._workers) {
@@ -314,8 +334,8 @@ export class Engine {
             }
         });
 
-        proc.stdout.on('data', (data) => { log.info(`Worker ${id}: ${String(data).trim()}`); });
-        //proc.stderr.on('data', (data) => { log.warn(`Worker ${id}: ${String(data).trim()}`); });
+        proc.stdout?.on('data', (data) => { log.info(`Worker ${id}: ${String(data).trim()}`); });
+        proc.stderr?.on('data', (data) => { log.warn(`Worker ${id}: ${String(data).trim()}`); });
 
         log.info(`Spawned worker ${id} as PID ${proc.pid}`);
 
@@ -337,7 +357,7 @@ class Template {
     }
 
     async $renderViews(document: unknown, contentType: string, views: View[], _attachments: unknown): Promise<RenderedView[]> {
-        const worker = this._engine._selectWorker();
+        const worker = this._engine['_selectWorker']();
         const result = [] as RenderedView[];
 
         try {
@@ -362,8 +382,15 @@ class Template {
                 await this._$sendMessage(page, 'ghostlyInit', { document, contentType });
 
                 // Render all views
-                for (const view of views) {
-                    let buffer = await this._$sendMessage(page, 'ghostlyRender', { contentType: view.contentType, params: view.params });
+                for (const view of deleteUndefined(views)) {
+                    const dpi = view.dpi || 96;
+                    const ps: PaperSize     = { format: 'A4', orientation: 'portrait', ...view.paperSize };
+                    const vps: ViewportSize = { ...Template.paperDimensions(ps.format, dpi, ps.orientation), ...view.viewportSize };
+                    const zf  = view.zoomFactor || 1;
+
+                    await page.setViewport({ width: vps.width, height: vps.height, isLandscape: ps.orientation === 'landscape', deviceScaleFactor: zf, });
+
+                    let buffer = await this._$sendMessage(page, 'ghostlyRender', view);
 
                     if (!buffer) {
                         switch (view.contentType) {
@@ -372,7 +399,18 @@ class Template {
                                 break;
 
                             case 'application/pdf':
-                                buffer = await page.pdf({format: "A4", preferCSSPageSize: true, });
+                                buffer = await page.pdf({
+                                    format:            ps.format,
+                                    landscape:         ps.orientation === 'landscape',
+                                    scale:             zf,
+                                    margin: {
+                                        top:           "0",
+                                        bottom:        "0",
+                                        left:          "0",
+                                        right:         "0",
+                                    },
+                                    preferCSSPageSize: true,
+                                });
                                 break;
 
                             case 'image/jpeg':
@@ -392,7 +430,7 @@ class Template {
                 }
 
                 // Return template to page cache if there were no errors
-                for (let i = 0; i < this._engine._config.pageCache; ++i) {
+                for (let i = 0; i < this._engine['_config'].pageCache; ++i) {
                     if (!worker.pageCache[i]) {
                         log.info(`Returning template ${page!.url()} to page cache.`);
                         worker.pageCache[i] = page;
@@ -414,6 +452,35 @@ class Template {
         return result;
     }
 
+    public static paperDimensions(format: PaperFormat, dpi: number, orientation: 'portrait' | 'landscape'): ViewportSize {
+        let width, height;
+
+        switch (format) {
+            case "A0":       width = 841; height = 1189; break;
+            case "A1":       width = 594; height = 841;  break;
+            case "A2":       width = 420; height = 594;  break;
+            case "A3":       width = 297; height = 420;  break;
+            case "A4":       width = 210; height = 297;  break;
+            case "A5":       width = 148; height = 210;  break;
+            case "Letter":   width = 216; height = 279;  break;
+            case "Legal":    width = 216; height = 356;  break;
+            case "Tabloid":  width = 432; height = 279;  break;
+            case "Ledger":   width = 279; height = 432;  break;
+            default:
+                throw new TypeError(`Invalid paper format: ${format}`);
+        }
+
+        if (orientation === 'landscape') {
+            [ width, height ] = [ height, width ];
+        }
+
+        // Convert from mm to pixels
+        width  = Math.round(width  / 25.4 * dpi)
+        height = Math.round(height / 25.4 * dpi)
+
+        return { width, height };
+    }
+
     private async _$createPage(worker: Worker): Promise<puppeteer.Page> {
         const page = await (await worker.browser.createIncognitoBrowserContext()).newPage();
 
@@ -423,13 +490,17 @@ class Template {
         page.on('request', (req) => {
             log.debug(`${this._url}: Loading ${req.url()}`);
 
-            if (this._engine._config.templatePattern.test(req.url())) {
+            if (this._engine['_config'].templatePattern.test(req.url())) {
                 req.continue();
             }
             else {
-                log.error(`${this._url}: Template accessed a disallowed URL: ${req.url()} did not match ${this._engine._config.templatePattern}`);
+                log.error(`${this._url}: Template accessed a disallowed URL: ${req.url()} did not match ${this._engine['_config'].templatePattern}`);
                 req.abort();
             }
+        });
+
+        page.on('error', (error) => {
+            log.error(`${this._url}: [error] ${error}`);
         });
 
         page.on('dialog', (dialog) => {
@@ -437,7 +508,7 @@ class Template {
             dialog.dismiss();
         });
 
-        page.on('console', msg => {
+        page.on('console', (msg) => {
             const method: Function = (log as any)[msg.type()];
             (typeof method === 'function' ? method : log.warn).call(log, `${this._url}: ${msg.text()}`);
         });
@@ -445,7 +516,7 @@ class Template {
         await page.goto(this._url);
 
         // Create the Ghostly message proxy
-        await ((window: GhostlyWindow, document: Document) => page.evaluate(() => {
+        await ((window: GhostlyWindow) => page.evaluate(() => {
             try {
                 window.__ghostly_message_proxy__ = window.open('', '', 'width=0,height=0') as GhostlyProxyWindow;
                 window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>${
@@ -463,7 +534,7 @@ class Template {
                                 window.onmessage = null;
 
                                 if (response && response[1] instanceof Uint8Array) {
-                                    // No Uint8Array support in Puppeteer
+                                    // No Uint8Array support in Puppeteer; encode as string
                                     let buffer = '';
 
                                     for (let i = 0, array = response[1]; i < array.length; ++i) {
@@ -471,10 +542,6 @@ class Template {
                                     }
 
                                     resolve([response[0], buffer, 'Uint8Array']);
-                                }
-                                else if (response && !response[1] && command === 'ghostlyRender' && (data as View).contentType === 'text/plain') {
-                                    // No easy way to get document as text in Puppeteer
-                                    resolve([response[0], document.body.innerText]);
                                 }
                                 else {
                                     resolve(response as GhostlyResponse);
@@ -490,7 +557,7 @@ class Template {
             catch (_ignored) {
                 throw 'Failed to create Ghostly message proxy!'
             }
-        }))(null!, null!);
+        }))(null!);
 
         await this._$sendMessage(page, 'ghostlyLoad', this._url);
         return page;
@@ -501,16 +568,16 @@ class Template {
             try {
                 return window.__ghostly_message_proxy__.sendMessage(command, data, timeout);
             }
-            catch (_ignored) {
-                throw 'Ghostly message proxy not found!';
+            catch (err) {
+                throw `Ghostly message proxy not found or it's failing: ${err}`;
             }
-        }, command, data, timeout))(null!) as GhostlyResponse;
+        }, command, data as SerializableOrJSHandle, timeout as number))(null!) as GhostlyResponse;
 
         if (response[0] !== 'ghostlyACK') {
             throw new Error(`${command} failed: ${response[1]}`);
         }
         else if (typeof response[1] === 'string' && response[2] === 'Uint8Array') {
-            return Buffer.from(response[1], 'latin1');
+            return Buffer.from(response[1], 'latin1'); // No Uint8Array support in Puppeteer; decode string
         }
         else {
             return response[1] ? Buffer.from(response[1]) : null;

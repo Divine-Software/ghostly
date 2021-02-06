@@ -47,6 +47,14 @@ var ghostly = {};
                     return (impl[event.data[0]] || ghostly.defaults[event.data[0]]).call(impl, event.data[1]);
                 })
                 .then(function(res) {
+                    if (!res && event.data[0] === 'ghostlyRender' && event.data[1].contentType === 'text/plain') {
+                        // No easy way to get document as text in Puppeteer, so we have to do it in the template instead
+                        res = document.body.innerText;
+                    }
+
+                    return res;
+                })
+                .then(function(res) {
                     event.source.postMessage(['ghostlyACK',  res || null], "*");
                 })
                 .catch(function(err) {

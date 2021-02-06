@@ -1,7 +1,7 @@
 {
-    "name": "@divine/ghostly-cli",
+    "name": "@divine/ghostly-core",
     "version": "2.0.0",
-    "description": "Ghostly template/print formatter command line utility",
+    "description": "Ghostly template/print formatter engine",
     "keywords": [
         "fop",
         "xsl",
@@ -20,25 +20,21 @@
     "repository": "LeviticusMB/ghostly",
     "license": "Apache-2.0",
     "author": "Martin Blom <martin@blom.org>",
-    "main": "lib/src/ghostly-cli.js",
-    "types": "lib/src/ghostly-cli.d.ts",
-    "bin": "ghostly-cli",
+    "main": "lib/src/ghostly.js",
+    "types": "lib/src/ghostly.d.ts",
     "files": [
-        "ghostly-cli",
         "lib/src",
         "lib/package*",
         "src"
     ],
     "dependencies": {
-        "@divine/ghostly-core": "2.0.0",
-        "@divine/sysconsole": "^2.0.0",
-        "commander": "^2.20.0",
-        "daemonize-process": "^3.0.0",
-        "puppeteer": "^1.15.0"
+        "puppeteer-core": "^1.15.0",
+        "tslib": "^2.1.0"
     },
     "devDependencies": {
         "@types/node": "^12",
-        "@types/puppeteer": "^1.12.3"
+        "@types/puppeteer": "^1.12.3",
+        "@types/puppeteer-core": "^1.9.0"
     },
     "engines": {
         "node": ">=12"

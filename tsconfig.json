@@ -1,0 +1,7 @@
+{
+    "include": [],
+    "references": [
+        { "path": "ghostly-cli" },
+        { "path": "ghostly-core" },
+    ]
+}
