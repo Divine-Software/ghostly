@@ -13,7 +13,8 @@
         "css",
         "pdf",
         "phantomjs",
-        "puppeteer"
+        "puppeteer",
+        "playwright"
     ],
     "homepage": "https://github.com/LeviticusMB/ghostly",
     "bugs": "https://github.com/LeviticusMB/ghostly/issues",
@@ -33,12 +34,10 @@
         "@divine/ghostly-core": "2.0.0",
         "@divine/sysconsole": "^2.0.0",
         "commander": "^2.20.0",
-        "daemonize-process": "^3.0.0",
-        "puppeteer": "^1.15.0"
+        "daemonize-process": "^3.0.0"
     },
     "devDependencies": {
-        "@types/node": "^12",
-        "@types/puppeteer": "^1.12.3"
+        "@types/node": "^12"
     },
     "engines": {
         "node": ">=12"

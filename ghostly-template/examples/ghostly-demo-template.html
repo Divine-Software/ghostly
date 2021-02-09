@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 
-<html xmlns='http://www.w3.org/1999/xhtml'>
+<html>
   <head>
+    <meta charset="UTF-8" />
     <title>Demo Template</title>
-    <style>/*<![CDATA[*/
+    <style>
 
 body {
     font-family: Helvetica;
@@ -20,9 +21,9 @@ td,th {
     text-align: center;
 }
 
-/*]]>*/</style>
+    </style>
     <script src="../ghostly-template.js"></script>
-    <script>//<![CDATA[
+    <script>
       ghostly.template({
           ghostlyInit: function(source) {
               this.document = ghostly.parse(source);
@@ -68,18 +69,23 @@ td,th {
               document.documentElement['class'] = view.contentType.split('/')[1];
               document.getElementById('content').innerHTML = renderTableCells(this.document, 0, maxDepth(this.document))[1];
 
+              document.getElementById('ua').innerText          = navigator.userAgent;
               document.getElementById('width').innerText       = window.innerWidth;
               document.getElementById('height').innerText      = window.innerHeight;
           },
       });
-//]]></script>
+</script>
   </head>
 
   <body>
     <h1>Demo Template</h1>
 
-    <h2>Viewport</h2>
+    <h2>Environment</h2>
     <table>
+        <tr>
+            <td>User-Agent</td>
+            <td id='ua'></td>
+        </tr>
         <tr>
             <td>Width</td>
             <td id='width'></td>

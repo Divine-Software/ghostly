@@ -1,5 +1,5 @@
 import http from 'http';
-import puppeteer, { SerializableOrJSHandle } from 'puppeteer-core';
+import playwright, { Browser, Page } from 'playwright-chromium';
 import stream from 'stream';
 import url from 'url';
 import packageJSON from '../package.json';
@@ -9,29 +9,28 @@ let log = nullConsole;
 
 export interface EngineConfig {
     templatePattern: RegExp;
-    chromiumPath:    string;
+    browser:         string;
     relaunchDelay:   number;
     workers:         number;
     pageCache:       number;
 }
 
 // This should be the same as puppeteer.PDFFormat
-export type PaperFormat  = "A0" | "A1" | "A2" | "A3" | "A4" | "A5" | "Letter" | "Legal" | "Tabloid" | "Ledger";
-export type PaperSize    = { format: PaperFormat, orientation: 'portrait' | 'landscape' };
-export type ViewportSize = { width: number, height: number };
+export type PaperFormat  = "A0" | "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "Letter" | "Legal" | "Tabloid" | "Ledger";
+export type PaperSize    = { format?: PaperFormat, orientation?: 'portrait' | 'landscape' };
+export type ViewportSize = { width?: number, height?: number };
 
 export interface View {
     contentType:   string;
     params:        unknown;
     dpi?:          number;
-    viewportSize?: ViewportSize
-    paperSize?:    PaperSize
-    zoomFactor?:   number;
+    viewportSize?: ViewportSize;
+    paperSize?:    PaperSize;
 }
 
 export interface RenderedView {
     contentType: string;
-    data: Buffer;
+    data:        Buffer;
 }
 
 export class Response {
@@ -41,8 +40,8 @@ export class Response {
 interface Worker {
     id:        number;
     load:      number;
-    browser:   puppeteer.Browser;
-    pageCache: (puppeteer.Page | undefined)[];
+    browser:   Browser;
+    pageCache: (Page | undefined)[];
 }
 
 type GhostlyResponse = ['ghostlyACK' | 'ghostlyNACK', string | null, 'Uint8Array'? ];
@@ -77,6 +76,10 @@ function deleteUndefined<T extends object>(obj: T): T {
     return obj;
 }
 
+function browserVersion(browser: Browser): string {
+    return `${browser.constructor.name}/${browser.version()}`;
+}
+
 export class Engine {
     private _config: EngineConfig;
     private _workers: (Worker | undefined)[];
@@ -84,7 +87,7 @@ export class Engine {
     constructor(config: Partial<EngineConfig> = {}) {
         this._config = {
             templatePattern: /.*/,
-            chromiumPath:    puppeteer.executablePath(),
+            browser:         'chromium',
             relaunchDelay:   1,
             workers:         1,
             pageCache:       0,
@@ -106,7 +109,7 @@ export class Engine {
                     await worker.browser.close();
                 }
                 catch (err) {
-                    log.warn(`Failed to close worker ${worker.id}: ${err}.`);
+                    log.warn(`Worker ${worker.id}: Failed to close browser: ${err}.`);
                 }
             }
         }
@@ -163,7 +166,7 @@ export class Engine {
         let body: string | undefined;
         let views: View[];
 
-        let uri = url.parse(request.url!, true);
+        const uri = url.parse(request.url!, true);
 
         if (uri.pathname !== '/') {
             throw new Response(404, `Resource ${uri.pathname} not found`);
@@ -252,8 +255,8 @@ export class Engine {
             document    = message.document as unknown;
             contentType = message.contentType || 'application/json';
             views       = message.views.map((view: View) => {
-                const { contentType, params, dpi, paperSize, viewportSize, zoomFactor } = view;
-                return { contentType, params, dpi, paperSize, viewportSize, zoomFactor };
+                const { contentType, params, dpi, paperSize, viewportSize } = view;
+                return { contentType, params, dpi, paperSize, viewportSize };
             });
         }
 
@@ -308,36 +311,33 @@ export class Engine {
 
     private async _$launchWorker(id: number): Promise<Worker> {
         if (this._workers[id]) {
-            log.info(`Worker ${id} already running as PID ${this._workers[id]!.browser.process().pid}`);
+            log.info(`Worker ${id}: Already connected to ${browserVersion(this._workers[id]!.browser)}`);
             return this._workers[id]!;
         }
 
-        const browser = await puppeteer.launch({
-            executablePath: this._config.chromiumPath,
+        const [ type, ...path ] = this._config.browser.split(':');
+        const browserType = playwright[type as 'chromium' | 'firefox' | 'webkit']
+
+        if (!browserType || typeof browserType.launch !== 'function') {
+            throw new Error(`Unsupported browser ${this._config.browser}`);
+        }
+
+        const browser = await browserType.launch({
+            executablePath: path.join(':'),
         });
 
-        const proc = browser.process();
-
-        proc.on('exit', (code, signal) => {
-            delete this._workers[id];
-
-            if (signal && signal !== 'SIGINT') {
-                log.error(`Worker ${id} was killed by signal ${signal}. Re-launching in ${this._config.relaunchDelay} seconds.`);
-                setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
-            }
-            else if (code) {
-                log.warn(`Worker ${id} exitied with status ${code}. Re-launching in ${this._config.relaunchDelay} seconds.`);
+        browser.on('disconnected', () => {
+            if (this._workers[id]) {
+                delete this._workers[id];
+                log.error(`Worker ${id}: Disconnected. Re-launching in ${this._config.relaunchDelay} seconds.`);
                 setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
             }
             else {
-                log.info(`Worker ${id} ${signal === 'SIGINT' ? 'interrupted': 'exited'}.`);
+                log.info(`Worker ${id}: Closed.`);
             }
         });
 
-        proc.stdout?.on('data', (data) => { log.info(`Worker ${id}: ${String(data).trim()}`); });
-        proc.stderr?.on('data', (data) => { log.warn(`Worker ${id}: ${String(data).trim()}`); });
-
-        log.info(`Spawned worker ${id} as PID ${proc.pid}`);
+        log.info(`Worker ${id}: Connected to ${browserVersion(browser)}`);
 
         return this._workers[id] = {
             id:        id,
@@ -364,31 +364,33 @@ class Template {
             ++worker.load;
 
             // Find a cached template ...
-            let page = worker.pageCache.find((page) => !!page && page.url() === this._url);
+            let page = worker.pageCache.find((page) => !!page && page.url() === this._url)!;
 
             try {
                 if (page) {
-                    log.info(`Using cached template ${this._url}.`);
+                    log.info(`${this._url}: Using cached template.`);
                     delete worker.pageCache[worker.pageCache.indexOf(page)];
                 }
                 else {
                     // ... or create a new one
-                    log.info(`Creating template ${this._url}.`);
+                    log.info(`${this._url}: Creating new template.`);
                     page = await this._$createPage(worker);
-                    log.info(`Created template ${this._url}.`);
                 }
 
                 // Send document/model to template
                 await this._$sendMessage(page, 'ghostlyInit', { document, contentType });
 
                 // Render all views
-                for (const view of deleteUndefined(views)) {
+                for (const view of deleteUndefined(views) /* Ensure undefined values do not overwrite defaults */) {
                     const dpi = view.dpi || 96;
-                    const ps: PaperSize     = { format: 'A4', orientation: 'portrait', ...view.paperSize };
-                    const vps: ViewportSize = { ...Template.paperDimensions(ps.format, dpi, ps.orientation), ...view.viewportSize };
-                    const zf  = view.zoomFactor || 1;
+                    const ps: Required<PaperSize> = { format: 'A4', orientation: 'portrait', ...view.paperSize };
+                    const dim = Template.paperDimensions(view.contentType === 'application/pdf' ? ps : view.paperSize, dpi)
+                    const vps: Required<ViewportSize> = { ...dim, ...view.viewportSize };
+                    const clip = view.viewportSize?.width || view.viewportSize?.height ? { x: 0, y: 0, ...vps } : undefined;
 
-                    await page.setViewport({ width: vps.width, height: vps.height, isLandscape: ps.orientation === 'landscape', deviceScaleFactor: zf, });
+                    log.info(`${this._url}: Rendering view ${view.contentType} (${vps.width}x${vps.height} @ ${dpi} DPI).`);
+
+                    await page.setViewportSize(vps);
 
                     let buffer = await this._$sendMessage(page, 'ghostlyRender', view);
 
@@ -398,27 +400,23 @@ class Template {
                                 buffer = Buffer.from(await page.content());
                                 break;
 
+                            case 'text/plain':
+                                buffer = Buffer.from(await page.innerText('css=body'));
+                                break;
+
                             case 'application/pdf':
                                 buffer = await page.pdf({
-                                    format:            ps.format,
-                                    landscape:         ps.orientation === 'landscape',
-                                    scale:             zf,
-                                    margin: {
-                                        top:           "0",
-                                        bottom:        "0",
-                                        left:          "0",
-                                        right:         "0",
-                                    },
-                                    preferCSSPageSize: true,
+                                    format:    ps.format,
+                                    landscape: ps.orientation === 'landscape',
                                 });
                                 break;
 
                             case 'image/jpeg':
-                                buffer = await page.screenshot({ fullPage: true, type: 'jpeg' });
+                                buffer = await page.screenshot({ fullPage: true, type: 'jpeg', clip });
                                 break;
 
                             case 'image/png':
-                                buffer = await page.screenshot({ fullPage: true, type: 'png' });
+                                buffer = await page.screenshot({ fullPage: true, type: 'png', clip });
                                 break;
 
                             default:
@@ -432,9 +430,9 @@ class Template {
                 // Return template to page cache if there were no errors
                 for (let i = 0; i < this._engine['_config'].pageCache; ++i) {
                     if (!worker.pageCache[i]) {
-                        log.info(`Returning template ${page!.url()} to page cache.`);
+                        log.info(`${page.url()}: Returning template to page cache.`);
                         worker.pageCache[i] = page;
-                        page = undefined;
+                        page = undefined!;
                         break;
                     }
                 }
@@ -452,25 +450,31 @@ class Template {
         return result;
     }
 
-    public static paperDimensions(format: PaperFormat, dpi: number, orientation: 'portrait' | 'landscape'): ViewportSize {
+    public static paperDimensions(paperSize: PaperSize | undefined, dpi: number): Required<ViewportSize> {
+        if (!paperSize?.format) {
+            return { width: 800, height: 600 };
+        }
+
         let width, height;
 
-        switch (format) {
+        switch (paperSize.format) {
             case "A0":       width = 841; height = 1189; break;
             case "A1":       width = 594; height = 841;  break;
             case "A2":       width = 420; height = 594;  break;
             case "A3":       width = 297; height = 420;  break;
             case "A4":       width = 210; height = 297;  break;
             case "A5":       width = 148; height = 210;  break;
+            case "A6":       width = 105; height = 148;  break;
             case "Letter":   width = 216; height = 279;  break;
             case "Legal":    width = 216; height = 356;  break;
             case "Tabloid":  width = 432; height = 279;  break;
             case "Ledger":   width = 279; height = 432;  break;
+
             default:
-                throw new TypeError(`Invalid paper format: ${format}`);
+                throw new TypeError(`Invalid paper format: ${paperSize.format}`);
         }
 
-        if (orientation === 'landscape') {
+        if (paperSize.orientation === 'landscape') {
             [ width, height ] = [ height, width ];
         }
 
@@ -481,26 +485,25 @@ class Template {
         return { width, height };
     }
 
-    private async _$createPage(worker: Worker): Promise<puppeteer.Page> {
-        const page = await (await worker.browser.createIncognitoBrowserContext()).newPage();
+    private async _$createPage(worker: Worker): Promise<Page> {
+        const page = await worker.browser.newPage({
+            userAgent: `Ghostly/${packageJSON.version} ${browserVersion(worker.browser)}`,
+        });
 
-        page.setUserAgent(`${packageJSON.name}/${packageJSON.version}`);
-        page.setRequestInterception(true);
-
-        page.on('request', (req) => {
+        await page.route('**/*', (route, req) => {
             log.debug(`${this._url}: Loading ${req.url()}`);
 
             if (this._engine['_config'].templatePattern.test(req.url())) {
-                req.continue();
+                route.continue();
             }
             else {
                 log.error(`${this._url}: Template accessed a disallowed URL: ${req.url()} did not match ${this._engine['_config'].templatePattern}`);
-                req.abort();
+                route.abort('addressunreachable');
             }
         });
 
-        page.on('error', (error) => {
-            log.error(`${this._url}: [error] ${error}`);
+        page.on('pageerror', (error) => {
+            log.error(`${this._url}: [pageerror]: ${error}`);
         });
 
         page.on('dialog', (dialog) => {
@@ -509,8 +512,8 @@ class Template {
         });
 
         page.on('console', (msg) => {
-            const method: Function = (log as any)[msg.type()];
-            (typeof method === 'function' ? method : log.warn).call(log, `${this._url}: ${msg.text()}`);
+            const method = (log as any)[msg.type()];
+            (typeof method === 'function' ? method : log.warn).call(log, `${this._url}: [console] ${msg.text()}`);
         });
 
         await page.goto(this._url);
@@ -534,7 +537,7 @@ class Template {
                                 window.onmessage = null;
 
                                 if (response && response[1] instanceof Uint8Array) {
-                                    // No Uint8Array support in Puppeteer; encode as string
+                                    // No Uint8Array support in Playwright; encode as string
                                     let buffer = '';
 
                                     for (let i = 0, array = response[1]; i < array.length; ++i) {
@@ -563,21 +566,21 @@ class Template {
         return page;
     }
 
-    private async _$sendMessage(page: puppeteer.Page, command: string, data: object | string, timeout?: number): Promise<Buffer | null> {
-        const response = await ((window: GhostlyWindow) => page.evaluate((command, data, timeout) => {
+    private async _$sendMessage(page: Page, command: string, data: object | string, timeout?: number): Promise<Buffer | null> {
+        const response = await ((window: GhostlyWindow) => page.evaluate(([command, data, timeout]) => {
             try {
                 return window.__ghostly_message_proxy__.sendMessage(command, data, timeout);
             }
             catch (err) {
                 throw `Ghostly message proxy not found or it's failing: ${err}`;
             }
-        }, command, data as SerializableOrJSHandle, timeout as number))(null!) as GhostlyResponse;
+        }, [command, data, timeout] as const))(null!) as GhostlyResponse;
 
         if (response[0] !== 'ghostlyACK') {
             throw new Error(`${command} failed: ${response[1]}`);
         }
         else if (typeof response[1] === 'string' && response[2] === 'Uint8Array') {
-            return Buffer.from(response[1], 'latin1'); // No Uint8Array support in Puppeteer; decode string
+            return Buffer.from(response[1], 'latin1'); // No Uint8Array support in Playwright; decode string
         }
         else {
             return response[1] ? Buffer.from(response[1]) : null;

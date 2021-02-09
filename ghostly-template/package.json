@@ -13,7 +13,8 @@
         "css",
         "pdf",
         "phantomjs",
-        "puppeteer"
+        "puppeteer",
+        "playwright"
     ],
     "homepage": "https://github.com/LeviticusMB/ghostly",
     "bugs": "https://github.com/LeviticusMB/ghostly/issues",
