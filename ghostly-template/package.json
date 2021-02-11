@@ -21,7 +21,11 @@
     "repository": "LeviticusMB/ghostly",
     "license": "Apache-2.0",
     "author": "Martin Blom <martin@blom.org>",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    }
+    "main": "lib/src/index.js",
+    "types": "lib/src/index.d.ts",
+    "files": [
+        "lib/src",
+        "lib/package*",
+        "src"
+    ]
 }

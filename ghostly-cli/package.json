@@ -31,8 +31,8 @@
         "src"
     ],
     "dependencies": {
-        "@divine/ghostly-core": "2.0.0",
-        "@divine/sysconsole": "^2.0.0",
+        "@divine/ghostly-core": "^2",
+        "@divine/sysconsole": "^2",
         "commander": "^2.20.0",
         "daemonize-process": "^3.0.0"
     },

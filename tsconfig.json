@@ -3,5 +3,6 @@
     "references": [
         { "path": "ghostly-cli" },
         { "path": "ghostly-core" },
+        // { "path": "ghostly-template" },
     ]
 }

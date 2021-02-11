@@ -29,6 +29,7 @@
         "src"
     ],
     "dependencies": {
+        "@divine/ghostly-template": "^2",
         "playwright-chromium": "^1.8.0",
         "tslib": "^2.1.0"
     },

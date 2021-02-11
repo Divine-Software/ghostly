@@ -22,11 +22,11 @@ td,th {
 }
 
     </style>
-    <script src="../ghostly-template.js"></script>
+    <script src="../lib/legacy.umd.js"></script>
     <script>
       ghostly.template({
-          ghostlyInit: function(source) {
-              this.document = ghostly.parse(source);
+          ghostlyInit: function(model) {
+              this.document = ghostly.parse(model);
           },
 
           ghostlyRender: function(view) {
@@ -96,7 +96,7 @@ td,th {
         </tr>
     </table>
 
-    <h2>Structure of incoming data source</h2>
+    <h2>Structure of incoming data model</h2>
     <table>
       <tbody id='content' />
     </table>

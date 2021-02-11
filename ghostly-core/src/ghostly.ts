@@ -1,8 +1,12 @@
+import { GhostlyRequest, parseGhostlyPacket, sendGhostlyMessage } from '@divine/ghostly-template';
+import type { PaperSize, View, ViewportSize } from '@divine/ghostly-template/lib/src/types'; // Avoid DOM types leaks
 import http from 'http';
 import playwright, { Browser, Page } from 'playwright-chromium';
 import stream from 'stream';
 import url from 'url';
 import packageJSON from '../package.json';
+
+export { Model, PaperFormat, PaperSize, View, ViewportSize } from '@divine/ghostly-template/lib/src/types'; // Avoid DOM types leaks
 
 const nullConsole = new console.Console(new stream.PassThrough());
 let log = nullConsole;
@@ -13,19 +17,6 @@ export interface EngineConfig {
     relaunchDelay:   number;
     workers:         number;
     pageCache:       number;
-}
-
-// This should be the same as puppeteer.PDFFormat
-export type PaperFormat  = "A0" | "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "Letter" | "Legal" | "Tabloid" | "Ledger";
-export type PaperSize    = { format?: PaperFormat, orientation?: 'portrait' | 'landscape' };
-export type ViewportSize = { width?: number, height?: number };
-
-export interface View {
-    contentType:   string;
-    params:        unknown;
-    dpi?:          number;
-    viewportSize?: ViewportSize;
-    paperSize?:    PaperSize;
 }
 
 export interface RenderedView {
@@ -47,7 +38,7 @@ interface Worker {
 type GhostlyResponse = ['ghostlyACK' | 'ghostlyNACK', string | null, 'Uint8Array'? ];
 
 interface GhostlyProxyWindow extends Window {
-    sendMessage(command: string, data: unknown, timeout?: number): Promise<GhostlyResponse>;
+    sendGhostlyMessage: typeof sendGhostlyMessage;
 }
 
 interface GhostlyWindow extends Window {
@@ -173,7 +164,7 @@ export class Engine {
         }
 
         let template    = uri.query.template as string | undefined;
-        let document    = uri.query.document as unknown;
+        let document    = uri.query.document as string | undefined;
         let contentType = (uri.query.contentType || 'application/json') as string;
         let view        = uri.query.view as string | undefined;
         let params      = uri.query.params && JSON.parse(uri.query.params as string) as unknown;
@@ -252,7 +243,7 @@ export class Engine {
             }
 
             template    = message.template as string;
-            document    = message.document as unknown;
+            document    = message.document;
             contentType = message.contentType || 'application/json';
             views       = message.views.map((view: View) => {
                 const { contentType, params, dpi, paperSize, viewportSize } = view;
@@ -269,7 +260,7 @@ export class Engine {
             throw new Response(403, ex.message);
         }
 
-        const results = await tpl.$renderViews(document, contentType, views, null);
+        const results = await tpl.$renderViews(document as string | object, contentType, views, null);
 
         if (view) {
             if (results.length !== 1) {
@@ -352,11 +343,11 @@ class Template {
     constructor(private _engine: Engine, private _url: string) {
     }
 
-    async $render(document: unknown, contentType: string, format: string, params: unknown): Promise<Buffer> {
+    async $render(document: string | object, contentType: string, format: string, params: unknown): Promise<Buffer> {
         return (await this.$renderViews(document, contentType, [{ contentType: format, params: params }], null))[0].data;
     }
 
-    async $renderViews(document: unknown, contentType: string, views: View[], _attachments: unknown): Promise<RenderedView[]> {
+    async $renderViews(document: string | object, contentType: string, views: View[], _attachments: unknown): Promise<RenderedView[]> {
         const worker = this._engine['_selectWorker']();
         const result = [] as RenderedView[];
 
@@ -378,7 +369,7 @@ class Template {
                 }
 
                 // Send document/model to template
-                await this._$sendMessage(page, 'ghostlyInit', { document, contentType });
+                await this._$sendMessage(page, ['ghostlyInit', { document, contentType }]);
 
                 // Render all views
                 for (const view of deleteUndefined(views) /* Ensure undefined values do not overwrite defaults */) {
@@ -392,9 +383,19 @@ class Template {
 
                     await page.setViewportSize(vps);
 
-                    let buffer = await this._$sendMessage(page, 'ghostlyRender', view);
+                    let buffer: Buffer;
+                    const data = await this._$sendMessage(page, ['ghostlyRender', view]);
 
-                    if (!buffer) {
+                    if (data instanceof Buffer) {
+                        buffer = data;
+                    }
+                    else if (data instanceof Uint8Array) {
+                        buffer = Buffer.from(data.buffer);
+                    }
+                    else if (typeof data === 'string') {
+                        buffer = Buffer.from(data);
+                    }
+                    else if (!data) {
                         switch (view.contentType) {
                             case 'text/html':
                                 buffer = Buffer.from(await page.content());
@@ -422,6 +423,9 @@ class Template {
                             default:
                                 throw new Error(`Template ${page!.url()} did not return a result for view ${view.contentType}`)
                         }
+                    }
+                    else {
+                        throw new Error(`Template ${page!.url()} returned an unexpected object ${view.contentType}: ${data}`)
                     }
 
                     result.push({ contentType: view.contentType, data: buffer });
@@ -516,74 +520,34 @@ class Template {
             (typeof method === 'function' ? method : log.warn).call(log, `${this._url}: [console] ${msg.text()}`);
         });
 
-        await page.goto(this._url);
+        await page.goto(this._url, { waitUntil: 'load' });
 
         // Create the Ghostly message proxy
-        await ((window: GhostlyWindow) => page.evaluate(() => {
+        await ((window: GhostlyWindow) => page.evaluate((sendGhostlyMessage) => {
             try {
                 window.__ghostly_message_proxy__ = window.open('', '', 'width=0,height=0') as GhostlyProxyWindow;
-                window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>${
-                    function sendMessage(command: string, data: unknown, timeout?: number): Promise<GhostlyResponse> {
-                        return new Promise((resolve, reject) => {
-                            const watchdog = setTimeout(() => {
-                                window.onmessage = null;
-                                reject(`Ghostly command ${command} timed out`);
-                            }, (timeout || 10) * 1000);
-
-                            window.onmessage = (event) => {
-                                const response = event.data as GhostlyResponse | [GhostlyResponse[0], Uint8Array];
-
-                                clearTimeout(watchdog);
-                                window.onmessage = null;
-
-                                if (response && response[1] instanceof Uint8Array) {
-                                    // No Uint8Array support in Playwright; encode as string
-                                    let buffer = '';
-
-                                    for (let i = 0, array = response[1]; i < array.length; ++i) {
-                                        buffer += String.fromCharCode(array[i]);
-                                    }
-
-                                    resolve([response[0], buffer, 'Uint8Array']);
-                                }
-                                else {
-                                    resolve(response as GhostlyResponse);
-                                }
-                            };
-
-                            window.opener.postMessage([command, data], '*');
-                        });
-                    }
-                }</script>`);
+                window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>${sendGhostlyMessage}</script>`);
                 window.__ghostly_message_proxy__.document.close();
             }
             catch (_ignored) {
                 throw 'Failed to create Ghostly message proxy!'
             }
-        }))(null!);
+        }, sendGhostlyMessage.toString()))(null!);
 
-        await this._$sendMessage(page, 'ghostlyLoad', this._url);
+        await this._$sendMessage(page, ['ghostlyLoad', this._url]);
         return page;
     }
 
-    private async _$sendMessage(page: Page, command: string, data: object | string, timeout?: number): Promise<Buffer | null> {
-        const response = await ((window: GhostlyWindow) => page.evaluate(([command, data, timeout]) => {
+    private async _$sendMessage(page: Page, request: GhostlyRequest, timeout?: number): Promise<string | Uint8Array | null> {
+        const response = await ((window: GhostlyWindow) => page.evaluate(([request, timeout]) => {
             try {
-                return window.__ghostly_message_proxy__.sendMessage(command, data, timeout);
+                return window.__ghostly_message_proxy__.sendGhostlyMessage(window, request, timeout);
             }
             catch (err) {
                 throw `Ghostly message proxy not found or it's failing: ${err}`;
             }
-        }, [command, data, timeout] as const))(null!) as GhostlyResponse;
+        }, [request, timeout] as const))(null!) as GhostlyResponse;
 
-        if (response[0] !== 'ghostlyACK') {
-            throw new Error(`${command} failed: ${response[1]}`);
-        }
-        else if (typeof response[1] === 'string' && response[2] === 'Uint8Array') {
-            return Buffer.from(response[1], 'latin1'); // No Uint8Array support in Playwright; decode string
-        }
-        else {
-            return response[1] ? Buffer.from(response[1]) : null;
-        }
+        return parseGhostlyPacket(request, response);
     }
 }

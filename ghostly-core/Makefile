@@ -5,7 +5,7 @@ BASENAME	:= $(notdir $(NAME))
 all:		build
 
 prepare:
-	yarn
+	$(MAKE) -C .. $@
 
 build:		prepare
 	yarn run tsc --build

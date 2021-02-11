@@ -1,7 +1,10 @@
 all:		build
 
-prepare:
-	yarn
+prepare:	node_modules/.yarn-integrity
+
+node_modules/.yarn-integrity:	package.json yarn.lock
+	yarn --frozen-lockfile --mutex network
+	touch $@
 
 build::		prepare
 	yarn run tsc --build
@@ -17,8 +20,9 @@ clean::
 distclean::
 	rm -rf node_modules
 
-docs clean distclean::
+build docs clean distclean::
 	$(MAKE) -C ghostly-cli $@
 	$(MAKE) -C ghostly-core $@
+	$(MAKE) -C ghostly-template $@
 
 .PHONY:		all prepare build docs test clean distclean

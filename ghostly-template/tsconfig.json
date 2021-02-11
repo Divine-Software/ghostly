@@ -3,13 +3,11 @@
     "include": [
         "src/**/*.ts",
         "test/**/*.ts",
-        "package.json"
     ],
     "compilerOptions": {
+        "target": "ES3",
         "lib": [ "dom", "es2018" ],
         "outDir": "./lib",
-    },
-    "references": [
-        { "path": "../ghostly-template" },
-    ]
+        "importHelpers": false,
+    }
 }
