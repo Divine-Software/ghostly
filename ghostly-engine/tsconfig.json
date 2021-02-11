@@ -10,6 +10,6 @@
         "outDir": "./lib",
     },
     "references": [
-        { "path": "../ghostly-template" },
+        { "path": "../ghostly-runtime" },
     ]
 }

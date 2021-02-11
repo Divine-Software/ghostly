@@ -1,5 +1,5 @@
 {
-    "name": "@divine/ghostly-core",
+    "name": "@divine/ghostly-engine",
     "version": "2.0.0",
     "description": "Ghostly template/print formatter engine",
     "keywords": [
@@ -29,7 +29,7 @@
         "src"
     ],
     "dependencies": {
-        "@divine/ghostly-template": "^2",
+        "@divine/ghostly-runtime": "^2",
         "playwright-chromium": "^1.8.0",
         "tslib": "^2.1.0"
     },

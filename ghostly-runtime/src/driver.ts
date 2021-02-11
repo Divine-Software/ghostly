@@ -17,8 +17,8 @@ export function executeGhostlyCommand(target: Window, request: GhostlyRequest, t
 /**
  * Sends a command to the Ghostly template and marshals the result so it can be transferred from browser to NodeJS.
  *
- * NOTE: This function must be self-contained and serializable, since `ghostly-core` will inject it into the Playwright
- * browser instance! No external helper functions or too fancy JS/TS allowed.
+ * NOTE: This function must be self-contained and serializable, since `ghostly-engine` will inject it into the
+ * Playwright browser instance! No external helper functions or too fancy JS/TS allowed.
  *
  * @param target   The window where the Ghostly template is running.
  * @param request  The command to send.

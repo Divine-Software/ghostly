@@ -22,7 +22,7 @@ distclean::
 
 build docs clean distclean::
 	$(MAKE) -C ghostly-cli $@
-	$(MAKE) -C ghostly-core $@
-	$(MAKE) -C ghostly-template $@
+	$(MAKE) -C ghostly-engine $@
+	$(MAKE) -C ghostly-runtime $@
 
 .PHONY:		all prepare build docs test clean distclean

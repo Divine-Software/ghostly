@@ -10,8 +10,8 @@
     "workspaces": {
         "packages": [
             "ghostly-cli",
-            "ghostly-core",
-            "ghostly-template"
+            "ghostly-engine",
+            "ghostly-runtime"
         ],
         "nohoist": [
             "**"

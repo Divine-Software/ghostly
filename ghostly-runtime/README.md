@@ -1,2 +1,2 @@
-# ghostly-template
+# ghostly-runtime
 Ghostly template/print formatter runtime support

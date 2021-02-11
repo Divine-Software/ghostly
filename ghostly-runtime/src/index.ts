@@ -1,3 +1,3 @@
 export * from './driver';
-export * from './template';
+export * from './runtime';
 export * from './types';

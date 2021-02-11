@@ -8,9 +8,9 @@ export default [{
         output: {
             file: 'lib/bundle.umd.js',
             format: 'umd',
-            name: '@divine.ghostly-template',
+            name: '@divine.ghostly-runtime',
             amd: {
-                id: '@divine/ghostly-template'
+                id: '@divine/ghostly-runtime'
             },
             sourcemap: true,
         },

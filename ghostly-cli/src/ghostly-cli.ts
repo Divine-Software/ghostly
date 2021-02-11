@@ -1,4 +1,4 @@
-import { Engine, EngineConfig, logger, View } from '@divine/ghostly-core';
+import { Engine, EngineConfig, logger, View } from '@divine/ghostly-engine';
 import { SysConsole } from '@divine/sysconsole';
 import childProcess from 'child_process';
 import commander from 'commander';

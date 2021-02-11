@@ -2,7 +2,7 @@
     "include": [],
     "references": [
         { "path": "ghostly-cli" },
-        { "path": "ghostly-core" },
-        // { "path": "ghostly-template" },
+        { "path": "ghostly-engine" },
+        { "path": "ghostly-runtime" },
     ]
 }

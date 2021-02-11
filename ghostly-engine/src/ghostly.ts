@@ -1,12 +1,12 @@
-import { GhostlyRequest, parseGhostlyPacket, sendGhostlyMessage } from '@divine/ghostly-template';
-import type { PaperSize, View, ViewportSize } from '@divine/ghostly-template/lib/src/types'; // Avoid DOM types leaks
+import { GhostlyRequest, parseGhostlyPacket, sendGhostlyMessage } from '@divine/ghostly-runtime';
+import type { PaperSize, View, ViewportSize } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
 import http from 'http';
 import playwright, { Browser, Page } from 'playwright-chromium';
 import stream from 'stream';
 import url from 'url';
 import packageJSON from '../package.json';
 
-export { Model, PaperFormat, PaperSize, View, ViewportSize } from '@divine/ghostly-template/lib/src/types'; // Avoid DOM types leaks
+export { Model, PaperFormat, PaperSize, View, ViewportSize } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
 
 const nullConsole = new console.Console(new stream.PassThrough());
 let log = nullConsole;
