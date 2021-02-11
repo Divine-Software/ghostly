@@ -1,4 +1,4 @@
-import type { View } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
+import type { OnGhostlyEvent, View } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
 import http from 'http';
 import playwright from 'playwright-chromium';
 import stream from 'stream';
@@ -8,12 +8,13 @@ import { browserVersion, TemplateEngineImpl, Worker } from './template';
 const nullConsole = new console.Console(new stream.PassThrough());
 
 export interface EngineConfig {
-    logger:          Console;
-    templatePattern: RegExp;
     browser:         string;
-    relaunchDelay:   number;
-    workers:         number;
+    logger:          Console;
     pageCache:       number;
+    relaunchDelay:   number;
+    templatePattern: RegExp;
+    timeout:         number;
+    workers:         number;
 }
 
 export interface RenderedView {
@@ -22,8 +23,8 @@ export interface RenderedView {
 }
 
 export interface TemplateEngine {
-    render(document: string | object, contentType: string, format: string, params: unknown): Promise<Buffer>;
-    renderViews(document: string | object, contentType: string, views: View[], _attachments: unknown): Promise<RenderedView[]>;
+    render(document: string | object, contentType: string, format: string, params: unknown, onGhostlyEvent?: OnGhostlyEvent): Promise<Buffer>;
+    renderViews(document: string | object, contentType: string, views: View[], attachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderedView[]>;
 }
 
 export class Response {
@@ -36,6 +37,7 @@ export class Engine {
 
     constructor(config: Partial<EngineConfig> = {}) {
         this._config = {
+            timeout:         10,
             logger:          nullConsole,
             templatePattern: /.*/,
             browser:         'chromium',
@@ -79,7 +81,7 @@ export class Engine {
             throw new Error(`Template URL is not allowed: ${uri} did not match ${this._config.templatePattern}`);
         }
 
-        return new TemplateEngineImpl(this, uri);
+        return new TemplateEngineImpl(this._config, this._workers, uri);
     }
 
     // GET  http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}&document=...&contentType=mime/type
@@ -220,7 +222,7 @@ export class Engine {
             throw new Response(403, ex.message);
         }
 
-        const results = await tpl.renderViews(document as string | object, contentType, views, null);
+        const results = await tpl.renderViews(document as string | object, contentType, views, false);
 
         if (view) {
             if (results.length !== 1) {

@@ -120,8 +120,9 @@ export async function main(): Promise<void> {
                 params:       null
             };
 
+            const evlog  = (data: object) => sysconsole.notice(data);
             const data   = await fs.readFile(file !== '-' ? file : '/dev/stdin');
-            const result = (await template.renderViews(data.toString(), argv.contentType || 'application/json', [ view ], null))[0].data;
+            const result = (await template.renderViews(data.toString(), argv.contentType || 'application/json', [ view ], false, evlog))[0].data;
 
             if (argv.output) {
                 await fs.writeFile(argv.output, result);

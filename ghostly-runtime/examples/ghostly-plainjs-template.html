@@ -3,7 +3,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Demo Template</title>
+    <title>Plain JS Demo Template</title>
     <style>
 
 body {
@@ -22,23 +22,25 @@ td,th {
 }
 
     </style>
-    <script src="../lib/legacy.umd.js"></script>
+    <script src="../lib/bundle.umd.js"></script>
     <script>
-      ghostly.template({
-          ghostlyInit: function(model) {
+      const { ghostly, GhostlyError } = window['@divine']['ghostly-runtime'];
+
+      ghostly.init({
+          ghostlyInit(model) {
               this.document = ghostly.parse(model);
           },
 
-          ghostlyRender: function(view) {
+          ghostlyRender(view) {
               function htmlize(text) {
                   return String(text).replace(/[&<"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&apos;' }[c] });
               }
 
               function maxDepth(obj) {
-                  var depth = 1;
+                  let depth = 1;
 
                   if (typeof obj == 'object') {
-                      for (var key in obj) {
+                      for (let key in obj) {
                           depth = Math.max(depth, maxDepth(obj[key]) + 1);
                       }
                   }
@@ -48,8 +50,8 @@ td,th {
 
               function renderTableCells(obj, depth, maxDepth) {
                   if (typeof obj == 'object' && Object.keys(obj).length) {
-                      var height = 0;
-                      var cells  = depth == 0 ? '<tr>' : '';
+                      let height = 0;
+                      let cells  = depth == 0 ? '<tr>' : '';
 
                       for (var key in obj) {
                           var result = renderTableCells(obj[key], depth + 1, maxDepth);
@@ -69,9 +71,9 @@ td,th {
               document.documentElement['class'] = view.contentType.split('/')[1];
               document.getElementById('content').innerHTML = renderTableCells(this.document, 0, maxDepth(this.document))[1];
 
-              document.getElementById('ua').innerText          = navigator.userAgent;
-              document.getElementById('width').innerText       = window.innerWidth;
-              document.getElementById('height').innerText      = window.innerHeight;
+              document.getElementById('ua').innerText     = navigator.userAgent;
+              document.getElementById('width').innerText  = window.innerWidth;
+              document.getElementById('height').innerText = window.innerHeight;
           },
       });
 </script>
