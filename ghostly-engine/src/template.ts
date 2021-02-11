@@ -40,11 +40,11 @@ export class TemplateEngineImpl implements TemplateEngine {
         return this._engine['_config'].logger;
     }
 
-    async $render(document: string | object, contentType: string, format: string, params: unknown): Promise<Buffer> {
-        return (await this.$renderViews(document, contentType, [{ contentType: format, params: params }], null))[0].data;
+    async render(document: string | object, contentType: string, format: string, params: unknown): Promise<Buffer> {
+        return (await this.renderViews(document, contentType, [{ contentType: format, params: params }], null))[0].data;
     }
 
-    async $renderViews(document: string | object, contentType: string, views: View[], _attachments: unknown): Promise<RenderedView[]> {
+    async renderViews(document: string | object, contentType: string, views: View[], _attachments: unknown): Promise<RenderedView[]> {
         const worker = this._selectWorker();
         const result = [] as RenderedView[];
 
@@ -62,11 +62,11 @@ export class TemplateEngineImpl implements TemplateEngine {
                 else {
                     // ... or create a new one
                     this.log.info(`${this._url}: Creating new template.`);
-                    page = await this._$createPage(worker);
+                    page = await this._createPage(worker);
                 }
 
                 // Send document/model to template
-                await this._$sendMessage(page, ['ghostlyInit', { document, contentType }]);
+                await this._sendMessage(page, ['ghostlyInit', { document, contentType }]);
 
                 // Render all views
                 for (const view of deleteUndefined(views) /* Ensure undefined values do not overwrite defaults */) {
@@ -81,7 +81,7 @@ export class TemplateEngineImpl implements TemplateEngine {
                     await page.setViewportSize(vps);
 
                     let buffer: Buffer;
-                    const data = await this._$sendMessage(page, ['ghostlyRender', view]);
+                    const data = await this._sendMessage(page, ['ghostlyRender', view]);
 
                     if (data instanceof Buffer) {
                         buffer = data;
@@ -202,7 +202,7 @@ export class TemplateEngineImpl implements TemplateEngine {
         return { width, height };
     }
 
-    private async _$createPage(worker: Worker): Promise<Page> {
+    private async _createPage(worker: Worker): Promise<Page> {
         const page = await worker.browser.newPage({
             userAgent: `Ghostly/${packageJSON.version} ${browserVersion(worker.browser)}`,
         });
@@ -247,11 +247,11 @@ export class TemplateEngineImpl implements TemplateEngine {
             }
         }, sendGhostlyMessage.toString()))(null!);
 
-        await this._$sendMessage(page, ['ghostlyLoad', this._url]);
+        await this._sendMessage(page, ['ghostlyLoad', this._url]);
         return page;
     }
 
-    private async _$sendMessage(page: Page, request: GhostlyRequest, timeout?: number): Promise<string | Uint8Array | null> {
+    private async _sendMessage(page: Page, request: GhostlyRequest, timeout?: number): Promise<string | Uint8Array | null> {
         const response = await ((window: GhostlyWindow) => page.evaluate(([request, timeout]) => {
             try {
                 return window.__ghostly_message_proxy__.sendGhostlyMessage(window, request, timeout);

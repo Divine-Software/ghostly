@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./lib/src/ghostly-cli').$main()
+require('./lib/src/ghostly-cli').main()
     .catch((ex) => {
         process.stdout.write('\n' + (ex && ex.stack || ex) + '\n');
         return 64;

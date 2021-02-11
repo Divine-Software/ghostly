@@ -87,7 +87,7 @@ function parseArgs(): commander.Command {
     return argv;
 }
 
-export async function $main(): Promise<void> {
+export async function main(): Promise<void> {
     const argv = parseArgs()
 
     const config: Partial<EngineConfig> = {};
@@ -109,7 +109,7 @@ export async function $main(): Promise<void> {
     const engine = new Engine(config);
 
     if (argv.template) {
-        const template = (await engine.$start()).template(argv.template);
+        const template = (await engine.start()).template(argv.template);
 
         for (const file of argv.args) {
             const view: View = {
@@ -121,7 +121,7 @@ export async function $main(): Promise<void> {
             };
 
             const data   = await fs.readFile(file !== '-' ? file : '/dev/stdin');
-            const result = (await template.$renderViews(data.toString(), argv.contentType || 'application/json', [ view ], null))[0].data;
+            const result = (await template.renderViews(data.toString(), argv.contentType || 'application/json', [ view ], null))[0].data;
 
             if (argv.output) {
                 await fs.writeFile(argv.output, result);
@@ -156,14 +156,14 @@ export async function $main(): Promise<void> {
 
         try {
             // Launch workers
-            await engine.$start();
+            await engine.start();
 
             // Wait for server to exit or fail
             await new Promise((resolve, reject) => server.once('close', resolve).once('error', reject));
         }
         finally {
             // Shut down workers
-            await engine.$stop();
+            await engine.stop();
         }
     }
 }

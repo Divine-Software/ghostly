@@ -22,8 +22,8 @@ export interface RenderedView {
 }
 
 export interface TemplateEngine {
-    $render(document: string | object, contentType: string, format: string, params: unknown): Promise<Buffer>;
-    $renderViews(document: string | object, contentType: string, views: View[], _attachments: unknown): Promise<RenderedView[]>;
+    render(document: string | object, contentType: string, format: string, params: unknown): Promise<Buffer>;
+    renderViews(document: string | object, contentType: string, views: View[], _attachments: unknown): Promise<RenderedView[]>;
 }
 
 export class Response {
@@ -52,12 +52,12 @@ export class Engine {
         return this._config.logger;
     }
 
-    async $start(): Promise<this> {
-        await this._$launchWorkers(this._config.workers);
+    async start(): Promise<this> {
+        await this._launchWorkers(this._config.workers);
         return this;
     }
 
-    async $stop(): Promise<this> {
+    async stop(): Promise<this> {
         for (const worker of this._workers) {
             if (worker) {
                 try {
@@ -85,15 +85,11 @@ export class Engine {
     // GET  http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}&document=...&contentType=mime/type
     // POST http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}
     // POST http://localhost:9999/
-    httpRequestHandler(request: http.IncomingMessage, response: http.ServerResponse) {
-        this.$httpRequestHandler(request, response);
-    }
-
-    async $httpRequestHandler(request: http.IncomingMessage, response: http.ServerResponse): Promise<Response> {
+    async httpRequestHandler(request: http.IncomingMessage, response?: http.ServerResponse): Promise<Response> {
         let result: Response;
 
         try {
-            result = await this.$handleRequest(request);
+            result = await this.handleRequest(request);
         }
         catch (ex) {
             result = ex instanceof Response ? ex : new Response(500, ex.message || `Unknown error: ${ex}`);
@@ -111,13 +107,13 @@ export class Engine {
             body = result.body;
         }
 
-        response.writeHead(result.status, { 'Content-Type': 'application/json', ...result.headers });
-        response.end(body instanceof Buffer ? body : JSON.stringify(body));
+        response?.writeHead(result.status, { 'Content-Type': 'application/json', ...result.headers });
+        response?.end(body instanceof Buffer ? body : JSON.stringify(body));
 
         return result;
     }
 
-    async $handleRequest(request: http.IncomingMessage): Promise<Response> {
+    async handleRequest(request: http.IncomingMessage): Promise<Response> {
         let body: string | undefined;
         let views: View[];
 
@@ -224,7 +220,7 @@ export class Engine {
             throw new Response(403, ex.message);
         }
 
-        const results = await tpl.$renderViews(document as string | object, contentType, views, null);
+        const results = await tpl.renderViews(document as string | object, contentType, views, null);
 
         if (view) {
             if (results.length !== 1) {
@@ -238,17 +234,17 @@ export class Engine {
         }
     }
 
-    private async _$launchWorkers(count: number): Promise<Worker[]> {
+    private async _launchWorkers(count: number): Promise<Worker[]> {
         const workers: Promise<Worker>[] = [];
 
         for (let id = 0; id < count; ++id) {
-            workers.push(this._$launchWorker(id));
+            workers.push(this._launchWorker(id));
         }
 
         return await Promise.all(workers);
     }
 
-    private async _$launchWorker(id: number): Promise<Worker> {
+    private async _launchWorker(id: number): Promise<Worker> {
         if (this._workers[id]) {
             this.log.info(`Worker ${id}: Already connected to ${browserVersion(this._workers[id]!.browser)}`);
             return this._workers[id]!;
@@ -269,7 +265,7 @@ export class Engine {
             if (this._workers[id]) {
                 delete this._workers[id];
                 this.log.error(`Worker ${id}: Disconnected. Re-launching in ${this._config.relaunchDelay} seconds.`);
-                setTimeout(() => this._$launchWorker(id), this._config.relaunchDelay * 1000);
+                setTimeout(() => this._launchWorker(id), this._config.relaunchDelay * 1000);
             }
             else {
                 this.log.info(`Worker ${id}: Closed.`);
