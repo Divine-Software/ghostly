@@ -1,4 +1,4 @@
-import { Engine, EngineConfig, logger, View } from '@divine/ghostly-engine';
+import { Engine, EngineConfig, View } from '@divine/ghostly-engine';
 import { SysConsole } from '@divine/sysconsole';
 import childProcess from 'child_process';
 import commander from 'commander';
@@ -90,11 +90,11 @@ function parseArgs(): commander.Command {
 export async function $main(): Promise<void> {
     const argv = parseArgs()
 
-    if (argv.debug) {
-        logger(sysconsole);
-    }
-
     const config: Partial<EngineConfig> = {};
+
+    if (argv.debug) {
+        config.logger = sysconsole;
+    }
 
     function arg<T>(name: keyof EngineConfig, type: (value: string) => T) {
         if (argv[name] !== undefined) (config as any /* why?? */)[name] = type(argv[name]);

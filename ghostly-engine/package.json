@@ -21,8 +21,8 @@
     "repository": "LeviticusMB/ghostly",
     "license": "Apache-2.0",
     "author": "Martin Blom <martin@blom.org>",
-    "main": "lib/src/ghostly.js",
-    "types": "lib/src/ghostly.d.ts",
+    "main": "lib/src/index.js",
+    "types": "lib/src/index.d.ts",
     "files": [
         "lib/src",
         "lib/package*",
