@@ -33,8 +33,14 @@ function deleteUndefined<T extends object>(obj: T): T {
 }
 
 export class TemplateEngineImpl implements TemplateEngine {
-    constructor(private _config: EngineConfig, private _workers: (Worker | undefined)[], private _url: string) {
-        // All done
+    private _url:  string;
+    private _hash: string;
+
+    constructor(private _config: EngineConfig, private _workers: (Worker | undefined)[], url: string) {
+        const [base, ...frag] = url.split('#');
+
+        this._url  = base;
+        this._hash = frag.join('#');
     }
 
     get log(): Console {
@@ -62,7 +68,7 @@ export class TemplateEngineImpl implements TemplateEngine {
             try {
                 if (page) {
                     this.log.info(`${this._url}: Using cached template.`);
-                    delete worker.pageCache[worker.pageCache.indexOf(page)];
+                    worker.pageCache = worker.pageCache.filter((p) => p !== page);
                 }
                 else {
                     // ... or create a new one
@@ -71,6 +77,8 @@ export class TemplateEngineImpl implements TemplateEngine {
                 }
 
                 try {
+                    await page.evaluate((hash) => history.replaceState(null, '', `#${hash}`), this._hash);
+
                     // Send document/model to template
                     this.log.info(`${this._url}: Initializing ${contentType} model.`);
                     const info = await this._sendMessage(page, ['ghostlyInit', { document, contentType }], onGhostlyEvent) as ResultInfo | null;
@@ -125,14 +133,9 @@ export class TemplateEngineImpl implements TemplateEngine {
                 }
 
                 // Return template to page cache if there were no errors
-                for (let i = 0; i < this._config.pageCache; ++i) {
-                    if (!worker.pageCache[i]) {
-                        this.log.info(`${this._url}: Returning template to page cache.`);
-                        worker.pageCache[i] = page;
-                        page = undefined;
-                        break;
-                    }
-                }
+                this.log.info(`${this._url}: Returning template to page cache.`);
+                worker.pageCache.unshift(page);
+                page = worker.pageCache.length > this._config.pageCache ? worker.pageCache.pop() : undefined;
             }
             finally {
                 await page?.close();
