@@ -1,8 +1,12 @@
+NODE_MODULES	= node_modules/.yarn-integrity \
+		  ghostly-cli/node_modules \
+		  ghostly-engine/node_modules
+
 all:		build
 
-prepare:	node_modules/.yarn-integrity
+prepare:	$(NODE_MODULES)
 
-node_modules/.yarn-integrity:	package.json yarn.lock
+$(NODE_MODULES):package.json */package.json yarn.lock
 	yarn --frozen-lockfile --mutex network
 	touch $@
 
