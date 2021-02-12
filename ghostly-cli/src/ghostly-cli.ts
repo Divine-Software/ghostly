@@ -7,9 +7,15 @@ import { promises as fs, writeFileSync } from 'fs';
 import http from 'http';
 import { AddressInfo } from 'net';
 import os from 'os';
+import path from 'path';
 import packageJSON from '../package.json';
 
 const sysconsole = new SysConsole({ syslog: false, showFile: false });
+
+function toFileName(basename: string, contentType: string): string {
+    const ext = contentType.replace(/.*\/([^+]*).*/, '$1') || 'bin';
+    return `${basename}.${ext === 'plain' ? 'txt' : ext}`;
+}
 
 function parseArgs(): commander.Command {
     const argv = commander
@@ -46,6 +52,7 @@ function parseArgs(): commander.Command {
         .option('    --render-orientation <portrait|landscape>',   'whether to render in portrait or landscape mode [portrait]')
         .option('-H, --http <host:port>',                          'run an HTTP server on this host and port')
         .option('-o  --output <file>',                             'template output filename [standard output]')
+        .option('-O  --output-dir <directory>',                    'attachments output directory [disabled]')
         .option('    --page-cache <num>',                          'each worker keeps <num> pages cached [0]', int)
         .option('    --browser <chromium|firefox|webkit[:<file>]', 'Specify browser to use (with optional exe path override)')
         .option('    --pidfile <file>',                            'fork and write PID to this file')
@@ -70,6 +77,7 @@ function parseArgs(): commander.Command {
         check(!argv.renderFormat,      '--render-format requires --template');
         check(!argv.renderOrientation, '--render-orientation requires --template');
         check(!argv.output,            '--output requires --template');
+        check(!argv.outputDir,         '--output-dir requires --template');
     }
 
     if (argv.http) {
@@ -122,13 +130,21 @@ export async function main(): Promise<void> {
 
             const evlog  = (data: object) => sysconsole.notice(data);
             const data   = await fs.readFile(file !== '-' ? file : '/dev/stdin');
-            const result = (await template.renderViews(data.toString(), argv.contentType || 'application/json', [ view ], false, evlog))[0].data;
+            const result = (await template.renderViews(data.toString(), argv.contentType || 'application/json', [ view ], !!argv.outputDir, evlog));
 
+            // Write rendered view (which is always the first RenderResult)
             if (argv.output) {
-                await fs.writeFile(argv.output, result);
+                await fs.writeFile(argv.output, result[0].data);
             }
             else {
-                await new Promise<void>((resolve, reject) => process.stdout.write(result) ? resolve() : process.stdout.once('drain', resolve).once('error', reject));
+                await new Promise<void>((resolve, reject) => process.stdout.write(result[0].data) ? resolve() : process.stdout.once('drain', resolve).once('error', reject));
+            }
+
+            // Write attachments
+            for (const rr of result) {
+                if (argv.outputDir && rr.type === 'attachment' && rr.name) {
+                    await fs.writeFile(toFileName(path.resolve(argv.outputDir, rr.name), rr.contentType), rr.data);
+                }
             }
         }
     }

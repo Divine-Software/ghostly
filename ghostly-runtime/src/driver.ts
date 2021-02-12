@@ -1,5 +1,5 @@
 import { GhostlyError } from './runtime';
-import type { GhostlyEvent, GhostlyPacket, GhostlyRequest, GhostlyResponse, OnGhostlyEvent } from './types';
+import type { GhostlyEvent, GhostlyPacket, GhostlyRequest, GhostlyResponse, GhostlyTypes, OnGhostlyEvent } from './types';
 
 /**
  * Convenience function to invoke a command, for pure-browser environments.
@@ -12,7 +12,7 @@ import type { GhostlyEvent, GhostlyPacket, GhostlyRequest, GhostlyResponse, OnGh
  * @see sendGhostlyMessage
  * @see parseGhostlyPacket
  */
-export function executeGhostlyCommand(target: Window, request: GhostlyRequest, onGhostlyEvent?: OnGhostlyEvent, timeout?: number): Promise<Uint8Array | string | object | null> {
+export function executeGhostlyCommand(target: Window, request: GhostlyRequest, onGhostlyEvent?: OnGhostlyEvent, timeout?: number): Promise<GhostlyTypes> {
     return sendGhostlyMessage(target, request, onGhostlyEvent, timeout).then((packet) => parseGhostlyPacket(request, packet));
 }
 
@@ -86,7 +86,7 @@ export function executeGhostlyCommand(target: Window, request: GhostlyRequest, o
  *
  * @see sendGhostlyMessage
  */
-export function parseGhostlyPacket(request: GhostlyRequest, response: GhostlyPacket): Uint8Array | string | object | null {
+export function parseGhostlyPacket(request: GhostlyRequest, response: GhostlyPacket): GhostlyTypes {
     const stringToUint8Array = (value: string) => Uint8Array.from(Array.from(value).map((c) => c.charCodeAt(0)));
 
     const result = typeof response[1] === 'string' ?

@@ -1,7 +1,9 @@
 export interface Template {
     ghostlyLoad?(url: string): void | Promise<void>;
-    ghostlyInit(model: Model): void | Promise<void>;
-    ghostlyRender(view: View): Uint8Array | string | null | Promise<Uint8Array | string | null>;
+    ghostlyInit(model: Model): void | AttachmentInfo | Promise<void | AttachmentInfo>;
+    ghostlyRender(view: View): void | Uint8Array | string | null | Promise<void | Uint8Array | string | null>;
+    ghostlyFetch?(attachmentInfo: AttachmentInfo): void | Uint8Array | string | null | Promise<void | Uint8Array | string | null>;
+    ghostlyEnd(): void | Promise<void>;
 }
 
 /** The module (data) that should be rendered by the template */
@@ -13,6 +15,12 @@ export interface Model {
     contentType: string;
 }
 
+export interface ResultInfo {
+    name:         string;
+    description?: string;
+    attachments?: AttachmentInfo[];
+}
+
 export interface View {
     contentType:   string;
     params:        unknown;
@@ -21,16 +29,24 @@ export interface View {
     paperSize?:    PaperSize;
 }
 
-export type OnGhostlyEvent = (event: object) => void;
+export interface AttachmentInfo extends View {
+    name:         string;
+    description?: string;
+}
 
-export type PaperFormat  = "A0" | "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "Letter" | "Legal" | "Tabloid" | "Ledger";
-export type PaperSize    = { format?: PaperFormat, orientation?: 'portrait' | 'landscape' };
-export type ViewportSize = { width?: number, height?: number };
+export type OnGhostlyEvent  = (event: object) => void;
 
-export type GhostlyRequest  = [ 'ghostlyInit',   Model  ] |
-                              [ 'ghostlyRender', View   ] |
-                              [ 'ghostlyLoad',   string ];
-export type GhostlyEvent    = [ 'ghostlyEvent',  object ];
-export type GhostlyResponse = [ 'ghostlyACK',    string | Uint8Array | object | null ] |
-                              [ 'ghostlyNACK',   string | Uint8Array | object | null ];
+export type PaperFormat     = "A0" | "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "Letter" | "Legal" | "Tabloid" | "Ledger";
+export type PaperSize       = { format?: PaperFormat, orientation?: 'portrait' | 'landscape' };
+export type ViewportSize    = { width?: number, height?: number };
+
+export type GhostlyRequest  = [ 'ghostlyLoad',   string         ] |
+                              [ 'ghostlyInit',   Model          ] |
+                              [ 'ghostlyRender', View           ] |
+                              [ 'ghostlyFetch',  AttachmentInfo ] |
+                              [ 'ghostlyEnd',    null           ];
+export type GhostlyEvent    = [ 'ghostlyEvent',  object         ];
+export type GhostlyResponse = [ 'ghostlyACK',    GhostlyTypes   ] |
+                              [ 'ghostlyNACK',   GhostlyTypes   ];
 export type GhostlyPacket   = [ string, string | null, ('Uint8Array' | 'JSON')? ];
+export type GhostlyTypes    = Uint8Array | string | object | null;

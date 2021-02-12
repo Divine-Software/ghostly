@@ -1,8 +1,8 @@
 import { parseGhostlyPacket, sendGhostlyMessage } from '@divine/ghostly-runtime';
-import { GhostlyRequest, OnGhostlyEvent, PaperSize, View, ViewportSize } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
+import { AttachmentInfo, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, ResultInfo, View, ViewportSize } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
 import { Browser, Page } from 'playwright-chromium';
 import packageJSON from '../package.json';
-import { EngineConfig, RenderedView, TemplateEngine } from './engine';
+import { EngineConfig, RenderResult, TemplateEngine } from './engine';
 
 export interface Worker {
     id:        number;
@@ -45,15 +45,19 @@ export class TemplateEngineImpl implements TemplateEngine {
         return (await this.renderViews(document, contentType, [{ contentType: format, params: params }], false, onGhostlyEvent))[0].data;
     }
 
-    async renderViews(document: string | object, contentType: string, views: View[], _attachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderedView[]> {
+    async renderViews(document: string | object, contentType: string, views: View[], attachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]> {
         const worker = this._selectWorker();
-        const result = [] as RenderedView[];
+        const result = [] as RenderResult[];
+        const events = [] as object[];
+
+        // Return events if custom handler not provider
+        onGhostlyEvent ??= (event) => events.push(event);
 
         try {
             ++worker.load;
 
             // Find a cached template ...
-            let page = worker.pageCache.find((page) => !!page && page.url() === this._url)!;
+            let page = worker.pageCache.find((page) => !!page && page.url() === this._url);
 
             try {
                 if (page) {
@@ -66,83 +70,72 @@ export class TemplateEngineImpl implements TemplateEngine {
                     page = await this._createPage(worker, onGhostlyEvent);
                 }
 
-                // Send document/model to template
-                await this._sendMessage(page, ['ghostlyInit', { document, contentType }], onGhostlyEvent);
+                try {
+                    // Send document/model to template
+                    this.log.info(`${this._url}: Initializing ${contentType} model.`);
+                    const info = await this._sendMessage(page, ['ghostlyInit', { document, contentType }], onGhostlyEvent) as ResultInfo | null;
 
-                // Render all views
-                for (const view of deleteUndefined(views) /* Ensure undefined values do not overwrite defaults */) {
-                    const dpi = view.dpi || 96;
-                    const ps: Required<PaperSize> = { format: 'A4', orientation: 'portrait', ...view.paperSize };
-                    const dim = this._paperDimensions(view.contentType === 'application/pdf' ? ps : view.paperSize, dpi)
-                    const vps: Required<ViewportSize> = { ...dim, ...view.viewportSize };
-                    const clip = view.viewportSize?.width || view.viewportSize?.height ? { x: 0, y: 0, ...vps } : undefined;
+                    if (info) { // Validate ResultInfo
+                        if (typeof info !== 'object' ||
+                            typeof info.name !== 'string' ||
+                            info.description !== undefined && typeof info.description !== 'string' ||
+                            info.attachments !== undefined && !Array.isArray(info.attachments)) {
+                            throw new Error(`${this._url}: ghostlyInit did not return a valid ResultInfo object: ${JSON.stringify(info)}`);
+                        }
 
-                    this.log.info(`${this._url}: Rendering view ${view.contentType} (${vps.width}x${vps.height} @ ${dpi} DPI).`);
-
-                    await page.setViewportSize(vps);
-
-                    let buffer: Buffer;
-                    const data = await this._sendMessage(page, ['ghostlyRender', view], onGhostlyEvent);
-
-                    if (data instanceof Buffer) {
-                        buffer = data;
-                    }
-                    else if (data instanceof Uint8Array) {
-                        buffer = Buffer.from(data.buffer);
-                    }
-                    else if (typeof data === 'string') {
-                        buffer = Buffer.from(data);
-                    }
-                    else if (!data) {
-                        switch (view.contentType) {
-                            case 'text/html':
-                                buffer = Buffer.from(await page.content());
-                                break;
-
-                            case 'text/plain':
-                                buffer = Buffer.from(await page.innerText('css=body'));
-                                break;
-
-                            case 'application/pdf':
-                                buffer = await page.pdf({
-                                    format:    ps.format,
-                                    landscape: ps.orientation === 'landscape',
-                                });
-                                break;
-
-                            case 'image/jpeg':
-                                buffer = await page.screenshot({ fullPage: true, type: 'jpeg', clip });
-                                break;
-
-                            case 'image/png':
-                                buffer = await page.screenshot({ fullPage: true, type: 'png', clip });
-                                break;
-
-                            default:
-                                throw new Error(`Template ${page!.url()} did not return a result for view ${view.contentType}`)
+                        for (const ai of info.attachments ?? []) {
+                            if (typeof ai.contentType !== 'string' ||
+                                typeof ai.name !== 'string' ||
+                                ai.description !== undefined && typeof ai.description !== 'string') {
+                                throw new Error(`${this._url}: ghostlyInit returned an invalid AttachmentInfo record: ${JSON.stringify(ai)}`);
+                            }
                         }
                     }
-                    else {
-                        throw new Error(`Template ${page!.url()} returned an unexpected object ${view.contentType}: ${data}`)
+
+                    // Render all views
+                    for (const view of deleteUndefined(views) /* Ensure undefined values do not overwrite defaults */) {
+                        result.push({
+                            type:        'view',
+                            name:        info?.name,
+                            description: info?.description,
+                            contentType: view.contentType,
+                            data:        await this._renderViewOrAttachment(view, null, page, onGhostlyEvent),
+                        });
                     }
 
-                    result.push({ contentType: view.contentType, data: buffer });
+                    // Render all attachments
+                    if (info && attachments) {
+                        for (const ai of info.attachments ?? []) {
+                            result.push({
+                                type:        'attachment',
+                                contentType: ai.contentType,
+                                name:        ai.name,
+                                description: ai.description,
+                                data:        await this._renderViewOrAttachment(ai, ai, page, onGhostlyEvent),
+                            });
+                        }
+                    }
+
+                    // Add events to result, if no onGhostlyEvent handler was provided
+                    result.push(...events.map((event) => ({ type: 'event' as const, 'contentType': 'application/json', data: Buffer.from(JSON.stringify(event))})));
+                }
+                finally {
+                    // Silently ignore ghostlyEnd errors, since only v2 templates implement this method
+                    await this._sendMessage(page, ['ghostlyEnd', null], onGhostlyEvent).catch(() => null);
                 }
 
                 // Return template to page cache if there were no errors
                 for (let i = 0; i < this._config.pageCache; ++i) {
                     if (!worker.pageCache[i]) {
-                        this.log.info(`${page.url()}: Returning template to page cache.`);
+                        this.log.info(`${this._url}: Returning template to page cache.`);
                         worker.pageCache[i] = page;
-                        page = undefined!;
+                        page = undefined;
                         break;
                     }
                 }
             }
             finally {
-                if (page) {
-                    await page.close();
-                }
+                await page?.close();
             }
         }
         finally {
@@ -150,6 +143,67 @@ export class TemplateEngineImpl implements TemplateEngine {
         }
 
         return result;
+    }
+
+    private async _renderViewOrAttachment(view: View, info: AttachmentInfo | null, page: Page, onGhostlyEvent: OnGhostlyEvent | undefined): Promise<Buffer> {
+        const dpi = view.dpi || 96;
+        const ps: Required<PaperSize> = { format: 'A4', orientation: 'portrait', ...view.paperSize };
+        const dim = this._paperDimensions(view.contentType === 'application/pdf' ? ps : view.paperSize, dpi)
+        const vps: Required<ViewportSize> = { ...dim, ...view.viewportSize };
+        const clip = view.viewportSize?.width || view.viewportSize?.height ? { x: 0, y: 0, ...vps } : undefined;
+
+        this.log.info(`${this._url}: Rendering ${info ? `attachment '${info.name}'` : 'view'} as ${view.contentType} (${vps.width}x${vps.height} @ ${dpi} DPI).`);
+        await page.setViewportSize(vps);
+
+        const data = info
+            ? await this._sendMessage(page, ['ghostlyFetch', info], onGhostlyEvent)
+            : await this._sendMessage(page, ['ghostlyRender', view], onGhostlyEvent)
+
+        if (data instanceof Buffer) {
+            return data;
+        }
+        else if (data instanceof Uint8Array) {
+            return Buffer.from(data.buffer);
+        }
+        else if (typeof data === 'string') {
+            return Buffer.from(data);
+        }
+        else if (!data) {
+            switch (view.contentType) {
+                case 'text/html':
+                    return Buffer.from(await page.content());
+                    break;
+
+                case 'text/plain':
+                    return Buffer.from(await page.innerText('css=body'));
+                    break;
+
+                case 'application/pdf':
+                    return await page.pdf({
+                        format:    ps.format,
+                        landscape: ps.orientation === 'landscape',
+                    });
+                    break;
+
+                case 'image/jpeg':
+                    return await page.screenshot({ fullPage: true, type: 'jpeg', clip });
+                    break;
+
+                case 'image/png':
+                    return await page.screenshot({ fullPage: true, type: 'png', clip });
+                    break;
+
+                default:
+                    throw info
+                        ? new Error(`${this._url}: ghostlyFetch did not return a result for attachment ${JSON.stringify(info)}`)
+                        : new Error(`${this._url}: ghostlyRender did not return a result for view ${JSON.stringify(view)}`)
+            }
+        }
+        else {
+            throw info
+                ? new Error(`${this._url}: ghostlyFetch returned an unexpected object for attachment ${JSON.stringify(info)}: ${data}`)
+                : new Error(`${this._url}: ghostlyRender returned an unexpected object for view ${JSON.stringify(view)}: ${data}`)
+        }
     }
 
     private _selectWorker(): Worker {
@@ -162,7 +216,7 @@ export class TemplateEngineImpl implements TemplateEngine {
         }
 
         if (!best) {
-            throw new Error(`No workers alive`);
+            throw new Error(`${this._url}: No workers alive`);
         }
 
         return best;
@@ -244,7 +298,7 @@ export class TemplateEngineImpl implements TemplateEngine {
                 window.__ghostly_message_proxy__.document.close();
             }
             catch (_ignored) {
-                throw 'Failed to create Ghostly message proxy!'
+                throw new Error(`Failed to create Ghostly message proxy!`);
             }
         }, sendGhostlyMessage.toString()))(null!);
 
@@ -252,16 +306,16 @@ export class TemplateEngineImpl implements TemplateEngine {
         return page;
     }
 
-    private async _sendMessage(page: Page, request: GhostlyRequest, onGhostlyEvent: OnGhostlyEvent | undefined): Promise<Uint8Array | string | object | null> {
+    private async _sendMessage(page: Page, request: GhostlyRequest, onGhostlyEvent: OnGhostlyEvent | undefined): Promise<GhostlyTypes> {
         const response = await ((window: GhostlyWindow) => page.evaluate(([request, timeout]) => {
             try {
-                const events: object[] = [];
+                const events: object[] = []; // Batch all events since I don't know how to propagate them in real-time
 
                 return window.__ghostly_message_proxy__.sendGhostlyMessage(window, request, (data) => events.push(data), timeout)
                     .then((packet) => ({ packet, events}));
             }
             catch (err) {
-                throw `Ghostly message proxy not found or it's failing: ${err}`;
+                throw new Error(`Ghostly message proxy not found or it's failing: ${err}`);
             }
         }, [request, this._config.timeout] as const))(null!);
 

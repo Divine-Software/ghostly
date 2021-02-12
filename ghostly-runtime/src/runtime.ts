@@ -1,4 +1,4 @@
-import type { GhostlyRequest, Model, Template, View } from './types';
+import type { AttachmentInfo, GhostlyRequest, Model, Template, View } from './types';
 
 let source: Window | null = null;
 let events: Array<MessageEvent<GhostlyRequest>> = [];
@@ -39,6 +39,14 @@ export namespace ghostly {
 
         ghostlyRender(_view: View) {
             throw new Error('ghostlyRender: This method must be implemented!');
+        },
+
+        ghostlyFetch(_attachmentInfo: AttachmentInfo) {
+            throw new Error('ghostlyFetch: This method must be implemented!');
+        },
+
+        ghostlyEnd() {
+            // Do nothing
         },
     }
 

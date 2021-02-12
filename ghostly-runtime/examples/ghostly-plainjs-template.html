@@ -29,6 +29,23 @@ td,th {
       ghostly.init({
           ghostlyInit(model) {
               this.document = ghostly.parse(model);
+
+              return {
+                  name:        'plainjs-template',
+                  description: document.head.title,
+                  attachments: [
+                      { name: 'model', contentType: 'application/json' }
+                  ]
+              }
+          },
+
+          ghostlyFetch(ai) {
+                if (ai.name === 'model') {
+                    return JSON.stringify(this.document);
+                }
+                else {
+                    throw new GhostlyError('Invalid attachment name', ai);
+                }
           },
 
           ghostlyRender(view) {

@@ -17,18 +17,40 @@ export interface EngineConfig {
     workers:         number;
 }
 
-export interface RenderedView {
-    contentType: string;
-    data:        Buffer;
+export interface RenderResult {
+    type:         'attachment' | 'event' | 'view';
+    contentType:  string;
+    data:         Buffer;
+    name?:        string;
+    description?: string;
+}
+
+export interface HTTPRenderResult extends Omit<RenderResult, 'data'> {
+    /** The result, base64-encoded */
+    data: string;
+}
+
+export interface HTTPRenderRequest {
+    template:     string;
+    document:     string | object;
+    contentType:  string;
+    views:        View[];
+    attachments?: boolean;
+}
+
+export type HTTPRenderResponse = HTTPRenderResult[];
+
+export interface HTTPErrorResponse {
+    message: string;
 }
 
 export interface TemplateEngine {
     render(document: string | object, contentType: string, format: string, params: unknown, onGhostlyEvent?: OnGhostlyEvent): Promise<Buffer>;
-    renderViews(document: string | object, contentType: string, views: View[], attachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderedView[]>;
+    renderViews(document: string | object, contentType: string, views: View[], attachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]>;
 }
 
 export class Response {
-    constructor(public status: number, public body: string | Buffer | RenderedView[], public headers?: http.OutgoingHttpHeaders) {}
+    constructor(public status: number, public body: string | Buffer | RenderResult[], public headers?: http.OutgoingHttpHeaders) {}
 }
 
 export class Engine {
@@ -126,10 +148,11 @@ export class Engine {
         }
 
         let template    = uri.query.template as string | undefined;
-        let document    = uri.query.document as string | undefined;
+        let document    = uri.query.document as string | object | undefined;
         let contentType = (uri.query.contentType || 'application/json') as string;
         let view        = uri.query.view as string | undefined;
         let params      = uri.query.params && JSON.parse(uri.query.params as string) as unknown;
+        let attachments = false;
 
         if (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'POST') {
             throw new Response(405, 'Only GET, HEAD and POST requests are accepted');
@@ -180,7 +203,7 @@ export class Engine {
             views    = [{ contentType: view!, params: params }];
         }
         else {
-            let message;
+            let message: HTTPRenderRequest;
 
             if (contentType !== 'application/json') {
                 throw new Response(415, `Only application/json requests are accepted when the 'template' query param is missing`);
@@ -204,13 +227,14 @@ export class Engine {
                 throw new Response(422, `The 'views' JSON property is required and should be an array`);
             }
 
-            template    = message.template as string;
+            template    = message.template;
             document    = message.document;
             contentType = message.contentType || 'application/json';
             views       = message.views.map((view: View) => {
                 const { contentType, params, dpi, paperSize, viewportSize } = view;
                 return { contentType, params, dpi, paperSize, viewportSize };
             });
+            attachments = message.attachments ?? false;
         }
 
         let tpl: TemplateEngine;
@@ -222,11 +246,13 @@ export class Engine {
             throw new Response(403, ex.message);
         }
 
-        const results = await tpl.renderViews(document as string | object, contentType, views, false);
+        const results = await tpl.renderViews(document as string | object, contentType, views, attachments, undefined);
 
         if (view) {
-            if (results.length !== 1) {
-                throw new Error(`Expected 1 result but got ${results.length}`);
+            const vr = results.filter((rr) => rr.type === 'view');
+
+            if (vr.length !== 1) {
+                throw new Error(`Expected 1 rendered view but got ${vr.length}`);
             }
 
             return new Response(200, results[0].data, { 'Content-Type': results[0].contentType });
