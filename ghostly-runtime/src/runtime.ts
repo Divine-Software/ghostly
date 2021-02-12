@@ -12,6 +12,7 @@ if (typeof addEventListener === 'function') { // Don't crash in non-DOM environm
     });
 }
 
+/** An Error class that can propage an extra data member back to the controlling application/driver */
 export class GhostlyError extends Error {
     constructor(message: string, public data?: string | object | null) {
         super(message);
@@ -28,6 +29,7 @@ export class GhostlyError extends Error {
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ghostly {
+    /** @private */
     export const defaults: Template = {
         ghostlyLoad(_url: string) {
             // Do nothing
@@ -50,6 +52,11 @@ export namespace ghostly {
         },
     }
 
+    /**
+     * Initializes *Ghostly* and installs a `Template` implementation.
+     *
+     * @param impl The Ghostly interface implementation to use for this template
+     */
     export function init(impl: Template): void {
         if (handler) {
             throw new Error("ghostly.init: Ghostly already initialized!");
@@ -84,11 +91,18 @@ export namespace ghostly {
     /** @deprecated */
     export const template = init;
 
-    export function notify(message: object): void {
+    /**
+     * Send a custom message to the controlling application/driver.
+     *
+     * Note: This method is only valid any of the `Template` implementation methods is executing.
+     *
+     * @param message The message to send, or `null` for just letting the driver know you're still alive.
+     */
+    export function notify(message: object | null): void {
         if (!source) {
             throw new Error(`ghostly.notify: No Ghostly operation is currently in progress`);
         }
-        else if (!message || typeof message !== 'object') {
+        else if (typeof message !== 'object') {
             throw new TypeError(`ghostly.notify: Message must be an object`);
         }
         else {
@@ -96,10 +110,21 @@ export namespace ghostly {
         }
     }
 
-    export function destroy(_impl: Template): void {
+    /**
+     * Uninstalls the `Template` implementation.
+     *
+     * @param impl The implementation that was previously installed by the `init` method.
+     */
+    export function destroy(impl: Template): void {
+        void impl;
         handler = null;
     }
 
+    /**
+     * Helper method that can be used to parse a `Model` object as JSON, HTML or XML.
+     *
+     * @param model A model received by `ghostlyInit`
+     */
     export function parse(model: Model): object | Document {
         if (typeof model.document === 'string') {
             if (/^(application\/json|[^/]+\/[^+]+\+json)$/.test(model.contentType)) {

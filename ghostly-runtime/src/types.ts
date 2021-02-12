@@ -45,7 +45,7 @@ export type GhostlyRequest  = [ 'ghostlyLoad',   string         ] |
                               [ 'ghostlyRender', View           ] |
                               [ 'ghostlyFetch',  AttachmentInfo ] |
                               [ 'ghostlyEnd',    null           ];
-export type GhostlyEvent    = [ 'ghostlyEvent',  object         ];
+export type GhostlyEvent    = [ 'ghostlyEvent',  object | null  ];
 export type GhostlyResponse = [ 'ghostlyACK',    GhostlyTypes   ] |
                               [ 'ghostlyNACK',   GhostlyTypes   ];
 export type GhostlyPacket   = [ string, string | null, ('Uint8Array' | 'JSON')? ];

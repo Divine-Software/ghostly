@@ -47,9 +47,13 @@ export function executeGhostlyCommand(target: Window, request: GhostlyRequest, o
         const eventListener = (event: MessageEvent<GhostlyEvent | GhostlyResponse>) => {
             const response = event.data;
 
-            if (Array.isArray(response) && response[0] === 'ghostlyEvent' && response[1] && typeof response[1] === 'object') {
+            if (Array.isArray(response) && response[0] === 'ghostlyEvent' && typeof response[1] === 'object') {
                 resetWatchdog();
-                onGhostlyEvent?.(response[1]);
+
+                if (response[1]) {
+                    onGhostlyEvent?.(response[1]);
+                }
+
                 return;
             }
 
