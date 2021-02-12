@@ -2,7 +2,7 @@ all:		build
 
 prepare:	node_modules/.yarn-integrity
 
-node_modules/.yarn-integrity:	package.json yarn.lock
+node_modules/.yarn-integrity:	package.json */package.json yarn.lock
 	yarn --frozen-lockfile --mutex network
 	touch $@
 

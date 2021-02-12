@@ -17,16 +17,17 @@ function toFileName(basename: string, contentType: string): string {
     return `${basename}.${ext === 'plain' ? 'txt' : ext}`;
 }
 
-function parseArgs(): commander.Command {
-    const argv = commander
+function parseArgs() {
+    const cmd = commander
         .usage('[options] [document]')
         .description('Render a Ghostly template or start a Ghostly HTTP server.')
         .version(packageJSON.version);
 
     function check(cond: boolean, message: string) {
         if (!cond) {
-            argv.outputHelp();
-            throw `Argument error: ${message}.`;
+            cmd.outputHelp();
+            console.error(`Argument error: ${message}.`);
+            process.exit(64);
         }
     }
 
@@ -42,7 +43,8 @@ function parseArgs(): commander.Command {
         return rc;
     }
 
-    argv.option('    --content-type <content-type>',               'input document format [application/json]')
+    const argv = cmd
+        .option('    --content-type <content-type>',               'input document format [application/json]')
         .option('-d, --debug',                                     'enable debug logging')
         .option('    --format <content-type>',                     'template output format [text/html]')
         .option('    --render-dpi <dpi>',                          'dots per inch when rendering images [96]', int)
@@ -61,14 +63,15 @@ function parseArgs(): commander.Command {
         .option('-T, --template-pattern <regexp>',                 'restrict template URIs to this regular expression')
         .option('-u, --user <user>',                               'run as this user')
         .option('    --workers <num>',                             'number of worker processes [1]', int)
-        .parse(process.argv);
+        .parse(process.argv)
+        .opts();
 
     if (argv.template) {
-        check(argv.args.length >= 1, 'No input document specified');
-        check(argv.args.length <= 1, 'Only one input document may be specified');
+        check(cmd.args.length >= 1, 'No input document specified');
+        check(cmd.args.length <= 1, 'Only one input document may be specified');
     }
     else {
-        check(!argv.args.length,       'Cannot specify document without --template');
+        check(!cmd.args.length,        'Cannot specify document without --template');
         check(!argv.contentType,       '--content-type requires --template');
         check(!argv.format,            '--format requires --template');
         check(!argv.renderDpi,         '--render-dpi requires --template');
@@ -92,11 +95,11 @@ function parseArgs(): commander.Command {
 
     check(!!argv.http != !!argv.template, 'Either --http or --template must be specified, but not both');
 
-    return argv;
+    return { cmd, argv };
 }
 
 export async function main(): Promise<void> {
-    const argv = parseArgs()
+    const { cmd, argv } = parseArgs()
 
     const config: Partial<EngineConfig> = {};
 
@@ -119,7 +122,7 @@ export async function main(): Promise<void> {
     if (argv.template) {
         const template = (await engine.start()).template(argv.template);
 
-        for (const file of argv.args) {
+        for (const file of cmd.args) {
             const view: View = {
                 contentType:  argv.format || 'text/html',
                 dpi:          argv.renderDpi,
