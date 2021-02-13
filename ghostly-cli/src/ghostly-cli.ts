@@ -107,13 +107,16 @@ export async function main(): Promise<void> {
         config.logger = sysconsole;
     }
 
+    const [ browserType, ...browserPath ] = argv.browser?.split(':') ?? [];
+    config.browser     = browserType;
+    config.browserPath = browserPath.join(':') || undefined;
+
     function arg<T>(name: keyof EngineConfig, type: (value: string) => T) {
         if (argv[name] !== undefined) (config as any /* why?? */)[name] = type(argv[name]);
     }
 
     arg('templatePattern', RegExp);
     arg('pageCache',       Number);
-    arg('browser',         String);
     arg('relaunchDelay',   Number);
     arg('workers',         Number);
 

@@ -19,19 +19,6 @@ interface GhostlyWindow extends Window {
     __ghostly_message_proxy__: GhostlyProxyWindow
 }
 
-function deleteUndefined<T extends object>(obj: T): T {
-    for (const prop in obj) {
-        if (obj[prop] === undefined) {
-            delete obj[prop];
-        }
-        else if (typeof obj[prop] === 'object') {
-            deleteUndefined(obj[prop] as unknown as object);
-        }
-    }
-
-    return obj;
-}
-
 export class TemplateEngineImpl implements TemplateEngine {
     private _url:  string;
     private _hash: string;
@@ -133,11 +120,17 @@ export class TemplateEngineImpl implements TemplateEngine {
                 }
 
                 // Return template to page cache if there were no errors
-                this.log.info(`${this._url}: Returning template to page cache.`);
-                worker.pageCache.unshift(page);
-                page = worker.pageCache.length > this._config.pageCache ? worker.pageCache.pop() : undefined;
+                if (this._config.pageCache) {
+                    this.log.info(`${this._url}: Returning template to page cache.`);
+                    worker.pageCache.unshift(page);
+                    page = worker.pageCache.length > this._config.pageCache ? worker.pageCache.pop() : undefined;
+                }
             }
             finally {
+                if (page && this._config.pageCache) {
+                    this.log.info(`${this._url}: Evicting template ${page.url().replace(/#.*/, '')} from page cache.`);
+                }
+
                 await page?.close();
             }
         }
@@ -329,4 +322,17 @@ export class TemplateEngineImpl implements TemplateEngine {
 
 export function browserVersion(browser: Browser): string {
     return `${browser.constructor.name}/${browser.version()}`;
+}
+
+export function deleteUndefined<T extends object>(obj: T): T {
+    for (const prop in obj) {
+        if (obj[prop] === undefined) {
+            delete obj[prop];
+        }
+        else if (typeof obj[prop] === 'object') {
+            deleteUndefined(obj[prop] as unknown as object);
+        }
+    }
+
+    return obj;
 }

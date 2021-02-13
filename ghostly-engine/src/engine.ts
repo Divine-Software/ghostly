@@ -3,12 +3,13 @@ import http from 'http';
 import playwright from 'playwright-chromium';
 import stream from 'stream';
 import url from 'url';
-import { browserVersion, TemplateEngineImpl, Worker } from './template';
+import { browserVersion, deleteUndefined, TemplateEngineImpl, Worker } from './template';
 
 const nullConsole = new console.Console(new stream.PassThrough());
 
 export interface EngineConfig {
-    browser:         string;
+    browser:         'chromium' | 'firefox' | 'webkit';
+    browserPath:     string | null;
     logger:          Console;
     pageCache:       number;
     relaunchDelay:   number;
@@ -63,10 +64,11 @@ export class Engine {
             logger:          nullConsole,
             templatePattern: /.*/,
             browser:         'chromium',
+            browserPath:     null,
             relaunchDelay:   1,
             workers:         1,
             pageCache:       0,
-            ...config
+            ...deleteUndefined(config)
         };
 
         this._workers = [];
@@ -278,15 +280,14 @@ export class Engine {
             return this._workers[id]!;
         }
 
-        const [ type, ...path ] = this._config.browser.split(':');
-        const browserType = playwright[type as 'chromium' | 'firefox' | 'webkit']
+        const browserType = playwright[this._config.browser];
 
         if (!browserType || typeof browserType.launch !== 'function') {
             throw new Error(`Unsupported browser ${this._config.browser}`);
         }
 
         const browser = await browserType.launch({
-            executablePath: path.join(':'),
+            executablePath: this._config.browserPath ?? undefined
         });
 
         browser.on('disconnected', () => {
