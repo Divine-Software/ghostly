@@ -80,6 +80,19 @@ module.exports = {
       copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
     },
   },
+  plugins: [
+    [
+      'docusaurus-plugin-typedoc',
+
+      {
+        entryPoints: [
+          '../ghostly-engine/index.ts',
+          '../ghostly-runtime/index.ts',
+        ],
+        tsconfig: '../tsconfig.json'
+      },
+    ],
+  ],
   presets: [
     [
       '@docusaurus/preset-classic',
