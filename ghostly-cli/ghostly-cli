@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./lib/src/ghostly-cli').main()
+require('.').main()
     .catch((err) => {
         console.error(String(err), JSON.stringify(err, null, 4));
         return 70;

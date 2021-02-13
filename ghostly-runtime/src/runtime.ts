@@ -29,7 +29,7 @@ export class GhostlyError extends Error {
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ghostly {
-    /** @private */
+    /** @private @internal */
     export const defaults: Template = {
         ghostlyLoad(_url: string) {
             // Do nothing
@@ -88,7 +88,7 @@ export namespace ghostly {
         events = [];
     }
 
-    /** @deprecated */
+    /** @deprecated @internal */
     export const template = init;
 
     /**

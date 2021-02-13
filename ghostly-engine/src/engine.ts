@@ -1,5 +1,5 @@
 import type { OnGhostlyEvent, View } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
-import http from 'http';
+import { IncomingMessage, OutgoingHttpHeaders, ServerResponse } from 'http';
 import playwright from 'playwright-chromium';
 import stream from 'stream';
 import url from 'url';
@@ -51,7 +51,7 @@ export interface TemplateEngine {
 }
 
 export class Response {
-    constructor(public status: number, public body: string | Buffer | RenderResult[], public headers?: http.OutgoingHttpHeaders) {}
+    constructor(public status: number, public body: string | Buffer | RenderResult[], public headers?: OutgoingHttpHeaders) {}
 }
 
 export class Engine {
@@ -111,7 +111,7 @@ export class Engine {
     // GET  http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}&document=...&contentType=mime/type
     // POST http://localhost:9999/?template=http://.../foo.html&view=mime/type&params={json}
     // POST http://localhost:9999/
-    async httpRequestHandler(request: http.IncomingMessage, response?: http.ServerResponse): Promise<Response> {
+    async httpRequestHandler(request: IncomingMessage, response?: ServerResponse): Promise<Response> {
         let result: Response;
 
         try {
@@ -139,7 +139,7 @@ export class Engine {
         return result;
     }
 
-    async handleRequest(request: http.IncomingMessage): Promise<Response> {
+    async handleRequest(request: IncomingMessage): Promise<Response> {
         let body: string | undefined;
         let views: View[];
 
