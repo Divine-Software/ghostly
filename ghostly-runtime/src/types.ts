@@ -15,18 +15,19 @@ export interface Model {
     contentType: string;
 }
 
-export interface ResultInfo {
+export interface ModelInfo {
     name:         string;
     description?: string;
     attachments?: AttachmentInfo[];
 }
 
 export interface View {
-    contentType:   string;
-    params:        unknown;
-    dpi?:          number;
-    viewportSize?: ViewportSize;
-    paperSize?:    PaperSize;
+    contentType:     string;
+    params:          unknown;
+    dpi?:            number;
+    paperSize?:      PaperSize;
+    viewportSize?:   ViewportSize;
+    htmlTransforms?: HTMLTransform[];
 }
 
 export interface AttachmentInfo extends View {
@@ -36,6 +37,7 @@ export interface AttachmentInfo extends View {
 
 export type OnGhostlyEvent  = (event: object) => void;
 
+export type HTMLTransform   = 'sanitize' | 'minimize'
 export type PaperFormat     = "A0" | "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "Letter" | "Legal" | "Tabloid" | "Ledger";
 export type PaperSize       = { format?: PaperFormat, orientation?: 'portrait' | 'landscape' };
 export type ViewportSize    = { width?: number, height?: number };

@@ -32,10 +32,13 @@
     ],
     "dependencies": {
         "@divine/ghostly-runtime": "^2.0.1-beta-1",
+        "dompurify": "^2.2.6",
+        "html-minifier": "^4.0.0",
         "playwright-chromium": "~1.8",
         "tslib": "^2"
     },
     "devDependencies": {
+        "@types/html-minifier": "^4.0.0",
         "@types/node": "^12"
     },
     "engines": {

@@ -1,4 +1,4 @@
-import { Engine, EngineConfig, View } from '@divine/ghostly-engine';
+import { Engine, EngineConfig, HTMLTransform, View } from '@divine/ghostly-engine';
 import { SysConsole } from '@divine/sysconsole';
 import childProcess from 'child_process';
 import commander from 'commander';
@@ -44,25 +44,26 @@ function parseArgs() {
     }
 
     const argv = cmd
-        .option('    --content-type <content-type>',               'input document format [application/json]')
-        .option('-d, --debug',                                     'enable debug logging')
-        .option('    --format <content-type>',                     'template output format [text/html]')
-        .option('    --render-dpi <dpi>',                          'dots per inch when rendering images [96]', int)
-        .option('    --render-width <pixels>',                     'width of rendered image in pixels', int)
-        .option('    --render-height <pixels>',                    'height of rendered image in pixels', int)
-        .option('    --render-format <paper-size>',                'physical size of rendered PDF [A4]')
-        .option('    --render-orientation <portrait|landscape>',   'whether to render in portrait or landscape mode [portrait]')
-        .option('-H, --http <host:port>',                          'run an HTTP server on this host and port')
-        .option('-o  --output <file>',                             'template output filename [standard output]')
-        .option('-O  --output-dir <directory>',                    'attachments output directory [disabled]')
-        .option('    --page-cache <num>',                          'each worker keeps <num> pages cached [0]', int)
-        .option('    --browser <chromium|firefox|webkit[:<file>]', 'Specify browser to use (with optional exe path override)')
-        .option('    --pidfile <file>',                            'fork and write PID to this file')
-        .option('    --relaunch-delay <seconds>',                  'delay in seconds before relaunching a crashed worker [1]', int)
-        .option('-t, --template <url>',                            'execute this Ghostly template')
-        .option('-T, --template-pattern <regexp>',                 'restrict template URIs to this regular expression')
-        .option('-u, --user <user>',                               'run as this user')
-        .option('    --workers <num>',                             'number of worker processes [1]', int)
+        .option('    --content-type <content-type>',                  'input document format [application/json]')
+        .option('-d, --debug',                                        'enable debug logging')
+        .option('    --format <content-type>',                        'template output format [text/html]')
+        .option('    --render-dpi <dpi>',                             'dots per inch when rendering images [96]', int)
+        .option('    --render-width <pixels>',                        'width of rendered image in pixels', int)
+        .option('    --render-height <pixels>',                       'height of rendered image in pixels', int)
+        .option('    --render-format <paper-size>',                   'physical size of rendered PDF [A4]')
+        .option('    --render-orientation <portrait|landscape>',      'whether to render in portrait or landscape mode [portrait]')
+        .option('    --render-html-transforms <list>',                'comma-separated list of HTML transformations to apply [sanitize,minimize]')
+        .option('-H, --http <host:port>',                             'run an HTTP server on this host and port')
+        .option('-o  --output <file>',                                'template output filename [standard output]')
+        .option('-O  --output-dir <directory>',                       'attachments output directory [disabled]')
+        .option('    --page-cache <num>',                             'each worker keeps <num> pages cached [0]', int)
+        .option('    --browser <chromium|firefox|webkit[:<file>]',    'Specify browser to use (with optional exe path override)')
+        .option('    --pidfile <file>',                               'fork and write PID to this file')
+        .option('    --relaunch-delay <seconds>',                     'delay in seconds before relaunching a crashed worker [1]', int)
+        .option('-t, --template <url>',                               'execute this Ghostly template')
+        .option('-T, --template-pattern <regexp>',                    'restrict template URIs to this regular expression')
+        .option('-u, --user <user>',                                  'run as this user')
+        .option('    --workers <num>',                                'number of worker processes [1]', int)
         .parse(process.argv)
         .opts();
 
@@ -71,16 +72,17 @@ function parseArgs() {
         check(cmd.args.length <= 1, 'Only one input document may be specified');
     }
     else {
-        check(!cmd.args.length,        'Cannot specify document without --template');
-        check(!argv.contentType,       '--content-type requires --template');
-        check(!argv.format,            '--format requires --template');
-        check(!argv.renderDpi,         '--render-dpi requires --template');
-        check(!argv.renderWidth,       '--render-width requires --template');
-        check(!argv.renderHeight,      '--render-height requires --template');
-        check(!argv.renderFormat,      '--render-format requires --template');
-        check(!argv.renderOrientation, '--render-orientation requires --template');
-        check(!argv.output,            '--output requires --template');
-        check(!argv.outputDir,         '--output-dir requires --template');
+        check(!cmd.args.length,            'Cannot specify document without --template');
+        check(!argv.contentType,           '--content-type requires --template');
+        check(!argv.format,                '--format requires --template');
+        check(!argv.renderDpi,             '--render-dpi requires --template');
+        check(!argv.renderWidth,           '--render-width requires --template');
+        check(!argv.renderHeight,          '--render-height requires --template');
+        check(!argv.renderFormat,          '--render-format requires --template');
+        check(!argv.renderOrientation,     '--render-orientation requires --template');
+        check(!argv.renderHtmlTransforms,  '--render-html-transforms requires --template');
+        check(!argv.output,                '--output requires --template');
+        check(!argv.outputDir,             '--output-dir requires --template');
     }
 
     if (argv.http) {
@@ -127,11 +129,12 @@ export async function main(): Promise<void> {
 
         for (const file of cmd.args) {
             const view: View = {
-                contentType:  argv.format || 'text/html',
-                dpi:          argv.renderDpi,
-                paperSize:    { format: argv.renderFormat, orientation: argv.renderOrientation },
-                viewportSize: { width: argv.renderWidth, height: argv.renderHeight },
-                params:       null
+                contentType:    argv.format || 'text/html',
+                params:         null,
+                dpi:            argv.renderDpi,
+                paperSize:      { format: argv.renderFormat, orientation: argv.renderOrientation },
+                viewportSize:   { width: argv.renderWidth, height: argv.renderHeight },
+                htmlTransforms: (argv.renderHtmlTransforms as string)?.split(',').map(t => t.trim()).filter(t => !!t) as HTMLTransform[],
             };
 
             const evlog  = (data: object) => sysconsole.notice(data);

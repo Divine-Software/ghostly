@@ -127,7 +127,13 @@ export class Engine {
             body = { message: String(result.body) };
         }
         else if (result.body instanceof Array) {
-            body = result.body.map((rr) => ({ contentType: rr.contentType, data: rr.data.toString('base64') }));
+            body = result.body.map<HTTPRenderResult>((rr) => ({
+                type:        rr. type,
+                contentType: rr.contentType,
+                data:        rr.data.toString('base64'),
+                name:        rr.name,
+                description: rr.description,
+            }));
         }
         else {
             body = result.body;

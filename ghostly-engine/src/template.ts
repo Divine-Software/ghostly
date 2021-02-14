@@ -1,8 +1,12 @@
 import { parseGhostlyPacket, sendGhostlyMessage } from '@divine/ghostly-runtime';
-import { AttachmentInfo, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, ResultInfo, View, ViewportSize } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
+import { AttachmentInfo, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, ModelInfo, View, ViewportSize } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
+import { promises as fs } from 'fs';
 import { Browser, Page } from 'playwright-chromium';
 import packageJSON from '../package.json';
 import { EngineConfig, RenderResult, TemplateEngine } from './engine';
+import { minify } from 'html-minifier';
+
+const domPurifyJS = fs.readFile(require.resolve('dompurify/dist/purify.min.js'), { encoding: 'utf8' });
 
 export interface Worker {
     id:        number;
@@ -13,6 +17,7 @@ export interface Worker {
 
 interface GhostlyProxyWindow extends Window {
     sendGhostlyMessage: typeof sendGhostlyMessage;
+    DOMPurify: { sanitize(dirty: string, options: { WHOLE_DOCUMENT: boolean }): string; }
 }
 
 interface GhostlyWindow extends Window {
@@ -68,7 +73,7 @@ export class TemplateEngineImpl implements TemplateEngine {
 
                     // Send document/model to template
                     this.log.info(`${this._url}: Initializing ${contentType} model.`);
-                    const info = await this._sendMessage(page, ['ghostlyInit', { document, contentType }], onGhostlyEvent) as ResultInfo | null;
+                    const info = await this._sendMessage(page, ['ghostlyInit', { document, contentType }], onGhostlyEvent) as ModelInfo | null;
 
                     if (info) { // Validate ResultInfo
                         if (typeof info !== 'object' ||
@@ -166,28 +171,55 @@ export class TemplateEngineImpl implements TemplateEngine {
         }
         else if (!data) {
             switch (view.contentType) {
-                case 'text/html':
-                    return Buffer.from(await page.content());
-                    break;
+                case 'text/html': {
+                    let content = await page.content();
+
+                    for (const transform of view.htmlTransforms ?? ['sanitize', 'minimize']) {
+                        this.log.info(`${this._url}: Applying HTML transform '${transform}'.`);
+
+                        if (transform === 'sanitize') {
+                            const doctype = /^<!DOCTYPE[^[>]*(\[[^\]]*\])?[^>]*>/i.exec(content)?.[0] ?? ''; // Preserve DOCTYPE
+                            content = doctype + await ((window: GhostlyWindow) => page.evaluate((dirty) => {
+                                return window.__ghostly_message_proxy__.DOMPurify.sanitize(dirty, { WHOLE_DOCUMENT: true });
+                            }, content))(null!);
+                        }
+                        else if (transform === 'minimize') {
+                            content = minify(content, {
+                                collapseBooleanAttributes: true,
+                                collapseWhitespace: true,
+                                conservativeCollapse: true,
+                                decodeEntities: true,
+                                minifyCSS: true,
+                                preserveLineBreaks: true,
+                                removeAttributeQuotes: true,
+                                removeComments: true,
+                                removeScriptTypeAttributes: true,
+                                removeStyleLinkTypeAttributes: true,
+                                sortAttributes: true,
+                                sortClassName:  true,
+                            });
+                        } else {
+                            throw new Error(`${this._url}: Unknown HTML transform '${transform}'`);
+                        }
+                    }
+
+                    return Buffer.from(content);
+                }
 
                 case 'text/plain':
                     return Buffer.from(await page.innerText('css=body'));
-                    break;
 
                 case 'application/pdf':
                     return await page.pdf({
                         format:    ps.format,
                         landscape: ps.orientation === 'landscape',
                     });
-                    break;
 
                 case 'image/jpeg':
                     return await page.screenshot({ fullPage: true, type: 'jpeg', clip });
-                    break;
 
                 case 'image/png':
                     return await page.screenshot({ fullPage: true, type: 'png', clip });
-                    break;
 
                 default:
                     throw info
@@ -287,17 +319,19 @@ export class TemplateEngineImpl implements TemplateEngine {
         await page.goto(this._url, { waitUntil: 'load' });
 
         // Create the Ghostly message proxy
-        await ((window: GhostlyWindow) => page.evaluate((sendGhostlyMessage) => {
+        await (async (window: GhostlyWindow) => page.evaluate(([sendGhostlyMessage, domPurifyJS]) => {
             try {
                 window.__ghostly_message_proxy__ = window.open('', '', 'width=0,height=0') as GhostlyProxyWindow;
-                window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>${sendGhostlyMessage}</script>`);
+                window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>
+                    ${domPurifyJS}
+                    ${sendGhostlyMessage}
+                </script>`);
                 window.__ghostly_message_proxy__.document.close();
             }
             catch (_ignored) {
                 throw new Error(`Failed to create Ghostly message proxy!`);
             }
-        }, sendGhostlyMessage.toString()))(null!);
-
+        }, [sendGhostlyMessage.toString(), await domPurifyJS]))(null!);
         await this._sendMessage(page, ['ghostlyLoad', this._url], onGhostlyEvent);
         return page;
     }
