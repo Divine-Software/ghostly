@@ -1,83 +1,123 @@
-module.exports = {
-  title: 'My Site',
-  tagline: 'The tagline of my site',
-  url: 'https://your-docusaurus-test-site.com',
-  baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+module.exports =  {
+  title: 'Ghostly',
+  tagline: 'A divine template/print formatter engine',
+  url: 'https://divine-software.github.io/',
+  baseUrl: '/ghostly/',
   favicon: 'img/favicon.ico',
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'Divine-Software',
+  projectName: 'ghostly',
+  onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'throw',
   themeConfig: {
+    colorMode: {
+      defaultMode: 'dark',
+      respectPrefersColorScheme: true,
+    },
     navbar: {
-      title: 'My Site',
+      title: 'Ghostly',
       logo: {
-        alt: 'My Site Logo',
+        alt: 'Ghostly Logo',
         src: 'img/logo.svg',
       },
       items: [
         {
+          to: 'blog/',
+          label: 'News',
+          position: 'left'
+        },
+        {
           to: 'docs/',
           activeBasePath: 'docs',
-          label: 'Docs',
+          label: 'Documentation',
           position: 'left',
         },
-        {to: 'blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/facebook/docusaurus',
-          label: 'GitHub',
+          to: 'preview',
+          label: 'Template Preview Tool',
+          position: 'left',
+        },
+        {
+          href: 'https://github.com/Divine-Software/ghostly',
+          label: 'Fork me on GitHub!',
           position: 'right',
         },
       ],
+      hideOnScroll: false,
     },
+    hideableSidebar: true,
     footer: {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'More Divine Software™',
           items: [
             {
-              label: 'Style Guide',
-              to: 'docs/',
+              label: 'Synchronization Library',
+              to: 'https://github.com/Divine-Software/divine-synchronization',
             },
             {
-              label: 'Second Doc',
-              to: 'docs/doc2/',
+              label: 'Syslog Console',
+              href: 'https://github.com/Divine-Software/sysconsole',
+            },
+            {
+              label: 'Web Service Framework',
+              href: 'https://divine-software.github.io/esxx-2/',
             },
           ],
         },
         {
-          title: 'Community',
+          title: 'Projects we ❤️',
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+              label: 'Docusaurus',
+              href: 'https://v2.docusaurus.io/',
             },
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
+              label: 'Playwright',
+              href: 'https://playwright.dev/',
             },
             {
-              label: 'Twitter',
-              href: 'https://twitter.com/docusaurus',
-            },
+              label: 'TypeDoc',
+              href: 'https://typedoc.org/',
+            }
           ],
         },
         {
-          title: 'More',
+          title: 'Templating',
           items: [
             {
-              label: 'Blog',
-              to: 'blog',
+              label: 'Angular',
+              href: 'https://angular.io//',
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              label: 'lit-html',
+              href: 'https://lit-html.polymer-project.org/',
             },
-          ],
+            {
+              label: 'Stencil',
+              href: 'https://stenciljs.com/',
+            },
+          ]
         },
-      ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        {
+          title: 'Get in touch',
+          items: [
+            {
+              label: 'Ask a question',
+              href: 'https://github.com/Divine-Software/ghostly/discussions'
+            },
+            {
+              label: 'Contribute code or docs',
+              href: 'https://github.com/Divine-Software/ghostly/pulls'
+            },
+            {
+              label: 'Report an issue',
+              href: 'https://github.com/Divine-Software/ghostly/issues'
+            },
+          ]
+        }
+    ],
+    copyright: `Copyright © 2016-${new Date().getFullYear()} Martin Blom. A Divine Software™ production.`,
     },
   },
   plugins: [
@@ -89,7 +129,10 @@ module.exports = {
           '../ghostly-engine/index.ts',
           '../ghostly-runtime/index.ts',
         ],
-        tsconfig: '../tsconfig.json'
+        excludePrivate: true,
+        excludeInternal: true,
+        tsconfig: '../tsconfig.json',
+        watch: process.env.TYPEDOC_WATCH === 'true',
       },
     ],
   ],
@@ -99,15 +142,13 @@ module.exports = {
       {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/website/',
+            'https://github.com/Divine-Software/ghostly/edit/master/website/',
         },
         blog: {
           showReadingTime: true,
-          // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/website/blog/',
+            'https://github.com/Divine-Software/ghostly/edit/master/website/blog/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),

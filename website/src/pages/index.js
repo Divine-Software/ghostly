@@ -8,32 +8,36 @@ import styles from './styles.module.css';
 
 const features = [
   {
-    title: 'Easy to Use',
-    imageUrl: 'img/undraw_docusaurus_mountain.svg',
+    title: 'Print formatting/PDF generator',
+    imageUrl: 'img/statistics-3679874.svg',
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Ghostly is perfect for generating invoces, rich sales reports or any other
+        kind of printable documents. Being powered by a modern web browser, its
+        layout capabilities are second to none.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    imageUrl: 'img/undraw_docusaurus_tree.svg',
+    title: 'Generate beautiful emails',
+    imageUrl: 'img/at-sign-1083508.svg',
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Each template can produce several output formats, such as plain text, HTML,
+        PDF, or even PNG and JPEG images. Additionally, a template may generate any number
+        of secondary results, such as email attachments or CSV/spreadsheet documents.
       </>
     ),
   },
   {
-    title: 'Powered by React',
-    imageUrl: 'img/undraw_docusaurus_react.svg',
+    title: 'Fully programmable templates',
+    imageUrl: 'img/cpu-2103856.svg',
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Ghostly templates are powered by HTML, CSS and JavaScript/TypeScript.
+        Roll your own template engine, or use Handlebars, Angular, React, Stencil ...
+        Ghostly templates can contain complex logic and even query remote databases or
+        web services during rendering.
       </>
     ),
   },
@@ -49,7 +53,7 @@ function Feature({imageUrl, title, description}) {
         </div>
       )}
       <h3>{title}</h3>
-      <p>{description}</p>
+      <p className="text--justify">{description}</p>
     </div>
   );
 }
@@ -59,8 +63,8 @@ function Home() {
   const {siteConfig = {}} = context;
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      title={`${siteConfig.title}`}
+      description={`${siteConfig.tagline}`}>
       <header className={clsx('hero hero--primary', styles.heroBanner)}>
         <div className="container">
           <h1 className="hero__title">{siteConfig.title}</h1>
@@ -80,7 +84,7 @@ function Home() {
       <main>
         {features && features.length > 0 && (
           <section className={styles.features}>
-            <div className="container">
+            <div className="container text--center">
               <div className="row">
                 {features.map((props, idx) => (
                   <Feature key={idx} {...props} />

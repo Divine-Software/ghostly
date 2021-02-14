@@ -1,0 +1,21 @@
+table.table {
+    width: 100%;
+}
+
+/* .table th {
+    width: 20%;
+}
+ */
+
+.table td {
+    width: 90%;
+}
+
+.table td > * {
+    width: 100%;
+}
+
+.iframe {
+    width: 100%;
+    background-color: oldlace
+}

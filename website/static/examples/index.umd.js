@@ -1,0 +1,1 @@
+../../../ghostly-runtime/build/index.umd.js

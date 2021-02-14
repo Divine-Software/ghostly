@@ -1,7 +1,7 @@
 module.exports = {
   someSidebar: {
-    Docusaurus: ['doc1', 'doc2', 'doc3'],
-    Features: ['mdx'],
+    'About': ['intro'],
+    'Getting started': ['installation/cli', 'installation/node', 'installation/docker'],
     API: require('./typedoc-sidebar.js'),
   },
 };
