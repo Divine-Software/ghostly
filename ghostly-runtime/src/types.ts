@@ -35,6 +35,21 @@ export interface AttachmentInfo extends View {
     description?: string;
 }
 
+/** An Error class that can propage an extra data member back to the controlling application/driver */
+export class GhostlyError extends Error {
+    constructor(message: string, public data?: string | object | null) {
+        super(message);
+
+        if (Object.getPrototypeOf(this) !== GhostlyError.prototype) {
+            Object.setPrototypeOf(this, GhostlyError.prototype);
+        }
+    }
+
+    toString(): string {
+        return `GhostlyError: ${this.message}: ${JSON.stringify(this.data)}`;
+    }
+}
+
 export type OnGhostlyEvent  = (event: object) => void;
 
 export type HTMLTransform   = 'sanitize' | 'minimize'

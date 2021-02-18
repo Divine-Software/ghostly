@@ -1,4 +1,4 @@
-import type { AttachmentInfo, GhostlyRequest, Model, Template, View } from './types';
+import { AttachmentInfo, GhostlyError, GhostlyRequest, Model, Template, View } from './types';
 
 let source: Window | null = null;
 let events: Array<MessageEvent<GhostlyRequest>> = [];
@@ -10,21 +10,6 @@ if (typeof addEventListener === 'function') { // Don't crash in non-DOM environm
             handler ? handler(event) : events.push(event);
         }
     });
-}
-
-/** An Error class that can propage an extra data member back to the controlling application/driver */
-export class GhostlyError extends Error {
-    constructor(message: string, public data?: string | object | null) {
-        super(message);
-
-        if (Object.getPrototypeOf(this) !== GhostlyError.prototype) {
-            Object.setPrototypeOf(this, GhostlyError.prototype);
-        }
-    }
-
-    toString(): string {
-        return `GhostlyError: ${this.message}: ${JSON.stringify(this.data)}`;
-    }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace

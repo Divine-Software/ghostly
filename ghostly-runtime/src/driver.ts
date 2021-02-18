@@ -1,5 +1,4 @@
-import { GhostlyError } from './runtime';
-import type { GhostlyEvent, GhostlyPacket, GhostlyRequest, GhostlyResponse, GhostlyTypes, OnGhostlyEvent } from './types';
+import { GhostlyError, GhostlyEvent, GhostlyPacket, GhostlyRequest, GhostlyResponse, GhostlyTypes, OnGhostlyEvent } from './types';
 
 /**
  * Convenience function to invoke a command, for pure-browser environments.
