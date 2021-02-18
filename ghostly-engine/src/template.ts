@@ -55,7 +55,7 @@ export class TemplateEngineImpl implements TemplateEngine {
             ++worker.load;
 
             // Find a cached template ...
-            let page = worker.pageCache.find((page) => !!page && page.url() === this._url);
+            let page = worker.pageCache.find((page) => page?.url().split('#')[0] === this._url);
 
             try {
                 if (page) {
@@ -133,7 +133,7 @@ export class TemplateEngineImpl implements TemplateEngine {
             }
             finally {
                 if (page && this._config.pageCache) {
-                    this.log.info(`${this._url}: Evicting template ${page.url().replace(/#.*/, '')} from page cache.`);
+                    this.log.info(`${this._url}: Evicting template ${page.url().split('#')[0]} from page cache.`);
                 }
 
                 await page?.close();
