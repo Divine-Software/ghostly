@@ -1,5 +1,5 @@
 import { parseGhostlyPacket, sendGhostlyMessage } from '@divine/ghostly-runtime';
-import { AttachmentInfo, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, ModelInfo, View, ViewportSize } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
+import { AttachmentInfo, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, ModelInfo, View, ViewportSize, GhostlyError } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
 import { promises as fs } from 'fs';
 import { Browser, Page } from 'playwright-chromium';
 import packageJSON from '../package.json';
@@ -8,11 +8,17 @@ import { minify } from 'html-minifier';
 
 const domPurifyJS = fs.readFile(require.resolve('dompurify/dist/purify.min.js'), { encoding: 'utf8' });
 
+const ERROR = Symbol('Error');
+
+interface CachedPage extends Page {
+    [ERROR]?: GhostlyError;
+}
+
 export interface Worker {
     id:        number;
     load:      number;
     browser:   Browser;
-    pageCache: (Page | undefined)[];
+    pageCache: (CachedPage | undefined)[];
 }
 
 interface GhostlyProxyWindow extends Window {
@@ -29,10 +35,8 @@ export class TemplateEngineImpl implements TemplateEngine {
     private _hash: string;
 
     constructor(private _config: EngineConfig, private _workers: (Worker | undefined)[], url: string) {
-        const [base, ...frag] = url.split('#');
-
-        this._url  = base;
-        this._hash = frag.join('#');
+        this._url  = url.replace(/#.*/, '');
+        this._hash = url.replace(/[^#]*#?/, '');
     }
 
     get log(): Console {
@@ -55,7 +59,7 @@ export class TemplateEngineImpl implements TemplateEngine {
             ++worker.load;
 
             // Find a cached template ...
-            let page = worker.pageCache.find((page) => page?.url().split('#')[0] === this._url);
+            let page = worker.pageCache.find((page) => page?.url().replace(/#.*/, '') === this._url);
 
             try {
                 if (page) {
@@ -69,7 +73,7 @@ export class TemplateEngineImpl implements TemplateEngine {
                 }
 
                 try {
-                    await page.evaluate((hash) => history.replaceState(null, '', `#${hash}`), this._hash);
+                    await page.evaluate((hash) => window.location.hash = hash, this._hash);
 
                     // Send document/model to template
                     this.log.info(`${this._url}: Initializing ${contentType} model.`);
@@ -124,6 +128,8 @@ export class TemplateEngineImpl implements TemplateEngine {
                     await this._sendMessage(page, ['ghostlyEnd', null], onGhostlyEvent).catch(() => null);
                 }
 
+                delete page[ERROR];
+
                 // Return template to page cache if there were no errors
                 if (this._config.pageCache) {
                     this.log.info(`${this._url}: Returning template to page cache.`);
@@ -131,12 +137,16 @@ export class TemplateEngineImpl implements TemplateEngine {
                     page = worker.pageCache.length > this._config.pageCache ? worker.pageCache.pop() : undefined;
                 }
             }
+            catch (err) {
+                this.log.error(`${this._url}: renderViews failed: ${page?.[ERROR] ?? err}`);
+                throw page?.[ERROR] ?? err;
+            }
             finally {
                 if (page && this._config.pageCache) {
-                    this.log.info(`${this._url}: Evicting template ${page.url().split('#')[0]} from page cache.`);
+                    this.log.info(`${this._url}: Evicting template ${page.url().replace(/#.*/, '')} from page cache.`);
                 }
 
-                await page?.close();
+                await page?.close().catch((err) => this.log.error(err));
             }
         }
         finally {
@@ -286,54 +296,74 @@ export class TemplateEngineImpl implements TemplateEngine {
     }
 
     private async _createPage(worker: Worker, onGhostlyEvent: OnGhostlyEvent | undefined): Promise<Page> {
-        const page = await worker.browser.newPage({
+        let main: CachedPage = null!;
+
+        const context = await worker.browser.newContext({
             userAgent: `Ghostly/${packageJSON.version} ${browserVersion(worker.browser)}`,
         });
 
-        await page.route('**/*', (route, req) => {
-            this.log.debug(`${this._url}: Loading ${req.url()}`);
+        context.on('page', (page) => {
+            /* async */ page.route('**/*', (route, req) => {
+                this.log.debug(`${this._url}: Loading ${req.url()}`);
 
-            if (this._config.templatePattern.test(req.url())) {
-                route.continue();
-            }
-            else {
-                this.log.error(`${this._url}: Template accessed a disallowed URL: ${req.url()} did not match ${this._config.templatePattern}`);
-                route.abort('addressunreachable');
-            }
+                if (this._config.templatePattern.test(req.url())) {
+                    route.continue();
+                }
+                else {
+                    this.log.error(`${this._url}: Template accessed a forbidden URL: ${req.url()} did not match ${this._config.templatePattern}`);
+                    route.abort('addressunreachable');
+                }
+            });
+
+            page.on('pageerror', (error) => {
+                this.log.error(`${this._url}: [pageerror]: ${error}`);
+
+                // Close page so request terminates directly
+                main[ERROR] = new GhostlyError(`Unhandled error in template ${this._url}`, error);
+                /* async */ page.close()
+            });
+
+            page.on('dialog', (dialog) => {
+                this.log.warn(`${this._url}: [${dialog.type()}] ${dialog.message()}`)
+                dialog.dismiss();
+            });
+
+            page.on('console', async (msg) => {
+                const method = (this.log as any)[msg.type()] as Console['log'];
+                const params = await Promise.all(msg.args().map((arg) => arg.jsonValue().catch(() => arg.toString())));
+
+                (typeof method === 'function' ? method : this.log.warn).call(this.log, `${this._url}: [console]`, ...params);
+            });
         });
 
-        page.on('pageerror', (error) => {
-            this.log.error(`${this._url}: [pageerror]: ${error}`);
-        });
+        main = await context.newPage();
 
-        page.on('dialog', (dialog) => {
-            this.log.warn(`${this._url}: [${dialog.type()}] ${dialog.message()}`)
-            dialog.dismiss();
-        });
+        try {
+            // Always specify fragment, because otherwise `window.location.hash = ''` will trigger an event
+            await main.goto(`${this._url}#${this._hash}`, { waitUntil: 'load' });
 
-        page.on('console', (msg) => {
-            const method = (this.log as any)[msg.type()];
-            (typeof method === 'function' ? method : this.log.warn).call(this.log, `${this._url}: [console] ${msg.text()}`);
-        });
+            // Create the Ghostly message proxy
+            await (async (window: GhostlyWindow) => main.evaluate(([sendGhostlyMessage, domPurifyJS]) => {
+                try {
+                    window.__ghostly_message_proxy__ = window.open('', '', 'width=0,height=0') as GhostlyProxyWindow;
+                    window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>
+                        ${domPurifyJS}
+                        ${sendGhostlyMessage}
+                    </script>`);
+                    window.__ghostly_message_proxy__.document.close();
+                }
+                catch (_ignored) {
+                    throw new Error(`Failed to create Ghostly message proxy!`);
+                }
+            }, [sendGhostlyMessage.toString(), await domPurifyJS]))(null!);
 
-        await page.goto(this._url, { waitUntil: 'load' });
+            await this._sendMessage(main, ['ghostlyLoad', this._url], onGhostlyEvent);
+        }
+        catch (err) {
+            throw main[ERROR] ?? err;
+        }
 
-        // Create the Ghostly message proxy
-        await (async (window: GhostlyWindow) => page.evaluate(([sendGhostlyMessage, domPurifyJS]) => {
-            try {
-                window.__ghostly_message_proxy__ = window.open('', '', 'width=0,height=0') as GhostlyProxyWindow;
-                window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>
-                    ${domPurifyJS}
-                    ${sendGhostlyMessage}
-                </script>`);
-                window.__ghostly_message_proxy__.document.close();
-            }
-            catch (_ignored) {
-                throw new Error(`Failed to create Ghostly message proxy!`);
-            }
-        }, [sendGhostlyMessage.toString(), await domPurifyJS]))(null!);
-        await this._sendMessage(page, ['ghostlyLoad', this._url], onGhostlyEvent);
-        return page;
+        return main;
     }
 
     private async _sendMessage(page: Page, request: GhostlyRequest, onGhostlyEvent: OnGhostlyEvent | undefined): Promise<GhostlyTypes> {

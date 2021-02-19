@@ -1,4 +1,4 @@
-import type { OnGhostlyEvent, View } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
+import { GhostlyError, OnGhostlyEvent, View } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
 import { IncomingMessage, OutgoingHttpHeaders, ServerResponse } from 'http';
 import playwright from 'playwright-chromium';
 import stream from 'stream';
@@ -254,19 +254,24 @@ export class Engine {
             throw new Response(403, ex.message);
         }
 
-        const results = await tpl.renderViews(document as string | object, contentType, views, attachments, undefined);
+        try {
+            const results = await tpl.renderViews(document as string | object, contentType, views, attachments, undefined);
 
-        if (view) {
-            const vr = results.filter((rr) => rr.type === 'view');
+            if (view) {
+                const vr = results.filter((rr) => rr.type === 'view');
 
-            if (vr.length !== 1) {
-                throw new Error(`Expected 1 rendered view but got ${vr.length}`);
+                if (vr.length !== 1) {
+                    throw new Error(`Expected 1 rendered view but got ${vr.length}`);
+                }
+
+                return new Response(200, results[0].data, { 'Content-Type': results[0].contentType });
             }
-
-            return new Response(200, results[0].data, { 'Content-Type': results[0].contentType });
+            else {
+                return new Response(200, results);
+            }
         }
-        else {
-            return new Response(200, results);
+        catch (ex) {
+            throw new Response(500, ex instanceof GhostlyError ? `${ex.message}: ${ex.data}` : ex.message);
         }
     }
 

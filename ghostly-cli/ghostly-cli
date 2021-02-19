@@ -2,7 +2,7 @@
 
 require('.').main()
     .catch((err) => {
-        console.error(String(err), JSON.stringify(err, null, 4));
+        console.error(`Aborted: ${err}`, JSON.stringify(err, null, 4));
         return 70;
     })
     .then((rc) => {
