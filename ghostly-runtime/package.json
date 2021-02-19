@@ -21,13 +21,13 @@
     "repository": "LeviticusMB/ghostly",
     "license": "Apache-2.0",
     "author": "Martin Blom <martin@blom.org>",
-    "main": "lib/index.js",
-    "types": "lib/index.d.ts",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
     "source": "index.ts",
     "files": [
-        "lib/index*",
-        "lib/package*",
-        "lib/src",
+        "build/index*",
+        "build/package*",
+        "build/src",
         "src"
     ]
 }

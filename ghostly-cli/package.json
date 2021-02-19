@@ -21,22 +21,23 @@
     "repository": "LeviticusMB/ghostly",
     "license": "Apache-2.0",
     "author": "Martin Blom <martin@blom.org>",
-    "main": "lib/index.js",
-    "types": "lib/index.d.ts",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
     "source": "index.ts",
     "bin": "ghostly-cli",
     "files": [
         "ghostly-cli",
-        "lib/index*",
-        "lib/package*",
-        "lib/src",
+        "build/index*",
+        "build/package*",
+        "build/src",
         "src"
     ],
     "dependencies": {
         "@divine/ghostly-engine": "^2.0.1-beta-2",
-        "@divine/sysconsole": "^2",
-        "commander": "^7",
-        "daemonize-process": "^3"
+        "@divine/sysconsole": "^2.0",
+        "commander": "^7.1",
+        "daemonize-process": "^3.0",
+        "tslib": "^2.1"
     },
     "devDependencies": {
         "@types/node": "^12"

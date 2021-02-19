@@ -1,4 +1,4 @@
-import { GhostlyError, OnGhostlyEvent, View } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
+import { GhostlyError, OnGhostlyEvent, View } from '@divine/ghostly-runtime/build/src/types'; // Avoid DOM types leaks
 import { IncomingMessage, OutgoingHttpHeaders, ServerResponse } from 'http';
 import playwright from 'playwright-chromium';
 import stream from 'stream';

@@ -14,7 +14,7 @@ test:		build
 	yarn run jest --passWithNoTests
 
 clean:
-	rm -rf lib coverage
+	rm -rf build coverage
 
 distclean:	clean
 	rm -rf node_modules

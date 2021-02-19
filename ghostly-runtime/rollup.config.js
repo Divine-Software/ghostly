@@ -3,10 +3,10 @@ import resolve from '@rollup/plugin-node-resolve';
 import sourcemaps from 'rollup-plugin-sourcemaps';
 
 export default [{
-        input: 'lib/index.js',
+        input: 'build/index.js',
         plugins: [commonjs(), resolve(), sourcemaps()],
         output: {
-            file: 'lib/index.umd.js',
+            file: 'build/index.umd.js',
             format: 'umd',
             name: '@divine.ghostly-runtime',
             amd: {
@@ -15,10 +15,10 @@ export default [{
             sourcemap: true,
         },
     }, {
-        input: 'lib/index.legacy.js',
+        input: 'build/index.legacy.js',
         plugins: [commonjs(), resolve(), sourcemaps()],
         output: {
-            file: 'lib/index.legacy.umd.js',
+            file: 'build/index.legacy.umd.js',
             format: 'umd',
             name: 'ghostly',
             amd: {

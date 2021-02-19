@@ -1,5 +1,5 @@
 import { parseGhostlyPacket, sendGhostlyMessage } from '@divine/ghostly-runtime';
-import { AttachmentInfo, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, ModelInfo, View, ViewportSize, GhostlyError } from '@divine/ghostly-runtime/lib/src/types'; // Avoid DOM types leaks
+import { AttachmentInfo, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, ModelInfo, View, ViewportSize, GhostlyError } from '@divine/ghostly-runtime/build/src/types'; // Avoid DOM types leaks
 import { promises as fs } from 'fs';
 import { Browser, Page } from 'playwright-chromium';
 import packageJSON from '../package.json';

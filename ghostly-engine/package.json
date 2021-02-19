@@ -21,24 +21,24 @@
     "repository": "LeviticusMB/ghostly",
     "license": "Apache-2.0",
     "author": "Martin Blom <martin@blom.org>",
-    "main": "lib/index.js",
-    "types": "lib/index.d.ts",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
     "source": "index.ts",
     "files": [
-        "lib/index*",
-        "lib/package*",
-        "lib/src",
+        "build/index*",
+        "build/package*",
+        "build/src",
         "src"
     ],
     "dependencies": {
         "@divine/ghostly-runtime": "^2.0.1-beta-2",
-        "dompurify": "^2.2.6",
-        "html-minifier": "^4.0.0",
+        "dompurify": "^2.2",
+        "html-minifier": "^4.0",
         "playwright-chromium": "~1.8",
-        "tslib": "^2"
+        "tslib": "^2.1"
     },
     "devDependencies": {
-        "@types/html-minifier": "^4.0.0",
+        "@types/html-minifier": "^4.0",
         "@types/node": "^12"
     },
     "engines": {
