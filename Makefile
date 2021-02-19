@@ -24,9 +24,9 @@ clean::
 distclean::
 	rm -rf node_modules
 
-build docs clean distclean::
+build docs clean distclean publish::
 	$(MAKE) -C ghostly-cli $@
 	$(MAKE) -C ghostly-engine $@
 	$(MAKE) -C ghostly-runtime $@
 
-.PHONY:		all prepare build docs test clean distclean
+.PHONY:		all prepare build docs test clean distclean publish

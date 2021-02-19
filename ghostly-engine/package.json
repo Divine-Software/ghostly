@@ -1,6 +1,6 @@
 {
     "name": "@divine/ghostly-engine",
-    "version": "2.0.1-beta-1",
+    "version": "2.0.1-beta-2",
     "description": "Ghostly template/print formatter engine",
     "keywords": [
         "fop",
@@ -31,7 +31,7 @@
         "src"
     ],
     "dependencies": {
-        "@divine/ghostly-runtime": "^2.0.1-beta-1",
+        "@divine/ghostly-runtime": "^2.0.1-beta-2",
         "dompurify": "^2.2.6",
         "html-minifier": "^4.0.0",
         "playwright-chromium": "~1.8",

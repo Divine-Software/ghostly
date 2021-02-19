@@ -1,6 +1,6 @@
 {
     "name": "@divine/ghostly-cli",
-    "version": "2.0.1-beta-1",
+    "version": "2.0.1-beta-2",
     "description": "Ghostly template/print formatter command line utility",
     "keywords": [
         "fop",
@@ -33,7 +33,7 @@
         "src"
     ],
     "dependencies": {
-        "@divine/ghostly-engine": "^2.0.1-beta-1",
+        "@divine/ghostly-engine": "^2.0.1-beta-2",
         "@divine/sysconsole": "^2",
         "commander": "^7",
         "daemonize-process": "^3"
