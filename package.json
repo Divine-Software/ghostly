@@ -2,9 +2,9 @@
     "name": "ghostly",
     "version": "0.0.0",
     "private": true,
-    "homepage": "https://github.com/LeviticusMB/ghostly",
-    "bugs": "https://github.com/LeviticusMB/ghostly/issues",
-    "repository": "LeviticusMB/ghostly",
+    "homepage": "https://divine-software.github.io/ghostly/",
+    "bugs": "https://github.com/Divine-Software/ghostly/issues",
+    "repository": "https://github.com/Divine-Software/ghostly.git",
     "license": "Apache-2.0",
     "author": "Martin Blom <martin@blom.org>",
     "workspaces": {
