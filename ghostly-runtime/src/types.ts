@@ -23,7 +23,7 @@ export interface ModelInfo {
 
 export interface View {
     contentType:     string;
-    params:          unknown;
+    params?:         unknown;
     dpi?:            number;
     paperSize?:      PaperSize;
     viewportSize?:   ViewportSize;

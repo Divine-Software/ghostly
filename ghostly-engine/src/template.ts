@@ -1,10 +1,12 @@
 import { parseGhostlyPacket, sendGhostlyMessage } from '@divine/ghostly-runtime';
-import { AttachmentInfo, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, ModelInfo, View, ViewportSize, GhostlyError } from '@divine/ghostly-runtime/build/src/types'; // Avoid DOM types leaks
+import { AttachmentInfo, GhostlyError, GhostlyRequest, GhostlyTypes, ModelInfo, OnGhostlyEvent, PaperSize, View, ViewportSize } from '@divine/ghostly-runtime/build/src/types'; // Avoid DOM types leaks
+import { ContentType } from '@divine/headers';
+import { Parser } from '@divine/uri';
 import { promises as fs } from 'fs';
+import { minify } from 'html-minifier';
 import { Browser, Page } from 'playwright-chromium';
 import packageJSON from '../package.json';
 import { EngineConfig, RenderResult, TemplateEngine } from './engine';
-import { minify } from 'html-minifier';
 
 const domPurifyJS = fs.readFile(require.resolve('dompurify/dist/purify.min.js'), { encoding: 'utf8' });
 
@@ -157,16 +159,17 @@ export class TemplateEngineImpl implements TemplateEngine {
     }
 
     private async _renderViewOrAttachment(view: View, info: AttachmentInfo | null, page: Page, onGhostlyEvent: OnGhostlyEvent | undefined): Promise<Buffer> {
+        const ct = ContentType.create(view.contentType);
         const dpi = view.dpi || 96;
         const ps: Required<PaperSize> = { format: 'A4', orientation: 'portrait', ...view.paperSize };
-        const dim = this._paperDimensions(view.contentType === 'application/pdf' ? ps : view.paperSize, dpi)
+        const dim = this._paperDimensions(ct.type === 'application/pdf' ? ps : view.paperSize, dpi)
         const vps: Required<ViewportSize> = { ...dim, ...view.viewportSize };
         const clip = view.viewportSize?.width || view.viewportSize?.height ? { x: 0, y: 0, ...vps } : undefined;
 
-        this.log.info(`${this._url}: Rendering ${info ? `attachment '${info.name}'` : 'view'} as ${view.contentType} (${vps.width}x${vps.height} @ ${dpi} DPI).`);
+        this.log.info(`${this._url}: Rendering ${info ? `attachment '${info.name}'` : 'view'} as ${ct.type} (${vps.width}x${vps.height} @ ${dpi} DPI).`);
         await page.setViewportSize(vps);
 
-        const data = info
+        let data = info
             ? await this._sendMessage(page, ['ghostlyFetch', info], onGhostlyEvent)
             : await this._sendMessage(page, ['ghostlyRender', view], onGhostlyEvent)
 
@@ -176,11 +179,8 @@ export class TemplateEngineImpl implements TemplateEngine {
         else if (data instanceof Uint8Array) {
             return Buffer.from(data.buffer);
         }
-        else if (typeof data === 'string') {
-            return Buffer.from(data);
-        }
-        else if (!data) {
-            switch (view.contentType) {
+        else if (data === null || data === undefined) {
+            switch (ct.type) {
                 case 'text/html': {
                     let content = await page.content();
 
@@ -213,11 +213,13 @@ export class TemplateEngineImpl implements TemplateEngine {
                         }
                     }
 
-                    return Buffer.from(content);
+                    data = content;
+                    break;
                 }
 
                 case 'text/plain':
-                    return Buffer.from(await page.innerText('css=body'));
+                    data = await page.innerText('css=body');
+                    break;
 
                 case 'application/pdf':
                     return await page.pdf({
@@ -237,10 +239,14 @@ export class TemplateEngineImpl implements TemplateEngine {
                         : new Error(`${this._url}: ghostlyRender did not return a result for view ${JSON.stringify(view)}`)
             }
         }
-        else {
+
+        try {
+            return (await Parser.serializeToBuffer(data, ct))[0];
+        }
+        catch (err) {
             throw info
-                ? new Error(`${this._url}: ghostlyFetch returned an unexpected object for attachment ${JSON.stringify(info)}: ${data}`)
-                : new Error(`${this._url}: ghostlyRender returned an unexpected object for view ${JSON.stringify(view)}: ${data}`)
+                    ? new Error(`${this._url}: ghostlyFetch returned an unexpected object for attachment ${JSON.stringify(info)}: ${data} [${err.message}]`)
+                    : new Error(`${this._url}: ghostlyRender returned an unexpected object for view ${JSON.stringify(view)}: ${data} [${err.message}]`)
         }
     }
 
