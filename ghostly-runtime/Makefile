@@ -20,7 +20,7 @@ clean:
 distclean:	clean
 	rm -rf node_modules
 
-publish:	distclean build test
+publish:	clean build test
 	@[[ -z "$$(git status --porcelain)" ]] || (git status; false)
 	git tag -s $(BASENAME)-v$(VERSION) -m "$(NAME) v$(VERSION)"
 	yarn publish --non-interactive --access public
