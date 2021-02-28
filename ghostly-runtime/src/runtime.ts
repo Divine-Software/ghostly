@@ -1,4 +1,4 @@
-import { AttachmentInfo, GhostlyError, GhostlyRequest, Model, Template, View } from './types';
+import { AttachmentInfo, GhostlyError, GhostlyRequest, Model, Template, View, WindowInfo } from './types';
 
 let source: Window | null = null;
 let events: Array<MessageEvent<GhostlyRequest>> = [];
@@ -16,23 +16,31 @@ if (typeof addEventListener === 'function') { // Don't crash in non-DOM environm
 export namespace ghostly {
     /** @private @internal */
     export const defaults: Template = {
-        ghostlyLoad(_url: string) {
+        ghostlyLoad(_url: string): void {
             // Do nothing
         },
 
-        ghostlyInit(_model: Model) {
-            throw new Error('ghostlyInit: This method must be implemented!');
+        ghostlyInit(_model: Model): never {
+            throw new GhostlyError('ghostlyInit: This method must be implemented!');
         },
 
-        ghostlyRender(_view: View) {
-            throw new Error('ghostlyRender: This method must be implemented!');
+        ghostlyRender(_view: View): never {
+            throw new GhostlyError('ghostlyRender: This method must be implemented!');
         },
 
-        ghostlyFetch(_attachmentInfo: AttachmentInfo) {
-            throw new Error('ghostlyFetch: This method must be implemented!');
+        ghostlyFetch(_attachmentInfo: AttachmentInfo): never {
+            throw new GhostlyError('ghostlyFetch: This method must be implemented!');
         },
 
-        ghostlyEnd() {
+        ghostlyInfo(): WindowInfo {
+            const { width, height } = getComputedStyle(document.documentElement);
+
+            return {
+                documentStyle: { width, height }
+            }
+        },
+
+        ghostlyEnd(): void {
             // Do nothing
         },
     }
@@ -44,10 +52,10 @@ export namespace ghostly {
      */
     export function init(impl: Template): void {
         if (handler) {
-            throw new Error("ghostly.init: Ghostly already initialized!");
+            throw new GhostlyError("ghostly.init: Ghostly already initialized!");
         }
         else if (!impl) {
-            throw new Error("ghostly.init: Missing GhostlyTemplate implementation!");
+            throw new GhostlyError("ghostly.init: Missing GhostlyTemplate implementation!");
         }
 
         handler = (event) => {
@@ -85,10 +93,10 @@ export namespace ghostly {
      */
     export function notify(message: object | null): void {
         if (!source) {
-            throw new Error(`ghostly.notify: No Ghostly operation is currently in progress`);
+            throw new GhostlyError(`ghostly.notify: No Ghostly operation is currently in progress`, message);
         }
         else if (typeof message !== 'object') {
-            throw new TypeError(`ghostly.notify: Message must be an object`);
+            throw new GhostlyError(`ghostly.notify: Message must be an object`, message);
         }
         else {
             source.postMessage(['ghostlyEvent', message], "*");
@@ -98,7 +106,7 @@ export namespace ghostly {
     /**
      * Uninstalls the `Template` implementation.
      *
-     * @param impl The implementation that was previously installed by the `init` method.
+     * @param impl The implementation that was previously installed by the `init()` method.
      */
     export function destroy(impl: Template): void {
         void impl;
@@ -108,7 +116,7 @@ export namespace ghostly {
     /**
      * Helper method that can be used to parse a `Model` object as JSON, HTML or XML.
      *
-     * @param model A model received by `ghostlyInit`
+     * @param model A model received by `ghostlyInit()`
      */
     export function parse(model: Model): object | Document {
         if (typeof model.document === 'string') {
@@ -122,13 +130,13 @@ export namespace ghostly {
                 return new DOMParser().parseFromString(model.document, 'application/xml');
             }
             else {
-                throw new TypeError('ghostly.parse: Cannot parse ' + model.contentType + ' documents');
+                throw new GhostlyError('ghostly.parse: Cannot parse ' + model.contentType + ' documents', model);
             }
         }
         else if (model.document && typeof model.document === 'object') {
             return model.document;
         }
 
-        throw new TypeError(`ghostly.parse: Cannot parse ${typeof model.document} documents as ${model.contentType}`);
+        throw new GhostlyError(`ghostly.parse: Cannot parse ${typeof model.document} documents as ${model.contentType}`, model);
     }
 }

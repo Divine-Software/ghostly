@@ -16,8 +16,7 @@ module.exports = {
     ],
     'rules': {
         '@typescript-eslint/ban-types': [
-            'error',
-            {
+            'error', {
                 extendDefaults: true,
                 types: {
                     'object': false
@@ -29,5 +28,10 @@ module.exports = {
         '@typescript-eslint/no-non-null-assertion': 0,
         '@typescript-eslint/no-unused-vars': 0,
         'import/no-unresolved': 0,
+        'no-constant-condition': [
+            'error', {
+                'checkLoops': false
+            }
+        ],
     }
 };

@@ -35,6 +35,13 @@ export interface AttachmentInfo extends View {
     description?: string;
 }
 
+export interface WindowInfo {
+    documentStyle: {
+        width:  string;
+        height: string;
+    }
+}
+
 /** An Error class that can propage an extra data member back to the controlling application/driver */
 export class GhostlyError extends Error {
     constructor(message: string, public data?: string | object | null) {
@@ -61,6 +68,7 @@ export type GhostlyRequest  = [ 'ghostlyLoad',   string         ] |
                               [ 'ghostlyInit',   Model          ] |
                               [ 'ghostlyRender', View           ] |
                               [ 'ghostlyFetch',  AttachmentInfo ] |
+                              [ 'ghostlyInfo',   null           ] |
                               [ 'ghostlyEnd',    null           ];
 export type GhostlyEvent    = [ 'ghostlyEvent',  object | null  ];
 export type GhostlyResponse = [ 'ghostlyACK',    GhostlyTypes   ] |
