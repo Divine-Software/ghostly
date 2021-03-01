@@ -14,7 +14,10 @@ if (typeof addEventListener === 'function') { // Don't crash in non-DOM environm
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ghostly {
-    /** @private @internal */
+    /**
+     * @private
+     * @internal
+     */
     export const defaults: Template = {
         ghostlyLoad(_url: string): void {
             // Do nothing
@@ -46,9 +49,9 @@ export namespace ghostly {
     }
 
     /**
-     * Initializes *Ghostly* and installs a `Template` implementation.
+     * Initializes Ghostly and activates a [[Template]] implementation.
      *
-     * @param impl The Ghostly interface implementation to use for this template
+     * @param impl The Ghostly interface implementation to use for this template.
      */
     export function init(impl: Template): void {
         if (handler) {
@@ -81,13 +84,16 @@ export namespace ghostly {
         events = [];
     }
 
-    /** @deprecated @internal */
+    /**
+     * @deprecated
+     * @internal
+     */
     export const template = init;
 
     /**
      * Send a custom message to the controlling application/driver.
      *
-     * Note: This method is only valid any of the `Template` implementation methods is executing.
+     * Note: This method is only valid any of the [[Template]] implementation methods is executing.
      *
      * @param message The message to send, or `null` for just letting the driver know you're still alive.
      */
@@ -104,9 +110,9 @@ export namespace ghostly {
     }
 
     /**
-     * Uninstalls the `Template` implementation.
+     * Deactivates the [[Template]] implementation.
      *
-     * @param impl The implementation that was previously installed by the `init()` method.
+     * @param impl The implementation that was previously installed by the [[init]] method.
      */
     export function destroy(impl: Template): void {
         void impl;
@@ -114,9 +120,9 @@ export namespace ghostly {
     }
 
     /**
-     * Helper method that can be used to parse a `Model` object as JSON, HTML or XML.
+     * Helper method that can be used to parse a [[Model]] object as JSON, HTML or XML.
      *
-     * @param model A model received by `ghostlyInit()`
+     * @param model A model received by [[ghostlyInit]].
      */
     export function parse(model: Model): object | Document {
         if (typeof model.document === 'string') {

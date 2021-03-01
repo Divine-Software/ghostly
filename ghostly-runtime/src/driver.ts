@@ -1,6 +1,6 @@
 import { AttachmentInfo, GhostlyError, GhostlyEvent, GhostlyPacket, GhostlyRequest, GhostlyResponse, GhostlyTypes, Model, ModelInfo, OnGhostlyEvent, Template, View, WindowInfo } from './types';
 
-/** Helper class to invoke the defined protocol methods using a user-defined `sendMessage()` implementation */
+/** Helper class to invoke the defined protocol methods using a user-defined [[sendMessage]] implementation. */
 export abstract class TemplateDriver implements Template {
     constructor(protected _template: string) {}
 
@@ -68,17 +68,17 @@ function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** An object that holds metainfo and the attachment response. Returned by `PreviewDriver.renderPreview()`. */
+/** An object that holds metainfo and the attachment response. Returned by [[renderPreview]]. */
 export interface PreviewAttachment extends AttachmentInfo {
-    /** The unpacked response to the `ghostlyFetch` request. Will be `null` if the template returned nothing. */
+    /** The unpacked response to the [[ghostlyFetch]] request. Will be `null` if the template returned nothing. */
     data: GhostlyTypes;
 }
 
-/** A utility class for rendering a template as HTML to an IFrame in a web browser (not using *Ghostly Engine*). */
+/** A utility class for rendering a template as HTML to an IFrame in a web browser (not using Ghostly Engine. */
 export class PreviewDriver extends TemplateDriver {
     /**
      * @param _target   The name of the IFrame to control.
-     * @param _template The URL to the *Ghostly* template to use.
+     * @param _template The URL to the Ghostly template to use.
      */
     constructor(protected _target: string, _template: string) {
         super(_template);
@@ -91,9 +91,9 @@ export class PreviewDriver extends TemplateDriver {
      * by the engine, `data` will be null. Only attachments where the template returns actual data will work.
      *
      * @param document     The model data, as JSON or a string.
-     * @param contentType  The models type, used as an indication to the template how `document` should be parsed.
+     * @param contentType  The model's media type, used as an indication to the template how `document` should be parsed.
      * @param params       Optional view params (as JSON).
-     * @returns            An array of `PreviewAttachment` objects representing all attachments the template produced.
+     * @returns            An array of [[PreviewAttachment]] objects representing all attachments the template produced.
      */
     async renderPreview(document: string | object, contentType: string, params: unknown): Promise<PreviewAttachment[]> {
         const target = this.target();
@@ -180,16 +180,16 @@ export class PreviewDriver extends TemplateDriver {
 }
 
 /**
- * Sends a command to the *Ghostly* template and marshals the result so it can be transferred from browser to NodeJS.
+ * Sends a command to the Ghostly template and marshals the result so it can be transferred from browser to Node.js.
  *
- * NOTE: This function must be self-contained and serializable, since the *Ghostly Engine* will inject it into the
+ * NOTE: This function must be self-contained and serializable, since the Ghostly Engine will inject it into the
  * Playwright browser instance! No external helper functions or too fancy JS/TS allowed.
  *
- * @param target         The window where the *Ghostly* template is running.
+ * @param target         The window where the Ghostly template is running.
  * @param request        The command to send.
- * @param onGhostlyEvent An optional handler that will be invoked when a the template calls `ghostly.notify()`.
+ * @param onGhostlyEvent An optional handler that will be invoked when a the template calls [[notify]].
  * @param timeout        An optional timeout, in seconds, to wait for a response, before an error is thrown. Defaults to 10 s.
- * @returns              The raw response packet. Must be unpacked using `parseGhostlyPacket()`.
+ * @returns              The raw response packet. Must be unpacked using [[parseGhostlyPacket]].
  *
  * @see parseGhostlyPacket
  * @see TemplateDriver
@@ -249,10 +249,13 @@ export class PreviewDriver extends TemplateDriver {
 }
 
 /**
- * Unmarshals a response from `sendGhostlyMessage()` and either returns the payload or throws an execption.
+ * Unmarshals a response from [[sendGhostlyMessage]] and either returns the payload or throws an execption.
  *
- * @param request
- * @param response
+ * @param request  The request object that was sent via [[sendGhostlyMessage]].
+ * @param response The raw response object returned by [[sendGhostlyMessage]].
+ * @returns        An unpacked response.
+
+ * @throws GhostlyError
  *
  * @see sendGhostlyMessage
  */

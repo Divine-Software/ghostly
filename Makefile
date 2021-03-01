@@ -12,8 +12,9 @@ $(NODE_MODULES):package.json */package.json yarn.lock
 
 build::		prepare
 	yarn run tsc --build
-
-docs::		build
+	ln -f README.md ghostly-engine/README.md
+	ln -f README.md ghostly-cli/README.md
+	ln -f README.md ghostly-runtime/README.md
 
 test::		build
 	yarn run jest
@@ -24,9 +25,9 @@ clean::
 distclean::
 	rm -rf node_modules
 
-build docs clean distclean publish::
+build clean distclean publish::
 	$(MAKE) -C ghostly-cli $@
 	$(MAKE) -C ghostly-engine $@
 	$(MAKE) -C ghostly-runtime $@
 
-.PHONY:		all prepare build docs test clean distclean publish
+.PHONY:		all prepare build test clean distclean publish

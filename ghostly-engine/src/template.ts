@@ -41,7 +41,7 @@ export class TemplateEngineImpl implements TemplateEngine {
         this._hash = url.replace(/[^#]*#?/, '');
     }
 
-    get log(): Console {
+    private get log(): Console {
         return this._config.logger;
     }
 
