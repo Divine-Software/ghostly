@@ -39,9 +39,10 @@ export interface Template {
     ghostlyInfo?(): WindowInfo | Promise<WindowInfo>;
 
     /**
-     * This method is invoked when all processing of the model is done. May be used to purge caches and other resources.
+     * This optional method is invoked when all processing of the model is done. May be used to purge caches and other
+     * resources.
      */
-    ghostlyEnd(): void | Promise<void>;
+    ghostlyEnd?(): void | Promise<void>;
 }
 
 /** The module (data) that should be rendered by the template. */

@@ -124,23 +124,23 @@ export namespace ghostly {
      *
      * @param model A model received by [[ghostlyInit]].
      */
-    export function parse(model: Model): object | Document {
+    export function parse<T extends object | Document>(model: Model): T {
         if (typeof model.document === 'string') {
             if (/^(application\/json|[^/]+\/[^+]+\+json)$/.test(model.contentType)) {
                 return JSON.parse(model.document);
             }
             else if (model.contentType === 'text/html' || model.contentType === 'image/svg+xml') {
-                return new DOMParser().parseFromString(model.document, model.contentType);
+                return new DOMParser().parseFromString(model.document, model.contentType) as T;
             }
             else if (/^(text\/xml|application\/xml|[^/]+\/[^+]+\+xml)$/.test(model.contentType)) {
-                return new DOMParser().parseFromString(model.document, 'application/xml');
+                return new DOMParser().parseFromString(model.document, 'application/xml') as T;
             }
             else {
                 throw new GhostlyError('ghostly.parse: Cannot parse ' + model.contentType + ' documents', model);
             }
         }
         else if (model.document && typeof model.document === 'object') {
-            return model.document;
+            return model.document as T;
         }
 
         throw new GhostlyError(`ghostly.parse: Cannot parse ${typeof model.document} documents as ${model.contentType}`, model);
