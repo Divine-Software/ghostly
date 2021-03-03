@@ -5,7 +5,7 @@ let events: Array<MessageEvent<GhostlyRequest>> = [];
 let handler: ((event: MessageEvent<GhostlyRequest>) => void) | null = null;
 
 if (typeof addEventListener === 'function') { // Don't crash in non-DOM environments
-    addEventListener?.("message", (event: MessageEvent<GhostlyRequest>) => {
+    addEventListener("message", (event: MessageEvent<GhostlyRequest>) => {
         if (Array.isArray(event.data) && /^ghostly[A-Z]/.test(event.data[0])) {
             handler ? handler(event) : events.push(event);
         }
@@ -125,18 +125,20 @@ export namespace ghostly {
      * @param model A model received by [[ghostlyInit]].
      */
     export function parse<T extends object | Document>(model: Model): T {
+        const contentType = model.contentType.replace(/;.*/, '').trim();
+
         if (typeof model.document === 'string') {
-            if (/^(application\/json|[^/]+\/[^+]+\+json)$/.test(model.contentType)) {
+            if (/^(application\/json|[^/]+\/[^+]+\+json)$/.test(contentType)) {
                 return JSON.parse(model.document);
             }
-            else if (model.contentType === 'text/html' || model.contentType === 'image/svg+xml') {
-                return new DOMParser().parseFromString(model.document, model.contentType) as T;
+            else if (contentType === 'text/html' || contentType === 'image/svg+xml') {
+                return new DOMParser().parseFromString(model.document, contentType) as T;
             }
-            else if (/^(text\/xml|application\/xml|[^/]+\/[^+]+\+xml)$/.test(model.contentType)) {
+            else if (/^(text\/xml|application\/xml|[^/]+\/[^+]+\+xml)$/.test(contentType)) {
                 return new DOMParser().parseFromString(model.document, 'application/xml') as T;
             }
             else {
-                throw new GhostlyError('ghostly.parse: Cannot parse ' + model.contentType + ' documents', model);
+                throw new GhostlyError('ghostly.parse: Cannot parse ' + contentType + ' documents', model);
             }
         }
         else if (model.document && typeof model.document === 'object') {
