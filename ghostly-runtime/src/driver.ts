@@ -1,4 +1,4 @@
-import { AttachmentInfo, GhostlyError, GhostlyEvent, GhostlyPacket, GhostlyRequest, GhostlyResponse, GhostlyTypes, Model, ModelInfo, OnGhostlyEvent, Template, View, WindowInfo } from './types';
+import { AttachmentInfo, GhostlyError, GhostlyEvent, GhostlyPacket, GhostlyRequest, GhostlyResponse, GhostlyTypes, Model, ModelInfo, OnGhostlyEvent, Template, View, PreviewResult, PreviewCommand } from './types';
 
 /** Helper class to invoke the defined protocol methods using a user-defined [[sendMessage]] implementation. */
 export abstract class TemplateDriver implements Template {
@@ -39,12 +39,12 @@ export abstract class TemplateDriver implements Template {
         return await this.sendMessage([ 'ghostlyFetch', info ]);
     }
 
-    async ghostlyInfo(): Promise<WindowInfo> {
-        const info = await this.sendMessage([ 'ghostlyInfo', null ]) as WindowInfo;
+    async ghostlyPreview(command: PreviewCommand = {}): Promise<PreviewResult> {
+        const info = await this.sendMessage([ 'ghostlyPreview', command ]) as PreviewResult;
 
         if (typeof info?.documentStyle?.height !== 'string' ||
             typeof info?.documentStyle?.width  !== 'string') {
-            throw new GhostlyError(`ghostlyInfo returned an invalid ViewInfo record`, info);
+            throw new GhostlyError(`ghostlyPreview returned an invalid ViewInfo record`, info);
         }
 
         return info;
@@ -93,9 +93,10 @@ export class PreviewDriver extends TemplateDriver {
      * @param document     The model data, as JSON or a string.
      * @param contentType  The model's media type, used as an indication to the template how `document` should be parsed.
      * @param params       Optional view params (as JSON).
+     * @param options      Optional commands to send to the template (like `print` to open the browsers print dialog)
      * @returns            An array of [[PreviewAttachment]] objects representing all attachments the template produced.
      */
-    async renderPreview(document: string | object, contentType: string, params: unknown): Promise<PreviewAttachment[]> {
+    async renderPreview(document: string | object, contentType: string, params?: unknown, options?: PreviewCommand): Promise<PreviewAttachment[]> {
         const target = this.target();
 
         target.contentWindow!.location.href = 'about:blank';
@@ -137,7 +138,9 @@ export class PreviewDriver extends TemplateDriver {
         }
 
         await this.ghostlyRender({ contentType: 'text/html; charset="utf-8"', params })
-        target.style.height = (await this.ghostlyInfo()).documentStyle.height;
+
+        const preview = await this.ghostlyPreview(options);
+        target.style.height = preview.documentStyle.height;
 
         return result;
     }

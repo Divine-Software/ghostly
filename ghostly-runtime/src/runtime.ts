@@ -1,4 +1,4 @@
-import { AttachmentInfo, GhostlyError, GhostlyRequest, Model, Template, View, WindowInfo } from './types';
+import { AttachmentInfo, GhostlyError, GhostlyRequest, Model, PreviewCommand, PreviewResult, Template, View } from './types';
 
 let source: Window | null = null;
 let events: Array<MessageEvent<GhostlyRequest>> = [];
@@ -35,8 +35,12 @@ export namespace ghostly {
             throw new GhostlyError('ghostlyFetch: This method must be implemented!');
         },
 
-        ghostlyInfo(): WindowInfo {
+        ghostlyPreview(command: PreviewCommand = {}): PreviewResult {
             const { width, height } = getComputedStyle(document.documentElement);
+
+            if (command.print) {
+                setTimeout(() => print(), 1); // Don't block
+            }
 
             return {
                 documentStyle: { width, height }

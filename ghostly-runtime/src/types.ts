@@ -35,8 +35,8 @@ export interface Template {
      */
     ghostlyFetch?(attachmentInfo: AttachmentInfo): void | GhostlyTypes | Promise<void | GhostlyTypes>;
 
-    /** This method is used by the [[PreviewDriver]] to find out the preferred size of the IFrame. */
-    ghostlyInfo?(): WindowInfo | Promise<WindowInfo>;
+    /** This method is used by the [[PreviewDriver]] to print and to find out the preferred size of the IFrame. */
+    ghostlyPreview?(command?: PreviewCommand): PreviewResult | Promise<PreviewResult>;
 
     /**
      * This optional method is invoked when all processing of the model is done. May be used to purge caches and other
@@ -96,7 +96,11 @@ export interface AttachmentInfo extends View {
     description?: string;
 }
 
-export interface WindowInfo {
+export interface PreviewCommand {
+    print?: boolean;
+}
+
+export interface PreviewResult {
     documentStyle: {
         width:  string;
         height: string;
@@ -132,14 +136,14 @@ export type PaperFormat     = "A0" | "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "
 export type PaperSize       = { format?: PaperFormat, orientation?: 'portrait' | 'landscape' };
 export type ViewportSize    = { width?: number, height?: number };
 
-export type GhostlyRequest  = [ 'ghostlyLoad',   string         ] |
-                              [ 'ghostlyInit',   Model          ] |
-                              [ 'ghostlyRender', View           ] |
-                              [ 'ghostlyFetch',  AttachmentInfo ] |
-                              [ 'ghostlyInfo',   null           ] |
-                              [ 'ghostlyEnd',    null           ];
-export type GhostlyEvent    = [ 'ghostlyEvent',  object | null  ];
-export type GhostlyResponse = [ 'ghostlyACK',    GhostlyTypes   ] |
-                              [ 'ghostlyNACK',   GhostlyTypes   ];
+export type GhostlyRequest  = [ 'ghostlyLoad',    string         ] |
+                              [ 'ghostlyInit',    Model          ] |
+                              [ 'ghostlyRender',  View           ] |
+                              [ 'ghostlyFetch',   AttachmentInfo ] |
+                              [ 'ghostlyPreview', PreviewCommand ] |
+                              [ 'ghostlyEnd',     null           ];
+export type GhostlyEvent    = [ 'ghostlyEvent',   object | null  ];
+export type GhostlyResponse = [ 'ghostlyACK',     GhostlyTypes   ] |
+                              [ 'ghostlyNACK',    GhostlyTypes   ];
 export type GhostlyPacket   = [ string, string | null, ('Uint8Array' | 'JSON')? ];
 export type GhostlyTypes    = Uint8Array | string | object | null;
