@@ -1,15 +1,37 @@
 import { AttachmentInfo, GhostlyError, GhostlyRequest, Model, PreviewCommand, PreviewResult, Template, View } from './types';
 
 let source: Window | null = null;
+let error: Error | string | null = null;
 let events: Array<MessageEvent<GhostlyRequest>> = [];
 let handler: ((event: MessageEvent<GhostlyRequest>) => void) | null = null;
 
 if (typeof addEventListener === 'function') { // Don't crash in non-DOM environments
-    addEventListener("message", (event: MessageEvent<GhostlyRequest>) => {
+    addEventListener('message', (event: MessageEvent<GhostlyRequest>) => {
         if (Array.isArray(event.data) && /^ghostly[A-Z]/.test(event.data[0])) {
             handler ? handler(event) : events.push(event);
         }
     });
+
+    addEventListener('error', (event) => {
+        error ??= event.error ?? event.message
+    });
+}
+
+function checkError() {
+    try {
+        if (error !== null) {
+            throw error;
+        }
+    }
+    finally {
+        error = null;
+    }
+}
+
+function unknownMethod(method: string): () => never {
+    return () => {
+        throw new GhostlyError(`${method}() is not a known method`, 'unknown-method');
+    };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -24,15 +46,15 @@ export namespace ghostly {
         },
 
         ghostlyInit(_model: Model): never {
-            throw new GhostlyError('ghostlyInit: This method must be implemented!');
+            throw new GhostlyError('ghostlyInit() must be implemented to initialize the model');
         },
 
-        ghostlyRender(_view: View): never {
-            throw new GhostlyError('ghostlyRender: This method must be implemented!');
+        ghostlyRender(view: View): never {
+            throw new GhostlyError(`ghostlyRender() must be implemented to render the view '${view.contentType}'`);
         },
 
-        ghostlyFetch(_attachmentInfo: AttachmentInfo): never {
-            throw new GhostlyError('ghostlyFetch: This method must be implemented!');
+        ghostlyFetch(attachmentInfo: AttachmentInfo): never {
+            throw new GhostlyError(`ghostlyFetch() must be implemented to render the attachment ${attachmentInfo.name}`);
         },
 
         ghostlyPreview(command: PreviewCommand = {}): PreviewResult {
@@ -59,26 +81,27 @@ export namespace ghostly {
      */
     export function init(impl: Template): void {
         if (handler) {
-            throw new GhostlyError("ghostly.init: Ghostly already initialized!");
+            throw new GhostlyError('ghostly.init: Ghostly already initialized!');
         }
         else if (!impl) {
-            throw new GhostlyError("ghostly.init: Missing GhostlyTemplate implementation!");
+            throw new GhostlyError('ghostly.init: Missing GhostlyTemplate implementation!');
         }
 
         handler = (event) => {
             const request = event.data;
-            const method  = impl[request[0]] ?? ghostly.defaults[request[0]] as any; // Note: can be undefined!
+            const method  = impl[request[0]] ?? ghostly.defaults[request[0]] ?? unknownMethod(request[0]) as any;
             const sender  = source = event.source as Window;
 
             Promise.resolve()
+                .then(()    => checkError())
                 .then(()    => method.call(impl, request[1]))
-                .then((res) => sender.postMessage(['ghostlyACK', res ?? null], "*"))
+                .then((res) => sender.postMessage(['ghostlyACK', res ?? null], '*'))
                 .catch((err: ReferenceError | GhostlyError | unknown) => {
                     try {
-                        sender.postMessage(['ghostlyNACK', err instanceof Error ? { ...err, message: err.message } : String(err)], "*");
+                        sender.postMessage(['ghostlyNACK', err instanceof Error ? { ...err, message: err.message } : String(err)], '*');
                     }
                     catch (ex) {
-                        sender.postMessage(['ghostlyNACK', `${ex}: ${err}`], "*");
+                        sender.postMessage(['ghostlyNACK', `${ex}: ${err}`], '*');
                     }
                 })
                 .then(() => source = null);
@@ -109,7 +132,7 @@ export namespace ghostly {
             throw new GhostlyError(`ghostly.notify: Message must be an object`, message);
         }
         else {
-            source.postMessage(['ghostlyEvent', message], "*");
+            source.postMessage(['ghostlyEvent', message], '*');
         }
     }
 
