@@ -2,10 +2,11 @@ import { AttachmentInfo, GhostlyError, GhostlyEvent, GhostlyPacket, GhostlyReque
 
 /** Helper class to invoke the defined protocol methods using a user-defined [[sendMessage]] implementation. */
 export abstract class TemplateDriver implements Template {
-    constructor(protected _template: string) {}
+    protected _template?: string;
 
     async ghostlyLoad(template: string): Promise<void> {
         await this.sendMessage([ 'ghostlyLoad', template] );
+        this._template = template;
     }
 
     async ghostlyInit(model: Model): Promise<ModelInfo | undefined> {
@@ -76,12 +77,16 @@ export interface PreviewAttachment extends AttachmentInfo {
 
 /** A utility class for rendering a template as HTML to an IFrame in a web browser (not using Ghostly Engine. */
 export class PreviewDriver extends TemplateDriver {
+    private _onGhostlyEvent: OnGhostlyEvent;
+
     /**
-     * @param _target   The name of the IFrame to control.
-     * @param _template The URL to the Ghostly template to use.
+     * @param _target         The name of the IFrame to control.
+     * @param _onGhostlyEvent The default event handler to use. Defauts to just logging the event to the console.
      */
-    constructor(protected _target: string, _template: string) {
-        super(_template);
+    constructor(protected _target: string, _onGhostlyEvent?: OnGhostlyEvent) {
+        super();
+
+        this._onGhostlyEvent = _onGhostlyEvent ?? (() => console.info(`Event from ${this._template}:`, event));
     }
 
     /**
@@ -90,13 +95,14 @@ export class PreviewDriver extends TemplateDriver {
      * Note that all attachments are returned as-is from the template, so if an attachment is supposed to be rendered
      * by the engine, `data` will be null. Only attachments where the template returns actual data will work.
      *
-     * @param document     The model data, as JSON or a string.
-     * @param contentType  The model's media type, used as an indication to the template how `document` should be parsed.
-     * @param params       Optional view params (as JSON).
-     * @param options      Optional commands to send to the template (like `print` to open the browsers print dialog)
-     * @returns            An array of [[PreviewAttachment]] objects representing all attachments the template produced.
+     * @param template       The URL to the Ghostly template to use.
+     * @param document       The model data, as JSON or a string.
+     * @param contentType    The model's media type, used as an indication to the template how `document` should be parsed.
+     * @param params         Optional view params (as JSON).
+     * @param onGhostlyEvent Optional event handler to use. Will fallback to the default event handler if unspecified.
+     * @returns              An array of [[PreviewAttachment]] objects representing all attachments the template produced.
      */
-    async renderPreview(document: string | object, contentType: string, params?: unknown, options?: PreviewCommand): Promise<PreviewAttachment[]> {
+    async renderPreview(template: string, document: string | object, contentType: string, params?: unknown, onGhostlyEvent?: OnGhostlyEvent): Promise<PreviewAttachment[]> {
         const target = this.target();
 
         target.contentWindow!.location.href = 'about:blank';
@@ -125,33 +131,38 @@ export class PreviewDriver extends TemplateDriver {
             target.addEventListener('load',  onLoad);
             target.addEventListener('error', onError);
 
-            target.contentWindow!.location.href = this._template;
+            target.contentWindow!.location.href = template;
         });
 
-        const result: PreviewAttachment[] = [];
+        const oldEventHandler = this._onGhostlyEvent;
+        this._onGhostlyEvent  = onGhostlyEvent ?? oldEventHandler;
 
-        await this.ghostlyLoad(this._template);
-        const info = await this.ghostlyInit({ document, contentType });
+        try {
+            const result: PreviewAttachment[] = [];
 
-        for (const ai of info?.attachments ?? []) {
-            result.push({ ... ai, data: await this.ghostlyFetch(ai) });
+            await this.ghostlyLoad(template);
+            const info = await this.ghostlyInit({ document, contentType });
+
+            for (const ai of info?.attachments ?? []) {
+                result.push({ ... ai, data: await this.ghostlyFetch(ai) });
+            }
+
+            await this.ghostlyRender({ contentType: 'text/html; charset="utf-8"', params })
+            target.style.height = (await this.ghostlyPreview()).documentStyle.height;
+
+            return result;
         }
-
-        await this.ghostlyRender({ contentType: 'text/html; charset="utf-8"', params })
-
-        const preview = await this.ghostlyPreview(options);
-        target.style.height = preview.documentStyle.height;
-
-        return result;
+        finally {
+            this._onGhostlyEvent = oldEventHandler;
+        }
     }
 
     /**
-     * This method will be called when an event from the template is received. To handle it, just override this method.
-     *
-     * @param event The event sent by the template.
+     * Prompt the user to print current view.
      */
-    protected onGhostlyEvent(event: object): void {
-        console.info(`Event from ${this._template}:`, event)
+    print(): void {
+        this.ghostlyPreview({ print: true })
+            .catch((err) => console.info(`Failed to print ${this._template}:`, err));
     }
 
     /**
@@ -177,7 +188,7 @@ export class PreviewDriver extends TemplateDriver {
      * @returns       The unpacked response.
      */
     protected sendMessage(request: GhostlyRequest): Promise<GhostlyTypes> {
-        return sendGhostlyMessage(this.target().contentWindow!, request, (ev) => this.onGhostlyEvent(ev))
+        return sendGhostlyMessage(this.target().contentWindow!, request, (ev) => this._onGhostlyEvent(ev))
             .then((packet) => parseGhostlyPacket(request, packet));
     }
 }

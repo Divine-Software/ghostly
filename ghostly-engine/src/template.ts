@@ -10,26 +10,11 @@ import { EngineConfig, RenderResult, TemplateEngine } from './engine';
 
 const domPurifyJS = fs.readFile(require.resolve('dompurify/dist/purify.min.js'), { encoding: 'utf8' });
 
-const ERROR = Symbol('Error');
-
-interface CachedPage extends Page {
-    [ERROR]?: GhostlyError;
-}
-
 export interface Worker {
     id:        number;
     load:      number;
     browser:   Browser;
-    pageCache: (CachedPage | undefined)[];
-}
-
-interface GhostlyProxyWindow extends Window {
-    sendGhostlyMessage: typeof sendGhostlyMessage;
-    DOMPurify: { sanitize(dirty: string, options: { WHOLE_DOCUMENT: boolean }): string; }
-}
-
-interface GhostlyWindow extends Window {
-    __ghostly_message_proxy__: GhostlyProxyWindow
+    pageCache: (PlaywrightDriver | undefined)[];
 }
 
 export class TemplateEngineImpl implements TemplateEngine {
@@ -61,106 +46,38 @@ export class TemplateEngineImpl implements TemplateEngine {
             ++worker.load;
 
             // Find a cached template ...
-            let page = worker.pageCache.find((page) => page?.url().replace(/#.*/, '') === this._url);
+            let driver = worker.pageCache.find((driver) => driver?.url === this._url);
 
             try {
-                const driver = new class extends TemplateDriver {
-                    constructor(template: string, private timeout: number) {
-                        super(template);
-                    }
-
-                    protected async sendMessage(request: GhostlyRequest): Promise<GhostlyTypes> {
-                        const response = await ((window: GhostlyWindow) => page!.evaluate(([request, timeout]) => {
-                            try {
-                                const events: object[] = []; // Batch all events since I don't know how to propagate them in real-time
-
-                                return window.__ghostly_message_proxy__.sendGhostlyMessage(window, request, (data) => events.push(data), timeout)
-                                    .then((packet) => ({ packet, events}));
-                            }
-                            catch (err) {
-                                throw new Error(`Ghostly message proxy not found or it's failing: ${err}`);
-                            }
-                        }, [request, this.timeout] as const))(null!);
-
-                        response.events.forEach((event) => onGhostlyEvent?.(event));
-                        return parseGhostlyPacket(request, response.packet);
-                    }
-                }(this._url, this._config.timeout);
-
-                if (page) {
+                if (driver) {
                     this.log.info(`${this._url}: Using cached template.`);
-                    worker.pageCache = worker.pageCache.filter((p) => p !== page);
+                    worker.pageCache = worker.pageCache.filter((d) => d !== driver);
                 }
                 else {
                     // ... or create a new one
                     this.log.info(`${this._url}: Creating new template.`);
-                    page = await this._createPage(worker);
-                    await driver.ghostlyLoad(this._url);
+                    driver = await new PlaywrightDriver(this._url, this._config).initialize(worker.browser);
                 }
 
-                try {
-                    await page.evaluate((hash) => window.location.hash = hash, this._hash);
+                // Render all views and attachments
+                result.push(...await driver.renderViews(this._hash, document, contentType, views, renderAttachments, onGhostlyEvent));
 
-                    // Send document/model to template
-                    this.log.info(`${this._url}: Initializing ${contentType} model.`);
-                    const info = await driver.ghostlyInit({ document, contentType });
-
-                    const attachments: RenderResult[] = [];
-
-                    // Render all attachments first (matching PreviewDriver behaviour)
-                    if (renderAttachments) {
-                        for (const ai of info?.attachments ?? []) {
-                            attachments.push({
-                                type:        'attachment',
-                                contentType: ai.contentType,
-                                name:        ai.name,
-                                description: ai.description,
-                                data:        await this._renderViewOrAttachment(ai, ai, page, driver),
-                            });
-                        }
-                    }
-
-                    // Render all views
-                    for (const view of deleteUndefined(views) /* Ensure undefined values do not overwrite defaults */) {
-                        result.push({
-                            type:        'view',
-                            name:        info?.name,
-                            description: info?.description,
-                            contentType: view.contentType,
-                            data:        await this._renderViewOrAttachment(view, null, page, driver),
-                        });
-                    }
-
-                    // Add attchments to result array (after the views)
-                    result.push(...attachments);
-
-                    // Add events to result, if no onGhostlyEvent handler was provided
-                    result.push(...events.map((event) => ({ type: 'event' as const, 'contentType': 'application/json', data: Buffer.from(JSON.stringify(event))})));
-                }
-                finally {
-                    // Silently ignore ghostlyEnd errors, since only v2 templates implement this method
-                    await driver.ghostlyEnd().catch(() => null);
-                }
-
-                delete page[ERROR];
+                // Add events to result, if no onGhostlyEvent handler was provided
+                result.push(...events.map((event) => ({ type: 'event' as const, 'contentType': 'application/json', data: Buffer.from(JSON.stringify(event))})));
 
                 // Return template to page cache if there were no errors
                 if (this._config.pageCache) {
                     this.log.info(`${this._url}: Returning template to page cache.`);
-                    worker.pageCache.unshift(page);
-                    page = worker.pageCache.length > this._config.pageCache ? worker.pageCache.pop() : undefined;
+                    worker.pageCache.unshift(driver);
+                    driver = worker.pageCache.length > this._config.pageCache ? worker.pageCache.pop() : undefined;
                 }
-            }
-            catch (err) {
-                this.log.error(`${this._url}: renderViews failed: ${page?.[ERROR] ?? err}`);
-                throw page?.[ERROR] ?? err;
             }
             finally {
-                if (page && this._config.pageCache) {
-                    this.log.info(`${this._url}: Evicting template ${page.url().replace(/#.*/, '')} from page cache.`);
+                if (driver && this._config.pageCache) {
+                    this.log.info(`${this._url}: Evicting template ${driver.url} from page cache.`);
                 }
 
-                await page?.close().catch((err) => this.log.error(err));
+                await driver?.close();
             }
         }
         finally {
@@ -170,20 +87,182 @@ export class TemplateEngineImpl implements TemplateEngine {
         return result;
     }
 
-    private async _renderViewOrAttachment(view: View, info: AttachmentInfo | null, page: Page, driver: TemplateDriver): Promise<Buffer> {
+    private _selectWorker(): Worker {
+        let best: Worker | null = null;
+
+        for (const worker of this._workers) {
+            if (worker && (!best || worker.load < best.load)) {
+                best = worker;
+            }
+        }
+
+        if (!best) {
+            throw new Error(`${this._url}: No workers alive`);
+        }
+
+        return best;
+    }
+}
+
+interface GhostlyProxyWindow extends Window {
+    sendGhostlyMessage: typeof sendGhostlyMessage;
+    DOMPurify: { sanitize(dirty: string, options: { WHOLE_DOCUMENT: boolean }): string; }
+}
+
+interface GhostlyWindow extends Window {
+    __ghostly_message_proxy__: GhostlyProxyWindow
+}
+
+class PlaywrightDriver extends TemplateDriver {
+    private _page!: Page;
+    private _error?: GhostlyError;
+    private _onGhostlyEvent?: OnGhostlyEvent;
+
+    constructor(public url: string, private _config: EngineConfig) {
+        super();
+    }
+
+    private get log(): Console {
+        return this._config.logger;
+    }
+
+    async initialize(browser: Browser): Promise<this> {
+        const context = await browser.newContext({
+            userAgent: `Ghostly/${packageJSON.version} ${browserVersion(browser)}`,
+        });
+
+        context.on('page', (page) => {
+            /* async */ page.route('**/*', (route, req) => {
+                this.log.debug(`${this.url}: Loading ${req.url()}`);
+
+                if (this._config.templatePattern.test(req.url())) {
+                    route.continue();
+                }
+                else {
+                    this.log.error(`${this.url}: Template accessed a forbidden URL: ${req.url()} did not match ${this._config.templatePattern}`);
+                    route.abort('addressunreachable');
+                }
+            });
+
+            page.on('pageerror', (error) => {
+                this.log.error(`${this.url}: [pageerror]: ${error}`);
+
+                // Close page so request terminates directly
+                this._error = new GhostlyError(`Unhandled error in template ${this.url}`, error);
+                /* async */ page.close();
+            });
+
+            page.on('dialog', (dialog) => {
+                this.log.warn(`${this.url}: [${dialog.type()}] ${dialog.message()}`)
+                dialog.dismiss();
+            });
+
+            page.on('console', async (msg) => {
+                const method = (this.log as any)[msg.type()] as Console['log'];
+                const params = await Promise.all(msg.args().map((arg) => arg.jsonValue().catch(() => arg.toString())));
+
+                (typeof method === 'function' ? method : this.log.warn).call(this.log, `${this.url}: [console]`, ...params);
+            });
+        });
+
+        this._page = await context.newPage();
+
+        return this;
+    }
+
+    async renderViews(hash: string, document: string | object, contentType: string, views: View[], renderAttachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]> {
+        const result: RenderResult[] = [];
+
+        try {
+            this._onGhostlyEvent = onGhostlyEvent;
+
+            if (!this._template /* ghostlyLoad not yet called */) {
+                // Always specify fragment on initial load, because otherwise `window.location.hash = ''` will trigger an event
+                await this._page.goto(`${this.url}#${hash}`, { waitUntil: 'load' });
+
+                // Create the Ghostly message proxy
+                await (async (window: GhostlyWindow) => this._page.evaluate(([sendGhostlyMessage, domPurifyJS]) => {
+                    try {
+                        window.__ghostly_message_proxy__ = window.open('', '', 'width=0,height=0') as GhostlyProxyWindow;
+                        window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>
+                            ${domPurifyJS}
+                            ${sendGhostlyMessage}
+                        </script>`);
+                        window.__ghostly_message_proxy__.document.close();
+                    }
+                    catch (_ignored) {
+                        throw new Error(`Failed to create Ghostly message proxy!`);
+                    }
+                }, [sendGhostlyMessage.toString(), await domPurifyJS]))(null!);
+
+                await this.ghostlyLoad(this.url);
+            }
+
+            // Set fragment
+            await this._page.evaluate((hash) => window.location.hash = hash, hash);
+
+            // Send document/model to template
+            this.log.info(`${this.url}: Initializing ${contentType} model.`);
+            const info = await this.ghostlyInit({ document, contentType });
+
+            const attachments: RenderResult[] = [];
+
+            // Render all attachments first (matching PreviewDriver behaviour)
+            if (renderAttachments) {
+                for (const ai of info?.attachments ?? []) {
+                    attachments.push({
+                        type:        'attachment',
+                        contentType: ai.contentType,
+                        name:        ai.name,
+                        description: ai.description,
+                        data:        await this._renderViewOrAttachment(ai, ai),
+                    });
+                }
+            }
+
+            // Render all views
+            for (const view of deleteUndefined(views) /* Ensure undefined values do not overwrite defaults */) {
+                result.push({
+                    type:        'view',
+                    name:        info?.name,
+                    description: info?.description,
+                    contentType: view.contentType,
+                    data:        await this._renderViewOrAttachment(view, null),
+                });
+            }
+
+            // Add attchments to result array (after the views)
+            result.push(...attachments);
+        }
+        catch (err) {
+            this.log.error(`${this.url}: renderViews failed: ${this._error ?? err}`);
+            throw this._error ?? err;
+        }
+        finally {
+            // Silently ignore ghostlyEnd errors, since only v2 templates implement this method
+            await this.ghostlyEnd().catch(() => null);
+
+            delete this._error;
+            delete this._onGhostlyEvent;
+        }
+
+        return result;
+    }
+
+    private async _renderViewOrAttachment(view: View, info: AttachmentInfo | null): Promise<Buffer> {
         const ct = ContentType.create(view.contentType);
         const dpi = view.dpi || 96;
         const ps: Required<PaperSize> = { format: 'A4', orientation: 'portrait', ...view.paperSize };
-        const dim = this._paperDimensions(ct.type === 'application/pdf' ? ps : view.paperSize, dpi)
+        const dim = paperDimensions(ct.type === 'application/pdf' ? ps : view.paperSize, dpi)
         const vps: Required<ViewportSize> = { ...dim, ...view.viewportSize };
         const clip = view.viewportSize?.width || view.viewportSize?.height ? { x: 0, y: 0, ...vps } : undefined;
 
-        this.log.info(`${this._url}: Rendering ${info ? `attachment '${info.name}'` : 'view'} as ${ct.type} (${vps.width}x${vps.height} @ ${dpi} DPI).`);
-        await page.setViewportSize(vps);
+        this.log.info(`${this.url}: Rendering ${info ? `attachment '${info.name}'` : 'view'} as ${ct.type} (${vps.width}x${vps.height} @ ${dpi} DPI).`);
+        await this._page.setViewportSize(vps);
 
         let data = info
-            ? await driver.ghostlyFetch(info)
-            : await driver.ghostlyRender(view);
+            ? await this.ghostlyFetch(info)
+            : await this.ghostlyRender(view);
 
         if (data instanceof Buffer) {
             return data;
@@ -194,14 +273,14 @@ export class TemplateEngineImpl implements TemplateEngine {
         else if (data === null || data === undefined) {
             switch (ct.type) {
                 case 'text/html': {
-                    let content = await page.content();
+                    let content = await this._page.content();
 
                     for (const transform of view.htmlTransforms ?? ['sanitize', 'minimize']) {
-                        this.log.info(`${this._url}: Applying HTML transform '${transform}'.`);
+                        this.log.info(`${this.url}: Applying HTML transform '${transform}'.`);
 
                         if (transform === 'sanitize') {
                             const doctype = /^<!DOCTYPE[^[>]*(\[[^\]]*\])?[^>]*>/i.exec(content)?.[0] ?? ''; // Preserve DOCTYPE
-                            content = doctype + await ((window: GhostlyWindow) => page.evaluate((dirty) => {
+                            content = doctype + await ((window: GhostlyWindow) => this._page.evaluate((dirty) => {
                                 return window.__ghostly_message_proxy__.DOMPurify.sanitize(dirty, { WHOLE_DOCUMENT: true });
                             }, content))(null!);
                         }
@@ -221,7 +300,7 @@ export class TemplateEngineImpl implements TemplateEngine {
                                 sortClassName:  true,
                             });
                         } else {
-                            throw new GhostlyError(`${this._url}: Unknown HTML transform '${transform}'`);
+                            throw new GhostlyError(`${this.url}: Unknown HTML transform '${transform}'`);
                         }
                     }
 
@@ -230,25 +309,25 @@ export class TemplateEngineImpl implements TemplateEngine {
                 }
 
                 case 'text/plain':
-                    data = await page.innerText('css=body');
+                    data = await this._page.innerText('css=body');
                     break;
 
                 case 'application/pdf':
-                    return await page.pdf({
+                    return await this._page.pdf({
                         format:    ps.format,
                         landscape: ps.orientation === 'landscape',
                     });
 
                 case 'image/jpeg':
-                    return await page.screenshot({ fullPage: true, type: 'jpeg', clip });
+                    return await this._page.screenshot({ fullPage: true, type: 'jpeg', clip });
 
                 case 'image/png':
-                    return await page.screenshot({ fullPage: true, type: 'png', clip });
+                    return await this._page.screenshot({ fullPage: true, type: 'png', clip });
 
                 default:
                     throw info
-                        ? new Error(`${this._url}: ghostlyFetch did not return a result for attachment ${JSON.stringify(info)}`)
-                        : new Error(`${this._url}: ghostlyRender did not return a result for view ${JSON.stringify(view)}`)
+                        ? new Error(`${this.url}: ghostlyFetch did not return a result for attachment ${JSON.stringify(info)}`)
+                        : new Error(`${this.url}: ghostlyRender did not return a result for view ${JSON.stringify(view)}`)
             }
         }
 
@@ -257,130 +336,67 @@ export class TemplateEngineImpl implements TemplateEngine {
         }
         catch (err) {
             throw info
-                    ? new Error(`${this._url}: ghostlyFetch returned an unexpected object for attachment ${JSON.stringify(info)}: ${data} [${err.message}]`)
-                    : new Error(`${this._url}: ghostlyRender returned an unexpected object for view ${JSON.stringify(view)}: ${data} [${err.message}]`)
+                    ? new Error(`${this.url}: ghostlyFetch returned an unexpected object for attachment ${JSON.stringify(info)}: ${data} [${err.message}]`)
+                    : new Error(`${this.url}: ghostlyRender returned an unexpected object for view ${JSON.stringify(view)}: ${data} [${err.message}]`)
         }
     }
 
-    private _selectWorker(): Worker {
-        let best: Worker | null = null;
+    async close(): Promise<void> {
+        await this._page.close().catch((err) => this.log.error(err));
+    }
 
-        for (const worker of this._workers) {
-            if (worker && (!best || worker.load < best.load)) {
-                best = worker;
+    protected async sendMessage(request: GhostlyRequest): Promise<GhostlyTypes> {
+        const response = await ((window: GhostlyWindow) => this._page.evaluate(([request, timeout]) => {
+            try {
+                const events: object[] = []; // Batch all events since I don't know how to propagate them in real-time
+
+                return window.__ghostly_message_proxy__.sendGhostlyMessage(window, request, (data) => events.push(data), timeout)
+                    .then((packet) => ({ packet, events}));
             }
-        }
+            catch (err) {
+                throw new Error(`Ghostly message proxy not found or it's failing: ${err}`);
+            }
+        }, [request, this._config.timeout] as const))(null!);
 
-        if (!best) {
-            throw new Error(`${this._url}: No workers alive`);
-        }
+        response.events.forEach((event) => this._onGhostlyEvent?.(event));
 
-        return best;
+        return parseGhostlyPacket(request, response.packet);
+    }
+}
+
+export function paperDimensions(paperSize: PaperSize | undefined, dpi: number): Required<ViewportSize> {
+    if (!paperSize?.format) {
+        return { width: 800, height: 600 };
     }
 
-    private _paperDimensions(paperSize: PaperSize | undefined, dpi: number): Required<ViewportSize> {
-        if (!paperSize?.format) {
-            return { width: 800, height: 600 };
-        }
+    let width, height;
 
-        let width, height;
+    switch (paperSize.format) {
+        case "A0":       width = 841; height = 1189; break;
+        case "A1":       width = 594; height = 841;  break;
+        case "A2":       width = 420; height = 594;  break;
+        case "A3":       width = 297; height = 420;  break;
+        case "A4":       width = 210; height = 297;  break;
+        case "A5":       width = 148; height = 210;  break;
+        case "A6":       width = 105; height = 148;  break;
+        case "Letter":   width = 216; height = 279;  break;
+        case "Legal":    width = 216; height = 356;  break;
+        case "Tabloid":  width = 432; height = 279;  break;
+        case "Ledger":   width = 279; height = 432;  break;
 
-        switch (paperSize.format) {
-            case "A0":       width = 841; height = 1189; break;
-            case "A1":       width = 594; height = 841;  break;
-            case "A2":       width = 420; height = 594;  break;
-            case "A3":       width = 297; height = 420;  break;
-            case "A4":       width = 210; height = 297;  break;
-            case "A5":       width = 148; height = 210;  break;
-            case "A6":       width = 105; height = 148;  break;
-            case "Letter":   width = 216; height = 279;  break;
-            case "Legal":    width = 216; height = 356;  break;
-            case "Tabloid":  width = 432; height = 279;  break;
-            case "Ledger":   width = 279; height = 432;  break;
-
-            default:
-                throw new GhostlyError(`Invalid paper format: ${paperSize.format}`);
-        }
-
-        if (paperSize.orientation === 'landscape') {
-            [ width, height ] = [ height, width ];
-        }
-
-        // Convert from mm to pixels
-        width  = Math.round(width  / 25.4 * dpi)
-        height = Math.round(height / 25.4 * dpi)
-
-        return { width, height };
+        default:
+            throw new GhostlyError(`Invalid paper format: ${paperSize.format}`);
     }
 
-    private async _createPage(worker: Worker): Promise<Page> {
-        let main: CachedPage = null!;
-
-        const context = await worker.browser.newContext({
-            userAgent: `Ghostly/${packageJSON.version} ${browserVersion(worker.browser)}`,
-        });
-
-        context.on('page', (page) => {
-            /* async */ page.route('**/*', (route, req) => {
-                this.log.debug(`${this._url}: Loading ${req.url()}`);
-
-                if (this._config.templatePattern.test(req.url())) {
-                    route.continue();
-                }
-                else {
-                    this.log.error(`${this._url}: Template accessed a forbidden URL: ${req.url()} did not match ${this._config.templatePattern}`);
-                    route.abort('addressunreachable');
-                }
-            });
-
-            page.on('pageerror', (error) => {
-                this.log.error(`${this._url}: [pageerror]: ${error}`);
-
-                // Close page so request terminates directly
-                main[ERROR] = new GhostlyError(`Unhandled error in template ${this._url}`, error);
-                /* async */ page.close()
-            });
-
-            page.on('dialog', (dialog) => {
-                this.log.warn(`${this._url}: [${dialog.type()}] ${dialog.message()}`)
-                dialog.dismiss();
-            });
-
-            page.on('console', async (msg) => {
-                const method = (this.log as any)[msg.type()] as Console['log'];
-                const params = await Promise.all(msg.args().map((arg) => arg.jsonValue().catch(() => arg.toString())));
-
-                (typeof method === 'function' ? method : this.log.warn).call(this.log, `${this._url}: [console]`, ...params);
-            });
-        });
-
-        main = await context.newPage();
-
-        try {
-            // Always specify fragment, because otherwise `window.location.hash = ''` will trigger an event
-            await main.goto(`${this._url}#${this._hash}`, { waitUntil: 'load' });
-
-            // Create the Ghostly message proxy
-            await (async (window: GhostlyWindow) => main.evaluate(([sendGhostlyMessage, domPurifyJS]) => {
-                try {
-                    window.__ghostly_message_proxy__ = window.open('', '', 'width=0,height=0') as GhostlyProxyWindow;
-                    window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>
-                        ${domPurifyJS}
-                        ${sendGhostlyMessage}
-                    </script>`);
-                    window.__ghostly_message_proxy__.document.close();
-                }
-                catch (_ignored) {
-                    throw new Error(`Failed to create Ghostly message proxy!`);
-                }
-            }, [sendGhostlyMessage.toString(), await domPurifyJS]))(null!);
-        }
-        catch (err) {
-            throw main[ERROR] ?? err;
-        }
-
-        return main;
+    if (paperSize.orientation === 'landscape') {
+        [ width, height ] = [ height, width ];
     }
+
+    // Convert from mm to pixels
+    width  = Math.round(width  / 25.4 * dpi)
+    height = Math.round(height / 25.4 * dpi)
+
+    return { width, height };
 }
 
 export function browserVersion(browser: Browser): string {
