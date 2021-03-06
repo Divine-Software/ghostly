@@ -67,30 +67,30 @@ export interface ModelInfo {
 }
 
 /** A view of the model that the template should render. */
-export interface View {
+export interface View<Params = unknown> {
     /** The view's type (for instance, `text/html` or `application/pdf`). */
-    contentType:     string;
+    contentType: string;
 
     /** Optional view params. */
-    params?:         unknown;
+    params?: Params;
 
     /** The resolution be used when rendering the view. Used for viewport size calculations. */
-    dpi?:            number;
+    dpi?: number;
 
     /** The paper size to be used when rendering documents. */
-    paperSize?:      PaperSize;
+    paperSize?: PaperSize;
 
     /** The size of the viewport to use, in pixels. Will be calculated from `dpi` and `paperSize`, if not provided. */
-    viewportSize?:   ViewportSize;
+    viewportSize?: ViewportSize;
 
     /** An array of transformations to apply when producing HTML results. Defaults to `[ sanitize, minimize ]`. */
     htmlTransforms?: HTMLTransform[];
 }
 
 /** Metadata about an attachment. */
-export interface AttachmentInfo extends View {
+export interface AttachmentInfo<Params = unknown> extends View<Params> {
     /** The name of the attachment (excluding file extension).*/
-    name:         string;
+    name: string;
 
     /** An optional description of the attachment. */
     description?: string;
@@ -118,7 +118,7 @@ export class GhostlyError extends Error {
     }
 
     toString(): string {
-        return `GhostlyError: ${this.message}: ${JSON.stringify(this.data)}`;
+        return `GhostlyError: ${this.message}: ${this.data instanceof Error ? String(this.data) : JSON.stringify(this.data)}`;
     }
 }
 
