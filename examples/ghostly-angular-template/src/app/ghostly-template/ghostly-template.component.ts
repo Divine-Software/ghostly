@@ -1,20 +1,14 @@
-import { Component, Input, ChangeDetectorRef, Testability, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, Testability } from '@angular/core';
+import { ghostly, Model, View } from '@divine/ghostly-runtime';
 
-declare var ghostly : any;
-
-export class GhostlyModel {
+interface GhostlyModel {
     name: string;
     username: string;
     email: string;
-};
-
-export class GhostlyView {
-    contentType: string;
-    params: any;
-};
+}
 
 @Component({
-    selector: 'ghostly-template',
+    selector: 'app-ghostly-template',
     template: `
         <div [class.pdf]="view?.contentType === 'application/pdf'">
         <h1>{{model.name}}, welcome to My Service!</h1>
@@ -27,33 +21,35 @@ export class GhostlyView {
         <address>The My Service team</address>
         </div>
     `,
+    styles: [
+    ]
 })
 export class GhostlyTemplateComponent implements OnInit, OnDestroy {
     model: GhostlyModel = {
-        name:     'Demo User',
+        name: 'Demo User',
         username: 'demo',
-        email:    'demo@example.com',
+        email: 'demo@example.com',
     };
 
-    view: GhostlyView;
+    view!: View;
 
     constructor(private changeDetector: ChangeDetectorRef, private testability: Testability) {
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         ghostly.init(this);
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         ghostly.destroy(this);
     }
 
-    ghostlyInit(source: GhostlyModel) {
+    ghostlyInit(source: Model): void {
         this.model = ghostly.parse(source);
     }
 
-    ghostlyRender(view : GhostlyView) {
-        return new Promise((resolve, reject) => {
+    ghostlyRender(view: View): Promise<void> {
+        return new Promise((resolve) => {
             this.view = view;
             this.changeDetector.detectChanges();
             this.testability.whenStable(resolve);
