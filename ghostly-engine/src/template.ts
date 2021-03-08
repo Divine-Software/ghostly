@@ -1,7 +1,7 @@
 import { parseGhostlyPacket, sendGhostlyMessage, TemplateDriver } from '@divine/ghostly-runtime';
 import { AttachmentInfo, GhostlyError, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, View, ViewportSize } from '@divine/ghostly-runtime/build/src/types'; // Avoid DOM types leaks
 import { ContentType } from '@divine/headers';
-import { Parser } from '@divine/uri';
+import { Parser, guessFileExtension } from '@divine/uri';
 import { promises as fs } from 'fs';
 import { minify } from 'html-minifier';
 import { Browser, Page } from 'playwright-chromium';
@@ -224,7 +224,7 @@ class PlaywrightDriver extends TemplateDriver {
             for (const view of deleteUndefined(views) /* Ensure undefined values do not overwrite defaults */) {
                 result.push({
                     type:        'view',
-                    name:        info?.name,
+                    name:        toFilename(info?.name, view.contentType),
                     description: info?.description,
                     contentType: view.contentType,
                     data:        await this._renderViewOrAttachment(view, null),
@@ -414,4 +414,9 @@ export function deleteUndefined<T extends object>(obj: T): T {
     }
 
     return obj;
+}
+
+export function toFilename(basename: string | undefined, contentType: string): string | undefined {
+    // Only add extension if basename is non-empty string
+    return basename && `${basename}.${guessFileExtension(contentType, true)}`;
 }

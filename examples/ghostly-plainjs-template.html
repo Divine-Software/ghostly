@@ -34,13 +34,13 @@ td,th {
                   name:        'plainjs-template',
                   description: document.head.title,
                   attachments: [
-                      { name: 'model', contentType: 'application/json' }
+                      { name: 'model.json', contentType: 'application/json' }
                   ]
               }
           },
 
           ghostlyFetch(ai) {
-                if (ai.name === 'model') {
+                if (ai.name === 'model.json') {
                     return JSON.stringify(this.document);
                 }
                 else {

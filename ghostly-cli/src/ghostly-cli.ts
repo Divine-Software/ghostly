@@ -12,11 +12,6 @@ import packageJSON from '../package.json';
 
 const sysconsole = new SysConsole({ syslog: false, showFile: false });
 
-function toFileName(basename: string, contentType: string): string {
-    const ext = contentType.replace(/.*\/([^+]*).*/, '$1') || 'bin';
-    return `${basename}.${ext === 'plain' ? 'txt' : ext}`;
-}
-
 function parseArgs() {
     const cmd = commander
         .usage('[options] [document]')
@@ -152,7 +147,7 @@ export async function main(): Promise<void> {
             // Write attachments
             for (const rr of result) {
                 if (argv.outputDir && rr.type === 'attachment' && rr.name) {
-                    await fs.writeFile(toFileName(path.resolve(argv.outputDir, rr.name), rr.contentType), rr.data);
+                    await fs.writeFile(path.resolve(argv.outputDir, rr.name), rr.data);
                 }
             }
         }

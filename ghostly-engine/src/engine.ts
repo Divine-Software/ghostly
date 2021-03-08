@@ -10,43 +10,43 @@ const nullConsole = new console.Console(new stream.PassThrough());
 /** Ghostly Engine configuration. */
 export interface EngineConfig {
     /** What browser to use for rendering. Defaults to 'chromium'. */
-    browser:         'chromium' | 'firefox' | 'webkit';
+    browser: 'chromium' | 'firefox' | 'webkit';
 
     /** Override browser executable path. */
-    browserPath:     string | null;
+    browserPath: string | null;
 
     /** A `Console` to use for debug logging. */
-    logger:          Console;
+    logger: Console;
 
     /** If specified, the maximum number of cached templates to keep. */
-    pageCache:       number;
+    pageCache: number;
 
     /** A delay (in seconds) to wait before attempting to restart a crashed browser. Defaults to 1 s. */
-    relaunchDelay:   number;
+    relaunchDelay: number;
 
     /** A regular expression that all template network requests must match, or else they will be forbidden. */
     templatePattern: RegExp;
 
     /** Timeout while waiting for a command response from the template. Defaults to 10 s. */
-    timeout:         number;
+    timeout: number;
 
     /** The number of browser instances to launch. Defaults to 1. */
-    workers:         number;
+    workers: number;
 }
 
 /** A result part from the template. Returned when using the [[TemplateEngine]] API. */
 export interface RenderResult {
     /** What kind of result this is. */
-    type:         'attachment' | 'event' | 'view';
+    type: 'attachment' | 'event' | 'view';
 
     /** The result's media type. */
-    contentType:  string;
+    contentType: string;
 
     /** The result, as a Buffer. */
-    data:         Buffer;
+    data: Buffer;
 
-    /** The name of the result, if present (not including file extension). */
-    name?:        string;
+    /** The name of the result, if present (*including* file extension). */
+    name?: string;
 
     /** A descriptipn of the result, if present. */
     description?: string;
@@ -61,16 +61,16 @@ export interface WSRenderResult extends Omit<RenderResult, 'data'> {
 /** The HTTP request message. */
 export interface WSRenderRequest {
     /** URL to the template to use. */
-    template:     string;
+    template: string;
 
     /** The model to render, as a string or embedded JSON object. */
-    document:     string | object;
+    document: string | object;
 
     /** The model's media type. Used when `document` is a string. */
-    contentType:  string;
+    contentType: string;
 
     /** What views to render. */
-    views:        View[];
+    views: View[];
 
     /** Set to `true` if attachments, if any, should be generated as well. */
     attachments?: boolean;

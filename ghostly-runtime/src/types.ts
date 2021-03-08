@@ -56,8 +56,8 @@ export interface Model {
 
 /** Metadata about a [[Model]], optionally returned by [[ghostlyInit]]. */
 export interface ModelInfo {
-    /** The name of the model. Will be used to construct file names. */
-    name:         string;
+    /** The name of the model (*excluding* file extension). Will be used to construct file names. */
+    name: string;
 
     /** An optional description of the model. */
     description?: string;
@@ -89,7 +89,7 @@ export interface View<Params = unknown> {
 
 /** Metadata about an attachment. */
 export interface AttachmentInfo<Params = unknown> extends View<Params> {
-    /** The name of the attachment (excluding file extension).*/
+    /** The name of the attachment (*including* file extension).*/
     name: string;
 
     /** An optional description of the attachment. */
