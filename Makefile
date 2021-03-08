@@ -2,6 +2,8 @@ NODE_MODULES	= node_modules/.yarn-integrity \
 		  ghostly-cli/node_modules \
 		  ghostly-engine/node_modules
 
+DOCKER_VERSION	:= $(shell node -p 'require(`./ghostly-cli/package.json`).version')
+
 all:		build
 
 prepare:	$(NODE_MODULES)
@@ -15,6 +17,9 @@ build::		prepare
 	ln -f README.md ghostly-engine/README.md
 	ln -f README.md ghostly-cli/README.md
 	ln -f README.md ghostly-runtime/README.md
+
+docker:
+	docker buildx build . -t divinesoftware/ghostly:$(DOCKER_VERSION) -t divinesoftware/ghostly:latest --build-arg version=$(DOCKER_VERSION)
 
 test::		build
 	yarn run jest
@@ -30,4 +35,4 @@ build clean distclean publish::
 	$(MAKE) -C ghostly-engine $@
 	$(MAKE) -C ghostly-runtime $@
 
-.PHONY:		all prepare build test clean distclean publish
+.PHONY:		all prepare build docker test clean distclean publish
