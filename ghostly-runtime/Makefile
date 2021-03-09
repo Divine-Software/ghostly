@@ -9,6 +9,7 @@ prepare:
 
 build:		prepare
 	yarn run tsc --build
+	yarn run tsc --build tsconfig.esm.json
 	yarn run rollup -c rollup.config.js
 
 test:		build

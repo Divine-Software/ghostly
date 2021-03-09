@@ -22,11 +22,13 @@
     "license": "Apache-2.0",
     "author": "Martin Blom <martin@blom.org>",
     "main": "build/index.js",
+    "module": "build/esm/index.js",
     "types": "build/index.d.ts",
     "source": "index.ts",
     "files": [
         "build/index*",
         "build/package*",
+        "build/esm",
         "build/src",
         "src"
     ]
