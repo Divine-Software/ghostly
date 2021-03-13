@@ -34,6 +34,33 @@ function unknownMethod(method: string): () => never {
     };
 }
 
+/**
+ * Filters the value to allow only types that are compatible with Ghostly Engine, `postMessage()` and JSON.
+ *
+ * Unsupported or recursive types are replaced with `undefined` (which will later be ignored when serializing as JSON).
+ * `Object.getOwnPropertyNames()` ensures `stack` and `message` of `Error` objects are passed though.
+ */
+function transportable(value: any, visited = new Set()): any {
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === undefined || value === null ||
+        value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Date || value instanceof Uint8Array) {
+         return value;
+    }
+
+    if (!visited.has(value)) {
+        visited = new Set(visited);
+        visited.add(value);
+
+        if (Array.isArray(value)) {
+            return value.map((item) => transportable(item, visited));
+        }
+        else if (typeof value === 'object') {
+            return Object.getOwnPropertyNames(value).reduce((object, name) => (object[name] = transportable(value[name], visited), object), {} as any);
+        }
+    }
+
+    return undefined;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ghostly {
     /**
@@ -95,10 +122,10 @@ export namespace ghostly {
             Promise.resolve()
                 .then(()    => checkError())
                 .then(()    => method.call(impl, request[1]))
-                .then((res) => sender.postMessage(['ghostlyACK', res ?? null], '*'))
+                .then((res) => sender.postMessage(['ghostlyACK', transportable(res) ?? null], '*'))
                 .catch((err: ReferenceError | GhostlyError | unknown) => {
                     try {
-                        sender.postMessage(['ghostlyNACK', err instanceof Error ? { ...err, message: err.message } : String(err)], '*');
+                        sender.postMessage(['ghostlyNACK', transportable(err) ?? null], '*');
                     }
                     catch (ex) {
                         sender.postMessage(['ghostlyNACK', `${ex}: ${err}`], '*');
@@ -132,7 +159,7 @@ export namespace ghostly {
             throw new GhostlyError(`ghostly.notify: Message must be an object`, message);
         }
         else {
-            source.postMessage(['ghostlyEvent', message], '*');
+            source.postMessage(['ghostlyEvent', transportable(message)], '*');
         }
     }
 
