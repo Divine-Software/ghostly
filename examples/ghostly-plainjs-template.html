@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Plain JS Demo Template</title>
+    <style>
+
+body {
+    font-family: Helvetica;
+    margin:  5mm;
+}
+
+h1 {
+    text-align: center;
+    border-bottom: 2px solid black;
+}
+
+td,th {
+    border: 1px solid #ccc;
+    text-align: center;
+}
+
+    </style>
+    <script src="./index.umd.js"></script>
+    <script>
+      const { ghostly, GhostlyError } = window['@divine']['ghostly-runtime'];
+
+      ghostly.init({
+          ghostlyInit(model) {
+              this.document = ghostly.parse(model);
+
+              return {
+                  name:        'plainjs-template',
+                  description: document.head.title,
+                  attachments: [
+                      { name: 'model.json', description: 'The raw data model used to render the view', contentType: 'application/json' },
+                  ]
+              }
+          },
+
+          ghostlyFetch(ai) {
+                if (ai.name === 'model.json') {
+                    return JSON.stringify(this.document);
+                }
+                else {
+                    throw new GhostlyError('Invalid attachment name', ai);
+                }
+          },
+
+          ghostlyRender(view) {
+              function htmlize(text) {
+                  return String(text).replace(/[&<"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '"': '&quot;', "'": '&apos;' }[c] });
+              }
+
+              function maxDepth(obj) {
+                  let depth = 1;
+
+                  if (typeof obj == 'object') {
+                      for (let key in obj) {
+                          depth = Math.max(depth, maxDepth(obj[key]) + 1);
+                      }
+                  }
+
+                  return depth;
+              }
+
+              function renderTableCells(obj, depth, maxDepth) {
+                  if (typeof obj == 'object' && Object.keys(obj).length) {
+                      let height = 0;
+                      let cells  = depth == 0 ? '<tr>' : '';
+
+                      for (var key in obj) {
+                          var result = renderTableCells(obj[key], depth + 1, maxDepth);
+
+                          height += result[0];
+
+                          cells += '<th rowspan="' + result[0] + '">' + htmlize(key) + '</th>' + result[1];
+                      }
+
+                      return [height, cells];
+                  }
+                  else {
+                      return [1, '<td colspan="' + (maxDepth - depth) + '">' + htmlize(JSON.stringify(obj)) + '</td></tr>'];
+                  }
+              }
+
+              document.documentElement['class'] = view.contentType.split('/')[1];
+              document.getElementById('content').innerHTML = renderTableCells(this.document, 0, maxDepth(this.document))[1];
+
+              document.getElementById('ua').innerText     = navigator.userAgent;
+              document.getElementById('width').innerText  = window.innerWidth;
+              document.getElementById('height').innerText = window.innerHeight;
+          },
+      });
+</script>
+  </head>
+
+  <body>
+    <h1>Plain JS Demo Template</h1>
+
+    <h2>Environment</h2>
+    <table>
+        <tr>
+            <td>User-Agent</td>
+            <td id='ua'></td>
+        </tr>
+        <tr>
+            <td>Width</td>
+            <td id='width'></td>
+        </tr>
+        <tr>
+            <td>Height</td>
+            <td id='height'></td>
+        </tr>
+    </table>
+
+    <h2>Structure of incoming data model</h2>
+    <table>
+      <tbody id='content' />
+    </table>
+  </body>
+</html>
