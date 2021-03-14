@@ -123,7 +123,7 @@ export namespace ghostly {
                 .then(()    => checkError())
                 .then(()    => method.call(impl, request[1]))
                 .then((res) => sender.postMessage(['ghostlyACK', transportable(res) ?? null], '*'))
-                .catch((err: ReferenceError | GhostlyError | unknown) => {
+                .catch((err: GhostlyError | unknown) => {
                     try {
                         sender.postMessage(['ghostlyNACK', transportable(err) ?? null], '*');
                     }

@@ -148,7 +148,7 @@ class PlaywrightDriver extends TemplateDriver {
                 this.log.error(`${this.url}: [pageerror]: ${error}`);
 
                 // Close page so request terminates directly
-                this._error = new GhostlyError(`Unhandled error in template ${this.url}`, error);
+                this._error = new GhostlyError(`${this.url}: Unhandled error in template`, error);
                 /* async */ page.close();
             });
 
@@ -191,7 +191,7 @@ class PlaywrightDriver extends TemplateDriver {
                         window.__ghostly_message_proxy__.document.close();
                     }
                     catch (_ignored) {
-                        throw new Error(`Failed to create Ghostly message proxy!`);
+                        throw new Error(`${this.url}: Failed to create Ghostly message proxy!`);
                     }
                 }, [sendGhostlyMessage.toString(), await domPurifyJS]))(null!);
 
@@ -300,7 +300,7 @@ class PlaywrightDriver extends TemplateDriver {
                                 sortClassName:  true,
                             });
                         } else {
-                            throw new GhostlyError(`${this.url}: Unknown HTML transform '${transform}'`);
+                            throw new GhostlyError(`${this.url}: Unknown HTML transform '${transform}'`, view);
                         }
                     }
 
@@ -326,8 +326,8 @@ class PlaywrightDriver extends TemplateDriver {
 
                 default:
                     throw info
-                        ? new Error(`${this.url}: ghostlyFetch did not return a result for attachment ${JSON.stringify(info)}`)
-                        : new Error(`${this.url}: ghostlyRender did not return a result for view ${JSON.stringify(view)}`)
+                        ? new GhostlyError(`${this.url}: ghostlyFetch did not return a result for attachment '${info.name}'`, info)
+                        : new GhostlyError(`${this.url}: ghostlyRender did not return a result for view '${view.contentType}'`, view)
             }
         }
 
@@ -336,8 +336,8 @@ class PlaywrightDriver extends TemplateDriver {
         }
         catch (err) {
             throw info
-                    ? new Error(`${this.url}: ghostlyFetch returned an unexpected object for attachment ${JSON.stringify(info)}: ${data} [${err.message}]`)
-                    : new Error(`${this.url}: ghostlyRender returned an unexpected object for view ${JSON.stringify(view)}: ${data} [${err.message}]`)
+                    ? new GhostlyError(`${this.url}: ghostlyFetch returned an unexpected object for attachment '${info.name}': ${data}`, err)
+                    : new GhostlyError(`${this.url}: ghostlyRender returned an unexpected object for view '${view.contentType}': ${data}`, err)
         }
     }
 
@@ -354,7 +354,7 @@ class PlaywrightDriver extends TemplateDriver {
                     .then((packet) => ({ packet, events}));
             }
             catch (err) {
-                throw new Error(`Ghostly message proxy not found or it's failing: ${err}`);
+                throw new Error(`${this.url}: Ghostly message proxy not found or it's failing: ${err}`);
             }
         }, [request, this._config.timeout] as const))(null!);
 
@@ -385,11 +385,14 @@ export function paperDimensions(paperSize: PaperSize | undefined, dpi: number): 
         case "Ledger":   width = 279; height = 432;  break;
 
         default:
-            throw new GhostlyError(`Invalid paper format: ${paperSize.format}`);
+            throw new GhostlyError(`Invalid paper format: ${paperSize.format}`, paperSize);
     }
 
     if (paperSize.orientation === 'landscape') {
         [ width, height ] = [ height, width ];
+    }
+    else if (paperSize.orientation !== 'portrait' && paperSize.orientation !== undefined) {
+        throw new GhostlyError(`Invalid paper orientation: ${paperSize.orientation}`, paperSize);
     }
 
     // Convert from mm to pixels

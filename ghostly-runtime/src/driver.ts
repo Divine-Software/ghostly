@@ -218,7 +218,7 @@ export class PreviewDriver extends TemplateDriver {
             clearTimeout(watchdog);
             watchdog = setTimeout(() => {
                 removeEventListener('message', eventListener);
-                reject(new Error(`sendGhostlyMessage: Command ${request[0]} timed out`));
+                reject(new GhostlyError(`sendGhostlyMessage: Command ${request[0]} timed out`, 'time-out'));
             }, (timeout || 10) * 1000);
         }
 

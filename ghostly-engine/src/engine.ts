@@ -95,7 +95,8 @@ export interface TemplateEngine {
      * @param params          Optional view params as parsed JSON.
      * @param onGhostlyEvent  Callback to invoke if the template emits an event using [[notify]].
      * @returns               A `Buffer` containing the rendered document.
-     * @throws GhostlyError
+     * @throws GhostlyError   Template-related errors.
+     * @throws Error          Other internal errors.
      */
     render(document: string | object, contentType: string, format: string, params: unknown, onGhostlyEvent?: OnGhostlyEvent): Promise<Buffer>;
 
@@ -108,7 +109,8 @@ export interface TemplateEngine {
      * @param attachments     Set to `true` if you also want to render the attachments (if any).
      * @param onGhostlyEvent  Callback to invoke if the template emits an event using [[notify]].
      * @returns               A `Buffer` containing the rendered document.
-     * @throws GhostlyError
+     * @throws GhostlyError   Template-related errors.
+     * @throws Error          Other internal errors.
      */
     renderViews(document: string | object, contentType: string, views: View[], attachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]>;
 }
@@ -200,7 +202,7 @@ export class Engine {
         uri = url.resolve(`file://${process.cwd()}/`, uri);
 
         if (!this._config.templatePattern.test(uri)) {
-            throw new Error(`Template URL is not allowed: ${uri} did not match ${this._config.templatePattern}`);
+            throw new GhostlyError(`Template URL is not allowed: ${uri} did not match ${this._config.templatePattern}`);
         }
 
         return new TemplateEngineImpl(this._config, this._workers, uri);
@@ -409,7 +411,7 @@ export class Engine {
             }
         }
         catch (ex) {
-            throw new WSResponse(500, ex instanceof GhostlyError ? `${ex.message}: ${ex.data}` : ex.message);
+            throw new WSResponse(500, ex instanceof GhostlyError ? `${ex.message}: ${JSON.stringify(ex.data)}` : ex.message);
         }
     }
 
