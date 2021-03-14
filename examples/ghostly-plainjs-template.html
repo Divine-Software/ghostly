@@ -66,7 +66,7 @@ td,th {
               }
 
               function renderTableCells(obj, depth, maxDepth) {
-                  if (typeof obj == 'object' && Object.keys(obj).length) {
+                  if (obj && typeof obj == 'object' && Object.keys(obj).length) {
                       let height = 0;
                       let cells  = depth == 0 ? '<tr>' : '';
 
