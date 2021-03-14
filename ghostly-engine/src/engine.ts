@@ -98,7 +98,7 @@ export interface TemplateEngine {
      * @throws GhostlyError   Template-related errors.
      * @throws Error          Other internal errors.
      */
-    render(document: string | object, contentType: string, format: string, params: unknown, onGhostlyEvent?: OnGhostlyEvent): Promise<Buffer>;
+    render(document: string | object, contentType: string, format: string, params?: unknown, onGhostlyEvent?: OnGhostlyEvent): Promise<Buffer>;
 
     /**
      * Render multiple views and/or attachments from a model and return the results as a [[RenderResult]] array.
@@ -179,16 +179,15 @@ export class Engine {
      * Close all running browser instances and clean up internal resources.
      */
     async stop(): Promise<this> {
-        for (const worker of this._workers) {
-            if (worker) {
-                try {
-                    await worker.browser.close();
-                }
-                catch (err) {
-                    this.log.warn(`Worker ${worker.id}: Failed to close browser: ${err}.`);
-                }
+        await Promise.all(this._workers.map(async (worker, index) => {
+            try {
+                delete this._workers[index];
+                await worker?.browser.close();
             }
-        }
+            catch (err) {
+                this.log.warn(`Worker ${worker?.id}: Failed to close browser: ${err}.`);
+            }
+        }));
 
         return this;
     }
