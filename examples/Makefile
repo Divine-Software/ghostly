@@ -1,9 +1,11 @@
 all:		build
 
 prepare:
+	make -C ../ghostly-runtime $@
 	yarn --cwd ghostly-angular-template --frozen-lockfile --mutex network
 
 build:		prepare
+	make -C ../ghostly-runtime $@
 	yarn --cwd ghostly-angular-template run build --prod
 
 test:		prepare
@@ -11,6 +13,11 @@ test:		prepare
 
 clean:
 	rm -rf ../website/static/examples/ghostly-angular-template
+
+dist:		build
+	rsync -a --delete \
+		ghostly-angular-template/dist/ghostly-angular-template/ \
+		../website/static/examples/ghostly-angular-template/
 
 distclean:	clean
 	rm -rf ghostly-angular-template/node_modules

@@ -1,4 +1,4 @@
-# The *Ghostly* template/print formatter engine
+# The Ghostly template/print formatter engine
 
 [![ghostly-cli version](https://badge.fury.io/js/%40divine%2Fghostly-cli.svg)](https://badge.fury.io/js/%40divine%2Fghostly-cli)
 [![ghostly-engine version](https://badge.fury.io/js/%40divine%2Fghostly-engine.svg)](https://badge.fury.io/js/%40divine%2Fghostly-engine)
@@ -15,7 +15,7 @@ The *Ghostly Engine* is available as a [Node.js module](https://www.npmjs.com/pa
 really simple API that you can embed in your own project. There is also a [command line
 tool](https://www.npmjs.com/package/@divine/ghostly-cli) that can either render documents from the command line or start
 a web service that accepts HTTP requests, enabling use from any language or environment. This tool is also available as
-a ready-made Docker image.
+a ready-made [Docker image](https://hub.docker.com/r/divinesoftware/ghostly).
 
 The *Ghostly Runtime* is a small [client-side library](https://www.npmjs.com/package/@divine/ghostly-runtime) that
 defines the protocol required to drive the template.
