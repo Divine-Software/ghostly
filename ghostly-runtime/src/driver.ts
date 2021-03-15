@@ -221,13 +221,16 @@ export class PreviewDriver extends TemplateDriver {
  * Sends a command to the Ghostly template and marshals the result so it can be transferred from browser to Node.js.
  *
  * NOTE: This function must be self-contained and serializable, since the Ghostly Engine will inject it into the
- * Playwright browser instance! No external helper functions or too fancy JS/TS allowed.
+ * Playwright browser instance! No external helper functions or too fancy JS/TS allowed (including GhostlyError).
  *
  * @param target         The window where the Ghostly template is running.
  * @param request        The command to send.
  * @param onGhostlyEvent An optional handler that will be invoked when a the template calls [[notify]].
  * @param timeout        An optional timeout, in seconds, to wait for a response, before an error is thrown. Defaults to 10 s.
  * @returns              The raw response packet. Must be unpacked using [[parseGhostlyPacket]].
+ *
+ * @throws RangeError    The command timed out.
+ * @throws TypeError     The template returned an illegal response packet.
  *
  * @see parseGhostlyPacket
  * @see TemplateDriver
@@ -242,7 +245,7 @@ export class PreviewDriver extends TemplateDriver {
             clearTimeout(watchdog);
             watchdog = setTimeout(() => {
                 removeEventListener('message', eventListener);
-                reject(new GhostlyError(`sendGhostlyMessage: Command ${request[0]} timed out`, 'time-out'));
+                reject(new RangeError(`sendGhostlyMessage: Command ${request[0]} timed out`));
             }, (timeout || 10) * 1000);
         }
 
@@ -265,7 +268,7 @@ export class PreviewDriver extends TemplateDriver {
             removeEventListener('message', eventListener);
 
             if (!Array.isArray(response) || typeof response[0] !== 'string') {
-                reject(new Error(`sendGhostlyMessage: Invalid response packet received for command ${request[0]}: ${response}`));
+                reject(new TypeError(`sendGhostlyMessage: Invalid response packet received for command ${request[0]}: ${response}`));
             }
             else if (response[1] instanceof Uint8Array) {
                 // No Uint8Array support in Playwright; encode as string
