@@ -306,11 +306,11 @@
 
 <!-- Toolbar -->
 <div class="toolbar" role="banner">
-    <img width="40" alt="Angular Logo"
+    <img width="40" alt="{{ name }} Logo"
         src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTAgMjUwIj4KICAgIDxwYXRoIGZpbGw9IiNERDAwMzEiIGQ9Ik0xMjUgMzBMMzEuOSA2My4ybDE0LjIgMTIzLjFMMTI1IDIzMGw3OC45LTQzLjcgMTQuMi0xMjMuMXoiIC8+CiAgICA8cGF0aCBmaWxsPSIjQzMwMDJGIiBkPSJNMTI1IDMwdjIyLjItLjFWMjMwbDc4LjktNDMuNyAxNC4yLTEyMy4xTDEyNSAzMHoiIC8+CiAgICA8cGF0aCAgZmlsbD0iI0ZGRkZGRiIgZD0iTTEyNSA1Mi4xTDY2LjggMTgyLjZoMjEuN2wxMS43LTI5LjJoNDkuNGwxMS43IDI5LjJIMTgzTDEyNSA1Mi4xem0xNyA4My4zaC0zNGwxNy00MC45IDE3IDQwLjl6IiAvPgogIDwvc3ZnPg==" />
     <span>Welcome</span>
     <div class="spacer"></div>
-    <a aria-label="Angular on twitter" target="_blank" rel="noopener" href="https://twitter.com/angular"
+    <a target="_blank" rel="noopener" href="https://twitter.com/{{ twitter }}"
         title="Twitter">
         <svg id="twitter-logo" height="24" data-name="Logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
             <rect width="400" height="400" fill="none" />
@@ -319,7 +319,7 @@
                 fill="#fff" />
         </svg>
     </a>
-    <a aria-label="Angular on YouTube" target="_blank" rel="noopener" href="https://youtube.com/angular"
+    <a target="_blank" rel="noopener" href="https://youtube.com/{{ youtube }}"
         title="YouTube">
         <svg id="youtube-logo" height="24" width="24" data-name="Logo" xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24" fill="#fff">
@@ -364,25 +364,25 @@
 
     <!-- Ghostly Template -->
     <h2>Ghostly Template</h2>
-    <p>The <a routerLink="ghostly-template">Ghostly template</a> is a just a component of this Angular app.</p>
+    <p>The <a routerLink="ghostly-template">Ghostly template</a> is a just a component of this {{ name }} app.</p>
 
     <!-- Resources -->
     <h2>Resources</h2>
     <p>Here are some links to help you get started:</p>
 
     <div class="card-container">
-        <a class="card" target="_blank" rel="noopener" href="https://angular.io/tutorial">
+        <a class="card" target="_blank" rel="noopener" href="{{ web.main }}/tutorial">
             <svg class="material-icons" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
             </svg>
 
-            <span>Learn Angular</span>
+            <span>Learn {{ name }}</span>
 
             <svg class="material-icons" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
             </svg> </a>
 
-        <a class="card" target="_blank" rel="noopener" href="https://angular.io/cli">
+        <a class="card" target="_blank" rel="noopener" href="{{ web.main }}/cli">
             <svg class="material-icons" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z" />
             </svg>
@@ -394,13 +394,13 @@
             </svg>
         </a>
 
-        <a class="card" target="_blank" rel="noopener" href="https://blog.angular.io/">
+        <a class="card" target="_blank" rel="noopener" href="{{ web.blog }}/">
             <svg class="material-icons" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <path
                     d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
             </svg>
 
-            <span>Angular Blog</span>
+            <span>{{ name }} Blog</span>
 
             <svg class="material-icons" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
@@ -429,7 +429,7 @@
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
             </svg>
 
-            <span>Angular Material</span>
+            <span>{{ name }} Material</span>
         </div>
 
         <div class="card card-small" (click)="selection.value = 'pwa'" tabindex="0">
@@ -467,17 +467,17 @@
 
     <!-- Terminal -->
     <div class="terminal" [ngSwitch]="selection.value">
-        <pre *ngSwitchDefault>ng generate component xyz</pre>
-        <pre *ngSwitchCase="'material'">ng add @angular/material</pre>
-        <pre *ngSwitchCase="'pwa'">ng add @angular/pwa</pre>
-        <pre *ngSwitchCase="'dependency'">ng add _____</pre>
-        <pre *ngSwitchCase="'test'">ng test</pre>
-        <pre *ngSwitchCase="'build'">ng build --prod</pre>
+        <pre *ngSwitchDefault>{{ cli }} generate component xyz</pre>
+        <pre *ngSwitchCase="'material'">{{ cli }} add @{{ npm }}/material</pre>
+        <pre *ngSwitchCase="'pwa'">{{ cli }} add @{{ npm }}/pwa</pre>
+        <pre *ngSwitchCase="'dependency'">{{ cli }} add _____</pre>
+        <pre *ngSwitchCase="'test'">{{ cli }} test</pre>
+        <pre *ngSwitchCase="'build'">{{ cli }} build --prod</pre>
     </div>
 
     <!-- Links -->
     <div class="card-container">
-        <a class="circle-link" title="Animations" href="https://angular.io/guide/animations" target="_blank"
+        <a class="circle-link" title="Animations" href="{{ web.main }}/guide/animations" target="_blank"
             rel="noopener">
             <svg id="Group_20" data-name="Group 20" xmlns="http://www.w3.org/2000/svg" width="21.813" height="23.453"
                 viewBox="0 0 21.813 23.453">
@@ -495,8 +495,8 @@
             </svg>
         </a>
 
-        <a class="circle-link" title="CLI" href="https://cli.angular.io/" target="_blank" rel="noopener">
-            <svg alt="Angular CLI Logo" xmlns="http://www.w3.org/2000/svg" width="21.762" height="23.447"
+        <a class="circle-link" title="CLI" href="{{ web.cli }}/" target="_blank" rel="noopener">
+            <svg xmlns="http://www.w3.org/2000/svg" width="21.762" height="23.447"
                 viewBox="0 0 21.762 23.447">
                 <g id="Group_21" data-name="Group 21" transform="translate(0)">
                     <path id="Path_20" data-name="Path 20"
@@ -517,7 +517,7 @@
         </a>
 
         <a class="circle-link" title="Protractor" href="https://www.protractortest.org/" target="_blank" rel="noopener">
-            <svg alt="Angular Protractor Logo" xmlns="http://www.w3.org/2000/svg" width="21.81" height="23.447"
+            <svg xmlns="http://www.w3.org/2000/svg" width="21.81" height="23.447"
                 viewBox="0 0 21.81 23.447">
                 <g id="Group_26" data-name="Group 26" transform="translate(0)">
                     <path id="Path_28" data-name="Path 28"
@@ -532,7 +532,7 @@
             </svg>
         </a>
 
-        <a class="circle-link" title="Find a Local Meetup" href="https://www.meetup.com/find/?keywords=angular"
+        <a class="circle-link" title="Find a Local Meetup" href="https://www.meetup.com/find/?keywords={{ name.toLowerCase() }}"
             target="_blank" rel="noopener">
             <svg alt="Meetup Logo" xmlns="http://www.w3.org/2000/svg" width="24.607" height="23.447"
                 viewBox="0 0 24.607 23.447">
@@ -542,7 +542,7 @@
             </svg>
         </a>
 
-        <a class="circle-link" title="Join the Conversation on Discord" href="https://discord.gg/angular"
+        <a class="circle-link" title="Join the Conversation on Discord" href="https://discord.gg/{{ discord }}"
             target="_blank" rel="noopener">
             <svg alt="Discord Logo" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 245 240">
                 <path
@@ -555,8 +555,8 @@
 
     <!-- Footer -->
     <footer>
-        Love Angular?&nbsp;
-        <a href="https://github.com/angular/angular" target="_blank" rel="noopener"> Give our repo a star.
+        Love {{ name }}?&nbsp;
+        <a href="https://github.com/{{ github.org }}/{{ github.repo }}" target="_blank" rel="noopener"> Give our repo a star.
             <div class="github-star-badge">
                 <svg class="material-icons" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                     viewBox="0 0 24 24">
@@ -567,7 +567,7 @@
                 Star
             </div>
         </a>
-        <a href="https://github.com/angular/angular" target="_blank" rel="noopener">
+        <a href="https://github.com/{{ github.org }}/ {{ github.repo }}" target="_blank" rel="noopener">
             <svg class="material-icons" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                 <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="#1976d2" />
                 <path d="M0 0h24v24H0z" fill="none" />

@@ -69,6 +69,7 @@
                                     "with": "src/environments/environment.prod.ts"
                                 }
                             ],
+                            "baseHref": "/ghostly/examples/ghostly-angular-template/",
                             "optimization": true,
                             "outputHashing": "all",
                             "sourceMap": false,

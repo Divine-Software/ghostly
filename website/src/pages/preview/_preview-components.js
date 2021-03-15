@@ -46,15 +46,61 @@ export class TemplateParams extends Component {
             params: '',
         },
         {
-            name:  'Angular Templage',
-            url:   absPath('examples/ghostly-angular-template/index.html#ghostly-template'),
+            name:  'Angular Templage #1',
+            url:   absPath('examples/ghostly-angular-template/#ghostly-template'),
             model: {
                 'name':     'John Doe',
                 'username': 'johndoe',
                 'email':    'john@doe.com'
             },
             params: '',
-        }
+        },
+        {
+            name:  'Angular Templage #2a',
+            url:   absPath('examples/ghostly-angular-template/#'),
+            model: {
+                name:     'Angular',
+                title:    'ghostly-angular-template',
+                github : {
+                    org:  'angular',
+                    repo: 'angular',
+                },
+                web : {
+                    main: 'https://angular.io',
+                    blog: 'https://blog.angular.io',
+                    cli : 'https://cli.angular.io',
+                },
+                cli:      'ng',
+                npm:      'angular',
+                discord:  'angular',
+                twitter:  'angular',
+                youtube:  'angular',
+            },
+            params: '',
+        },
+        {
+            name:  'Angular Templage #2b',
+            url:   absPath('examples/ghostly-angular-template/#'),
+            model: {
+                name:     'Gradian',
+                title:    'ghostly-gradian-template',
+                github : {
+                    org:  'gradian-org',
+                    repo: 'gradian-repo',
+                },
+                web : {
+                    main: 'https://gradian.io',
+                    blog: 'https://blog.gradian.io',
+                    cli : 'https://cli.gradian.io',
+                },
+                cli:      'gon',
+                npm:      'gradianOnNPM',
+                discord:  'gradianOnDiscord',
+                twitter:  'gradianOnTwitter',
+                youtube:  'gradianOnYoutube',
+            },
+            params: '',
+        },
     ].map(({ name, url, model, params }) => ({ name, url, model: JSON.stringify(model, null, 4), params }));
 
     constructor(props) {
@@ -62,10 +108,11 @@ export class TemplateParams extends Component {
 
         this.target = props.target;
         this.state  = { ...TemplateParams.presets[0], busy: false, extras: [] };
+        this.driver = new DebugDriver(this.target);
     }
 
     newPreset = (ev) => {
-        this.setState({ ...TemplateParams.presets.find((p) => p.url === ev.target.value) })
+        this.setState({ ...TemplateParams.presets.find((p) => p.name === ev.target.value) })
     }
 
     newURL = (ev) => {
@@ -80,23 +127,37 @@ export class TemplateParams extends Component {
         this.setState({ params: ev.target.value });
     }
 
-    renderModel = async (ev, print) => {
+    renderPreview = async (ev, print) => {
         ev.preventDefault();
 
         try {
             this.setState({ busy: true, extras: [] });
 
-            const driver = new PreviewDriver(this.target, (ev) => alert(`Event from ${this.state.url}: ${JSON.stringify(ev)}`));
-            const extras = await driver.renderPreview(this.state.url, this.state.model, 'application/json', this.state.params ? JSON.parse(this.state.params) : undefined);
+            const extras = await this.driver.renderPreview(this.state.url, this.state.model, 'application/json', this.state.params ? JSON.parse(this.state.params) : undefined);
 
             this.setState({ extras });
 
             if (print) {
-                driver.print();
+                this.driver.print();
             }
         }
         catch (err) {
             alert(err);
+        }
+        finally {
+            this.setState({ busy: false });
+        }
+
+        return false;
+    }
+
+    clearPreview = async (ev) => {
+        ev.preventDefault();
+
+        try {
+            this.setState({ busy: true, extras: [] });
+
+            await this.driver.clearPreview();
         }
         finally {
             this.setState({ busy: false });
@@ -124,7 +185,7 @@ export class TemplateParams extends Component {
                 p.url    === this.state.url &&
                 p.model  === this.state.model &&
                 p.params === this.state.params
-            )?.url ?? '';
+            )?.name ?? '';
 
         return <form onSubmit={() => false}>
             <table className={styles.table}>
@@ -135,7 +196,7 @@ export class TemplateParams extends Component {
                         </th>
                         <td>
                             <select name='preset' value={selected} onChange={this.newPreset}>
-                                { TemplateParams.presets.map((p) => <option key={p.url} value={p.url}>{p.name}</option>) }
+                                { TemplateParams.presets.map((p) => <option key={p.name} value={p.name}>{p.name}</option>) }
                                 { !selected && <option key={selected} value={selected}>Custom Template</option> }
                             </select>
                         </td>
@@ -161,7 +222,7 @@ export class TemplateParams extends Component {
                             <label htmlFor='params'>View params<br/>(optional; JSON)</label>
                         </th>
                         <td>
-                            <textarea name='params' value={this.state.params} onChange={ev => this.newParams(ev)} rows='5'></textarea>
+                            <textarea name='params' value={this.state.params} onChange={this.newParams} rows='5'></textarea>
                         </td>
                     </tr>
                     <tr>
@@ -170,9 +231,11 @@ export class TemplateParams extends Component {
                         </th>
                         <td>
                             <span>
-                                <button className='button button--primary' disabled={this.state.busy} onClick={(ev) => this.renderModel(ev, false)}>Render model as HTML</button>
+                                <button className='button button--primary' disabled={this.state.busy} onClick={(ev) => this.renderPreview(ev, false)}>Preview model as HTML</button>
                                 &nbsp;
-                                <button className='button button--primary' disabled={this.state.busy} onClick={(ev) => this.renderModel(ev, true)}>Render model and print</button>
+                                <button className='button button--primary' disabled={this.state.busy} onClick={(ev) => this.renderPreview(ev, true)}>Preview model and print</button>
+                                &nbsp;
+                                <button className='button button--primary' disabled={this.state.busy} onClick={this.clearPreview}>Clear preview</button>
                             </span>
                         </td>
                     </tr>
@@ -194,5 +257,48 @@ export class TemplateParams extends Component {
                 </tbody>
             </table>
         </form>
+    }
+}
+
+class DebugDriver extends PreviewDriver {
+    constructor(target) {
+        super(target, (ev) => alert(`Event from ${this._template}: ${JSON.stringify(ev)}`));
+    }
+
+    async _invokeAndLog(method, args) {
+        try {
+            const result = await super[method](...args);
+
+            console.info(method, args, result);
+            return result;
+        }
+        catch (err) {
+            console.error(method, args, err);
+            throw err;
+        }
+    }
+
+    ghostlyLoad(...args) {
+        return this._invokeAndLog('ghostlyLoad', args);
+    }
+
+    ghostlyInit(...args) {
+        return this._invokeAndLog('ghostlyInit', args);
+    }
+
+    ghostlyRender(...args) {
+        return this._invokeAndLog('ghostlyRender', args);
+    }
+
+    ghostlyFetch(...args) {
+        return this._invokeAndLog('ghostlyFetch', args);
+    }
+
+    ghostlyPreview(...args) {
+        return this._invokeAndLog('ghostlyPreview', args);
+    }
+
+    ghostlyEnd(...args) {
+        return this._invokeAndLog('ghostlyEnd', args);
     }
 }
