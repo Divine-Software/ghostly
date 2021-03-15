@@ -52,6 +52,7 @@ function parseArgs() {
         .option('-o  --output <file>',                                'template output filename [standard output]')
         .option('-O  --output-dir <directory>',                       'attachments output directory [disabled]')
         .option('    --page-cache <num>',                             'each worker keeps <num> pages cached [0]', int)
+        .option('    --page-max-age <seconds>',                       'time (in seconds) to keep a cached page in memory [60]', int)
         .option('    --browser <chromium|firefox|webkit[:<file>]',    'Specify browser to use (with optional exe path override)')
         .option('    --pidfile <file>',                               'fork and write PID to this file')
         .option('    --relaunch-delay <seconds>',                     'delay in seconds before relaunching a crashed worker [1]', int)
@@ -114,6 +115,7 @@ export async function main(): Promise<void> {
 
     arg('templatePattern', RegExp);
     arg('pageCache',       Number);
+    arg('pageMaxAge',      Number);
     arg('relaunchDelay',   Number);
     arg('workers',         Number);
 

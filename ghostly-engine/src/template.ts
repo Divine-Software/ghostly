@@ -67,14 +67,16 @@ export class TemplateEngineImpl implements TemplateEngine {
 
                 // Return template to page cache if there were no errors
                 if (this._config.pageCache) {
-                    this.log.info(`${this._url}: Returning template to page cache.`);
                     worker.pageCache.unshift(driver);
                     driver = worker.pageCache.length > this._config.pageCache ? worker.pageCache.pop() : undefined;
+
+                    const capacity = Math.round(100 * worker.pageCache.length / this._config.pageCache);
+                    this.log.info(`${this._url}: Returning template to page cache (${capacity}% full).`);
                 }
             }
             finally {
                 if (driver && this._config.pageCache) {
-                    this.log.info(`${this._url}: Evicting template ${driver.url} from page cache.`);
+                    this.log.info(`${driver.url}: Evicting template from page cache.`);
                 }
 
                 await driver?.close();
@@ -102,6 +104,18 @@ export class TemplateEngineImpl implements TemplateEngine {
 
         return best;
     }
+
+    public static async purgeExpiredPages(workers: (Worker | undefined)[], config: EngineConfig): Promise<void> {
+        for (const worker of workers) {
+            for (const [index, driver] of worker?.pageCache.entries() ?? []) {
+                if (driver?.isExpired()) {
+                    config.logger.info(`${driver.url}: Purging expired template from page cache.`);
+                    delete worker!.pageCache[index];
+                    await driver.close();
+                }
+            }
+        }
+    }
 }
 
 interface GhostlyProxyWindow extends Window {
@@ -114,12 +128,19 @@ interface GhostlyWindow extends Window {
 }
 
 class PlaywrightDriver extends TemplateDriver {
+    private _expires: number;
     private _page!: Page;
     private _error?: GhostlyError;
     private _onGhostlyEvent?: OnGhostlyEvent;
 
     constructor(public url: string, private _config: EngineConfig) {
         super();
+
+        this._expires = Date.now() + _config.pageMaxAge * 1000;
+    }
+
+    isExpired(): boolean {
+        return Date.now() > this._expires;
     }
 
     private get log(): Console {

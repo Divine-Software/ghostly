@@ -21,6 +21,9 @@ export interface EngineConfig {
     /** If specified, the maximum number of cached templates to keep. */
     pageCache: number;
 
+    /** Number of seconds to keep cached template around. Defaults to 60 seconds. */
+    pageMaxAge: number;
+
     /** A delay (in seconds) to wait before attempting to restart a crashed browser. Defaults to 1 s. */
     relaunchDelay: number;
 
@@ -141,6 +144,7 @@ export class WSResponse {
 export class Engine {
     private _config: EngineConfig;
     private _workers: (Worker | undefined)[];
+    private _cleaner?: NodeJS.Timeout;
 
     /**
      * Constructs a Ghostly Engine instance.
@@ -157,6 +161,7 @@ export class Engine {
             relaunchDelay:   1,
             workers:         1,
             pageCache:       0,
+            pageMaxAge:      60,
             ...deleteUndefined(config)
         };
 
@@ -172,6 +177,11 @@ export class Engine {
      */
     async start(): Promise<this> {
         await this._launchWorkers(this._config.workers);
+
+        this._cleaner = setInterval(() => {
+            TemplateEngineImpl.purgeExpiredPages(this._workers, this._config);
+        }, 1000);
+
         return this;
     }
 
@@ -179,6 +189,8 @@ export class Engine {
      * Close all running browser instances and clean up internal resources.
      */
     async stop(): Promise<this> {
+        clearInterval(this._cleaner!);
+
         await Promise.all(this._workers.map(async (worker, index) => {
             try {
                 delete this._workers[index];
