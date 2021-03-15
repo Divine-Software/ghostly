@@ -1,48 +1,38 @@
 {
-  "name": "ghostly",
-  "version": "1.3.0",
-  "description": "Ghostly template/print formatter engine",
-  "keywords": [
-    "fop",
-    "xsl",
-    "xslt",
-    "template",
-    "print",
-    "formatter",
-    "html",
-    "css",
-    "pdf",
-    "phantomjs"
-  ],
-  "homepage": "https://github.com/LeviticusMB/ghostly",
-  "bugs": "https://github.com/LeviticusMB/ghostly/issues",
-  "repository": "LeviticusMB/ghostly",
-  "license": "MIT",
-  "author": "Martin Blom <martin@blom.org>",
-  "main": "lib/src/ghostly.js",
-  "types": "lib/src/ghostly.d.ts",
-  "bin": "ghostly-cli",
-  "files": [
-    "lib",
-    "ghostly-cli",
-    "phantomjs*"
-  ],
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "engines": {
-    "node": ">=6"
-  },
-  "dependencies": {
-    "@divine/sysconsole": "^1.1.0",
-    "commander": "^2.19.0",
-    "daemonize-process": "^2.0.0",
-    "mz": "^2.7.0",
-    "phantomjs-bin": "^2.1.1"
-  },
-  "devDependencies": {
-    "@types/mz": "^0.0.32",
-    "@types/node": "^6.0.118",
-    "typescript": "^3.1.3"
-  }
+    "name": "ghostly",
+    "version": "0.0.0",
+    "private": true,
+    "homepage": "https://divine-software.github.io/ghostly/",
+    "bugs": "https://github.com/Divine-Software/ghostly/issues",
+    "repository": "https://github.com/Divine-Software/ghostly.git",
+    "license": "Apache-2.0",
+    "author": "Martin Blom <martin@blom.org>",
+    "workspaces": {
+        "packages": [
+            "ghostly-cli",
+            "ghostly-engine",
+            "ghostly-runtime"
+        ],
+        "nohoist": [
+            "**"
+        ]
+    },
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^17.1",
+        "@rollup/plugin-node-resolve": "^11.1",
+        "@types/jest": "^26.0",
+        "@typescript-eslint/eslint-plugin": "^4.14",
+        "@typescript-eslint/parser": "^4.14",
+        "eslint": "^7.18",
+        "eslint-import-resolver-node": "~0.3",
+        "eslint-plugin-import": "^2.22",
+        "eslint-plugin-jest": "^24.1",
+        "eslint-plugin-jsdoc": "^32.0",
+        "jest": "^26.6",
+        "jest-cli": "^26.6",
+        "playwright": "~1.9",
+        "rollup": "^2.38",
+        "rollup-plugin-sourcemaps": "~0.6",
+        "typescript": "~4.2"
+    }
 }

@@ -1,0 +1,49 @@
+{
+    "name": "@divine/ghostly-engine",
+    "version": "2.0.1",
+    "description": "Ghostly template/print formatter engine",
+    "keywords": [
+        "fop",
+        "xsl",
+        "xslt",
+        "template",
+        "print",
+        "formatter",
+        "html",
+        "css",
+        "pdf",
+        "phantomjs",
+        "puppeteer",
+        "playwright"
+    ],
+    "homepage": "https://divine-software.github.io/ghostly/",
+    "bugs": "https://github.com/Divine-Software/ghostly/issues",
+    "repository": "https://github.com/Divine-Software/ghostly.git",
+    "license": "Apache-2.0",
+    "author": "Martin Blom <martin@blom.org>",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
+    "source": "index.ts",
+    "files": [
+        "build/index*",
+        "build/package*",
+        "build/src",
+        "src"
+    ],
+    "dependencies": {
+        "@divine/ghostly-runtime": "^2.0.1",
+        "@divine/headers": "^1.3.0",
+        "@divine/uri": "~0.3.2",
+        "dompurify": "^2.2",
+        "html-minifier": "^4.0",
+        "playwright-chromium": "~1.9",
+        "tslib": "^2.1"
+    },
+    "devDependencies": {
+        "@types/html-minifier": "^4.0",
+        "@types/node": "^12"
+    },
+    "engines": {
+        "node": ">=12"
+    }
+}

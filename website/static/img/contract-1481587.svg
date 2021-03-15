@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="800" version="1.1" viewBox="0 0 800.00001 800.00001" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <mask id="e" maskUnits="userSpaceOnUse">
+   <circle cx="400" cy="400" r="400" color="#000000" color-rendering="auto" fill="#fff" fill-rule="evenodd" image-rendering="auto" shape-rendering="auto" solid-color="#000000" style="isolation:auto;mix-blend-mode:normal"/>
+  </mask>
+  <mask id="f" maskUnits="userSpaceOnUse">
+   <circle cx="400" cy="400" r="400" color="#000000" color-rendering="auto" fill="#fff" fill-rule="evenodd" image-rendering="auto" shape-rendering="auto" solid-color="#000000" style="isolation:auto;mix-blend-mode:normal"/>
+  </mask>
+  <linearGradient id="d" x1="391.43" x2="146.87" y1="402.79" y2="668.51" gradientUnits="userSpaceOnUse">
+   <stop offset="0"/>
+   <stop stop-opacity="0" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(0 -252.36)" fill-rule="evenodd" shape-rendering="auto">
+  <circle cx="400" cy="652.36" r="400" color="#000000" color-rendering="auto" fill="#1c8adb" image-rendering="auto" solid-color="#000000" style="isolation:auto;mix-blend-mode:normal"/>
+  <path transform="translate(0 252.36)" d="m241.43 226.23-238.09 238.09c24.998 189.77 123.28 321.37 369.91 335.17l196.48-196.48v-376.79z" color="#000000" color-rendering="auto" fill="url(#d)" image-rendering="auto" mask="url(#f)" opacity=".42" solid-color="#000000" style="isolation:auto;mix-blend-mode:normal"/>
+  <path transform="translate(0 252.36)" d="m241.43 226.23v376.79h210.45v-21.051h-192.1v-334.68h291.61v334.68h-28.256v21.051h46.6v-376.79h-328.3zm36.365 38.387v22.223h213.14v-22.223h-213.14zm0 30v22.223h227.79v-22.223h-227.79zm0 30v22.223h162.07v-22.223h-162.07zm0 30v22.223h208.14v-22.223h-208.14zm0 30v22.223h220.27v-22.223h-220.27zm0 30v22.223h247.41v-22.223h-247.41zm0 30v22.223h238.84v-22.223h-238.84zm204.99 42.828l-3.752 10.16-7.959-7.3476-0.99414 10.777-9.5898-5.0352 1.5274 8.8926-8.6914-2.4473 4.6289 11.6-12.49 0.49609 5.7754 6.9434-8.7559 2.2226 8.5039 6.7051-9.4492 5.2891 9.9512 4.2774-7.7559 7.5566 8.9336 1.2949-5.0117 7.5039 12.475-0.8125-3.3887 12.02 8.3887-3.3398-0.58985 9.0078 6.3672-4.248v65.68l16.6-19.371 16.6 19.371v-65.811l6.5606 4.3789-0.58985-9.0078 8.3906 3.3398-2.9375-10.418 10.756 1.2715-5.5352-9.3047 10.721-1.5547-6.4688-6.2988 8.4727-3.1289-10.566-6.6699 9.8125-7.7305-8.752-2.2226 5.7715-6.9434-10.822-0.42774 4.5332-9.832-10.57 2.3848 1.832-10.666-7.9902 4.1973-0.35938-9.0176-9.6133 7.9844-4.3281-11.719-4.8184 7.6308-4.8203-7.6308zm4.7227 16.951a29.02 29.02 0 0 1 29.021 29.018 29.02 29.02 0 0 1 -29.021 29.021 29.02 29.02 0 0 1 -29.018 -29.021 29.02 29.02 0 0 1 29.018 -29.018zm0 2.5527a26.466 26.466 0 0 0 -26.465 26.465 26.466 26.466 0 0 0 26.465 26.467 26.466 26.466 0 0 0 26.467 -26.467 26.466 26.466 0 0 0 -26.467 -26.465z" color="#000000" color-rendering="auto" fill="#fff" image-rendering="auto" mask="url(#e)" solid-color="#000000" style="isolation:auto;mix-blend-mode:normal"/>
+ </g>
+</svg>

@@ -1,0 +1,14 @@
+{
+    "extends": "../tsconfig-base.json",
+    "include": [
+        "index.*",
+        "src/**/*.ts",
+        "test/**/*.ts",
+    ],
+    "compilerOptions": {
+        "target": "ES3",
+        "lib": [ "DOM", "ES2018" ],
+        "outDir": "build",
+        "importHelpers": false,
+    }
+}

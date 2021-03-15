@@ -1,0 +1,51 @@
+---
+title: Node.js module
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Add the Ghostly Engine to your Node project:
+
+<Tabs defaultValue="npm" groupId='jspm' values={[
+    { label: 'NPM', value: 'npm' },
+    { label: 'Yarn', value: 'yarn' }
+    ]}>
+<TabItem value='npm'>
+
+```sh
+npm install -g @divine/ghostly-engine
+```
+</TabItem>
+<TabItem value='yarn'>
+
+```sh
+yarn add @divine/ghostly-engine
+```
+</TabItem>
+</Tabs>
+
+Then, in your code, you create an [Engine](../api/classes/ghostly_engine.engine.md) and instantiate a
+[TemplateEngine](../api/interfaces/ghostly_engine.templateengine.md), which is used to render the data model.
+
+```js
+import { Engine } from '@divine/ghostly-engine';
+
+const TEMPLATE = 'https://divine-software.github.io/ghostly/examples/ghostly-plainjs-template.html';
+const MODEL    = [ null, "one", 2, { "three": [ false, true ] } ];
+const MODEL_CT = 'application/json';
+
+(async () => {
+    const engine = await new Engine({
+        logger: console,
+        pageCache: 10,
+        workers: 1,
+    }).start();
+
+    const template = engine.template(TEMPLATE);
+    const textBuff = await template.render(MODEL, MODEL_CT, 'text/plain; charset=utf-8');
+
+    console.log(textBuff.toString())
+    await engine.stop();
+})();
+```

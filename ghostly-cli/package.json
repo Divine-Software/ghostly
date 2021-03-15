@@ -1,0 +1,48 @@
+{
+    "name": "@divine/ghostly-cli",
+    "version": "2.0.1",
+    "description": "Ghostly template/print formatter command line utility",
+    "keywords": [
+        "fop",
+        "xsl",
+        "xslt",
+        "template",
+        "print",
+        "formatter",
+        "html",
+        "css",
+        "pdf",
+        "phantomjs",
+        "puppeteer",
+        "playwright"
+    ],
+    "homepage": "https://divine-software.github.io/ghostly/",
+    "bugs": "https://github.com/Divine-Software/ghostly/issues",
+    "repository": "https://github.com/Divine-Software/ghostly.git",
+    "license": "Apache-2.0",
+    "author": "Martin Blom <martin@blom.org>",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
+    "source": "index.ts",
+    "bin": "ghostly-cli",
+    "files": [
+        "ghostly-cli",
+        "build/index*",
+        "build/package*",
+        "build/src",
+        "src"
+    ],
+    "dependencies": {
+        "@divine/ghostly-engine": "^2.0.1",
+        "@divine/sysconsole": "^2.0",
+        "commander": "^7.1",
+        "daemonize-process": "^3.0",
+        "tslib": "^2.1"
+    },
+    "devDependencies": {
+        "@types/node": "^12"
+    },
+    "engines": {
+        "node": ">=12"
+    }
+}

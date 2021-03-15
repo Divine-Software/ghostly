@@ -1,0 +1,13 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "module": "ES2020",
+        "declaration": false,
+        "declarationMap": false,
+        "composite": false,
+        "outDir": "build/esm",
+    },
+    "exclude": [
+        "index.legacy.ts"
+    ]
+}

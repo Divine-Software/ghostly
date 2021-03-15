@@ -1,8 +1,7 @@
-# The Ghostly template/print formatter engine
-
-[![ghostly-cli version](https://badge.fury.io/js/%40divine%2Fghostly-cli.svg)](https://badge.fury.io/js/%40divine%2Fghostly-cli)
-[![ghostly-engine version](https://badge.fury.io/js/%40divine%2Fghostly-engine.svg)](https://badge.fury.io/js/%40divine%2Fghostly-engine)
-[![ghostly-runtime version](https://badge.fury.io/js/%40divine%2Fghostly-runtime.svg)](https://badge.fury.io/js/%40divine%2Fghostly-runtime)
+---
+title: Intro
+slug: /
+---
 
 *Ghostly* is a template engine/print formatter that can be used to render HTML or PDF documents, images and other kinds
 of documents from a data model or parameter set.
@@ -23,7 +22,3 @@ defines the protocol required to drive the template.
 Ghostly version 1 has been used in production for several years. Version 2 is a major rewrite which uses a modern
 [headless browser engine](https://playwright.dev/) and adds support for generating arbitrary attachments as part of the
 rendering operation.
-
-Please visit our [web site](https://divine-software.github.io/ghostly/) for more information.
-
-Copyright 2016-2021 Martin Blom. A Divine Software™ production.
