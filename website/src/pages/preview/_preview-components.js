@@ -2,7 +2,6 @@ import { PreviewDriver } from '@divine/ghostly-runtime';
 import React, { Component } from 'react';
 import styles from './styles.module.css';
 import config from '../../../docusaurus.config';
-import { extension } from 'mime-types';
 
 export class TemplatePreview extends Component {
     render() {
@@ -247,7 +246,7 @@ export class TemplateParams extends Component {
                             <span>
                                 { this.state.extras.map((a) => [
                                     <button key={a.name} className='button button--sm button--outline button--info' title={a.description} onClick={(ev) => this.displayAttachment(ev, a)}>
-                                        {a.name}.{extension(a.contentType) ?? 'bin'}
+                                        {a.name}
                                     </button>,
                                     '\xa0',
                                 ])}
