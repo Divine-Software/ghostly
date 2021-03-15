@@ -4,14 +4,14 @@
         <title>Ghostly Blog</title>
         <link>https://divine-software.github.io/blog</link>
         <description>Ghostly Blog</description>
-        <lastBuildDate>Sat, 15 Feb 2020 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Sun, 15 Mar 2020 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <item>
             <title><![CDATA[Welcome]]></title>
-            <link>https://divine-software.github.io/ghostly/blog/2020/02/15/welcome</link>
+            <link>https://divine-software.github.io/ghostly/blog/2020/03/15/welcome</link>
             <guid>Welcome</guid>
-            <pubDate>Sat, 15 Feb 2020 00:00:00 GMT</pubDate>
+            <pubDate>Sun, 15 Mar 2020 00:00:00 GMT</pubDate>
             <description><![CDATA[I'm happy to announce that Ghostly v2 is now released! Version 2.0 is an substantial upgrade over last release.]]></description>
         </item>
     </channel>
