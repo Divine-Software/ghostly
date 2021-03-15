@@ -92,17 +92,75 @@ export class PreviewDriver extends TemplateDriver {
     /**
      * Renders the provided model as HTML to the target IFrame, and then returns all attachments.
      *
-     * Note that all attachments are returned as-is from the template, so if an attachment is supposed to be rendered
-     * by the engine, `data` will be null. Only attachments where the template returns actual data will work.
+     * Note that all attachments are returned as-is from the template, so if an attachment is supposed to be rendered by
+     * the engine, `data` will be null. Only attachments where the template returns actual data will work.
+     *
+     * Note that [[ghostlyEnd]] will not be invoked by this method, since that would affect the preview result.
      *
      * @param template       The URL to the Ghostly template to use.
      * @param document       The model data, as JSON or a string.
      * @param contentType    The model's media type, used as an indication to the template how `document` should be parsed.
      * @param params         Optional view params (as JSON).
      * @param onGhostlyEvent Optional event handler to use. Will fallback to the default event handler if unspecified.
-     * @returns              An array of [[PreviewAttachment]] objects representing all attachments the template produced.
+     * @returns              An array of [[PreviewAttachment]] objects representing all attachments the template
+     * produced.
      */
     async renderPreview(template: string, document: string | object, contentType: string, params?: unknown, onGhostlyEvent?: OnGhostlyEvent): Promise<PreviewAttachment[]> {
+        const target = this.target();
+
+        if (template.indexOf('#') < 0) {
+            template += '#';
+        }
+
+        await new Promise<void>((resolve, reject) => {
+            const onLoad  = (_ev: Event)     => (cleanUp(), resolve());
+            const onError = (ev: ErrorEvent) => (cleanUp(), reject(ev.error ?? ev));
+            const cleanUp = () => {
+                target.removeEventListener('load',  onLoad);
+                target.removeEventListener('error', onError);
+            }
+
+            target.addEventListener('load',  onLoad);
+            target.addEventListener('error', onError);
+
+            target.contentWindow!.location.href = template;
+
+            if (template.replace(/#.*/, '') === this._template?.replace(/#.*/, '')) {
+                // URL not really changed, so no 'load' event will be triggered; resolve immediately instead
+                onLoad(null!);
+            }
+        });
+
+        const oldEventHandler = this._onGhostlyEvent;
+        this._onGhostlyEvent  = onGhostlyEvent ?? oldEventHandler;
+
+        try {
+            const result: PreviewAttachment[] = [];
+
+            if (template !== this._template) {
+                await this.ghostlyLoad(template);
+            }
+
+            const info = await this.ghostlyInit({ document, contentType });
+
+            for (const ai of info?.attachments ?? []) {
+                result.push({ ... ai, data: await this.ghostlyFetch(ai) });
+            }
+
+            await this.ghostlyRender({ contentType: 'text/html; charset="utf-8"', params })
+            target.style.height = (await this.ghostlyPreview()).documentStyle.height;
+
+            return result;
+        }
+        finally {
+            this._onGhostlyEvent = oldEventHandler;
+        }
+    }
+
+    /**
+     * Clears the preview IFrame by loading `about:blank`.
+     */
+    async clearPreview(): Promise<void> {
         const target = this.target();
 
         target.contentWindow!.location.href = 'about:blank';
@@ -120,41 +178,7 @@ export class PreviewDriver extends TemplateDriver {
             }
         }
 
-        await new Promise<void>((resolve, reject) => {
-            const onLoad  = (_ev: Event)     => (cleanUp(), resolve());
-            const onError = (ev: ErrorEvent) => (cleanUp(), reject(ev.error ?? ev));
-            const cleanUp = () => {
-                target.removeEventListener('load',  onLoad);
-                target.removeEventListener('error', onError);
-            }
-
-            target.addEventListener('load',  onLoad);
-            target.addEventListener('error', onError);
-
-            target.contentWindow!.location.href = template;
-        });
-
-        const oldEventHandler = this._onGhostlyEvent;
-        this._onGhostlyEvent  = onGhostlyEvent ?? oldEventHandler;
-
-        try {
-            const result: PreviewAttachment[] = [];
-
-            await this.ghostlyLoad(template);
-            const info = await this.ghostlyInit({ document, contentType });
-
-            for (const ai of info?.attachments ?? []) {
-                result.push({ ... ai, data: await this.ghostlyFetch(ai) });
-            }
-
-            await this.ghostlyRender({ contentType: 'text/html; charset="utf-8"', params })
-            target.style.height = (await this.ghostlyPreview()).documentStyle.height;
-
-            return result;
-        }
-        finally {
-            this._onGhostlyEvent = oldEventHandler;
-        }
+        delete this._template;
     }
 
     /**

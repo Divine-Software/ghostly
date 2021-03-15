@@ -171,6 +171,7 @@ class PlaywrightDriver extends TemplateDriver {
     }
 
     async renderViews(hash: string, document: string | object, contentType: string, views: View[], renderAttachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]> {
+        const template = `${this.url}#${hash}`;
         const result: RenderResult[] = [];
 
         try {
@@ -178,7 +179,7 @@ class PlaywrightDriver extends TemplateDriver {
 
             if (!this._template /* ghostlyLoad not yet called */) {
                 // Always specify fragment on initial load, because otherwise `window.location.hash = ''` will trigger an event
-                await this._page.goto(`${this.url}#${hash}`, { waitUntil: 'load' });
+                await this._page.goto(template, { waitUntil: 'load' });
 
                 // Create the Ghostly message proxy
                 await (async (window: GhostlyWindow) => this._page.evaluate(([sendGhostlyMessage, domPurifyJS]) => {
@@ -194,12 +195,16 @@ class PlaywrightDriver extends TemplateDriver {
                         throw new Error(`${this.url}: Failed to create Ghostly message proxy!`);
                     }
                 }, [sendGhostlyMessage.toString(), await domPurifyJS]))(null!);
-
-                await this.ghostlyLoad(this.url);
             }
 
             // Set fragment
             await this._page.evaluate((hash) => window.location.hash = hash, hash);
+
+            // Call ghostlyLoad if new template or hash differs
+            if (template !== this._template) {
+                this.log.info(`${this.url}: Initializing page with fragment '#${hash}'.`);
+                await this.ghostlyLoad(template);
+            }
 
             // Send document/model to template
             this.log.info(`${this.url}: Initializing ${contentType} model.`);

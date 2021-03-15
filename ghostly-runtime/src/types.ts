@@ -1,9 +1,10 @@
 /** The Ghostly Template API. */
 export interface Template {
     /**
-     * This optional method will be invoked once the template has been loaded by the browser.
+     * This optional method will be invoked once the template has been loaded by the browser, or each time the fragment
+     * part (hash) changes in a cached template.
      *
-     * @param url The template URL.
+     * @param url The template URL (including fragment).
      */
     ghostlyLoad?(url: string): void | Promise<void>;
 
