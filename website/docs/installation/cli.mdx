@@ -8,13 +8,20 @@ import TabItem from '@theme/TabItem';
 Install the command line tool:
 
 <Tabs defaultValue="npm" groupId='jspm' values={[
-    { label: 'NPM', value: 'npm' },
+    { label: 'npm',  value: 'npm'  },
+    { label: 'pnpm', value: 'pnpm' },
     { label: 'Yarn', value: 'yarn' }
     ]}>
 <TabItem value='npm'>
 
 ```sh
 npm install -g @divine/ghostly-cli
+```
+</TabItem>
+<TabItem value='pnpm'>
+
+```sh
+npm add --global @divine/ghostly-cli
 ```
 </TabItem>
 <TabItem value='yarn'>

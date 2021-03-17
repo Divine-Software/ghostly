@@ -2,24 +2,25 @@ all:		build
 
 prepare:
 	$(MAKE) -C ../ghostly-cli build
-	yarn --frozen-lockfile --mutex network
+	pnpm install --frozen-lockfile
 
 build:		prepare
-	yarn run build
+	pnpm run build
 
 watch:		prepare
-	yarn run start
+	pnpm run start
 
 test:
 
 clean:
-	yarn run clear
+	-pnpm run clear
+	rm -rf build
 
 distclean:	clean
 	rm -rf node_modules
 
 publish:	prepare clean
 	@[[ -z "$$(git status --porcelain)" ]] || (git status; false)
-	GIT_USER=LeviticusMB USE_SSH=true yarn run deploy
+	GIT_USER=LeviticusMB USE_SSH=true pnpm run deploy
 
 .PHONY:		all prepare build docs test clean distclean publish

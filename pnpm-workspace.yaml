@@ -1,0 +1,4 @@
+packages:
+  - ghostly-cli
+  - ghostly-engine
+  - ghostly-runtime

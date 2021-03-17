@@ -8,12 +8,12 @@ prepare:
 	$(MAKE) -C .. $@
 
 build:		prepare
-	yarn run tsc --build
-	yarn run tsc --build tsconfig.esm.json
-	yarn run rollup -c rollup.config.js
+	pnpx tsc --build
+	pnpx tsc --build tsconfig.esm.json
+	pnpx rollup -c rollup.config.js
 
 test:		build
-	yarn run jest --passWithNoTests
+	pnpx jest --passWithNoTests
 
 clean:
 	rm -rf build coverage
@@ -23,7 +23,8 @@ distclean:	clean
 
 publish:	clean build test
 	@[[ -z "$$(git status --porcelain)" ]] || (git status; false)
+	@[[ "`npm --version`" > "7" ]] || (echo Need npm v7+; false)
 	git tag -s $(BASENAME)-v$(VERSION) -m "$(NAME) v$(VERSION)"
-	yarn publish --non-interactive --access public
+	pnpm publish --access public
 
 .PHONY:		all prepare build docs test clean distclean publish

@@ -2,24 +2,28 @@ all:		build
 
 prepare:
 	make -C ../ghostly-runtime $@
-	yarn --cwd ghostly-angular-template --frozen-lockfile --mutex network
+	pnpm install --frozen-lockfile
 
 build:		prepare
 	make -C ../ghostly-runtime $@
-	yarn --cwd ghostly-angular-template run build --prod
+	pnpm run --dir ghostly-angular-template -- build --prod
 
 test:		prepare
-#	yarn --cwd ghostly-angular-template run ng test
+#	pnpm run --dir ghostly-angular-template -- ng test
 
 clean:
-	rm -rf ../website/static/examples/ghostly-angular-template
+	rm -rf ghostly-angular-template/dist
 
-dist:		build
+install:	build
 	rsync -a --delete \
 		ghostly-angular-template/dist/ghostly-angular-template/ \
 		../website/static/examples/ghostly-angular-template/
 
+uninstall:
+	rm -rf ../website/static/examples/ghostly-angular-template
+
 distclean:	clean
+	rm -rf node_modules
 	rm -rf ghostly-angular-template/node_modules
 
 .PHONY:		all prepare build test clean distclean
