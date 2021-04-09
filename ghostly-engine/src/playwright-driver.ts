@@ -3,10 +3,10 @@ import { AttachmentInfo, GhostlyError, GhostlyRequest, GhostlyTypes, OnGhostlyEv
 import { ContentType } from '@divine/headers';
 import { Parser } from '@divine/uri';
 import { promises as fs } from 'fs';
-import { minify } from 'html-minifier';
 import { Browser, Page } from 'playwright-chromium';
 import packageJSON from '../package.json';
 import { EngineConfig, RenderResult } from './engine';
+import { HTMLTransforms } from './html-transforms';
 import { browserVersion, deleteUndefined, paperDimensions, toFilename } from './template';
 
 const domPurifyJS = fs.readFile(require.resolve('dompurify/dist/purify.min.js'), { encoding: 'utf8' });
@@ -192,7 +192,11 @@ export class PlaywrightDriver extends TemplateDriver {
         else if (data === null || data === undefined) {
             switch (ct.type) {
                 case 'text/html': {
-                    data = await this.applyHTMLTransforms(await this._page.content(), view);
+                    const sanitizer = (dirty: string) => ((window: GhostlyWindow) => this._page.evaluate((dirty) => {
+                        return window.__ghostly_message_proxy__.DOMPurify.sanitize(dirty, { WHOLE_DOCUMENT: true });
+                    }, dirty))(null!);
+
+                    data = await new HTMLTransforms(this.url, this._config, sanitizer).apply(await this._page.content(), view);
                     break;
                 }
 
@@ -227,40 +231,6 @@ export class PlaywrightDriver extends TemplateDriver {
                     ? new GhostlyError(`${this.url}: ghostlyFetch returned an unexpected object for attachment '${info.name}': ${data}`, err)
                     : new GhostlyError(`${this.url}: ghostlyRender returned an unexpected object for view '${view.contentType}': ${data}`, err)
         }
-    }
-
-    private async applyHTMLTransforms(content: string, view: View): Promise<string> {
-        for (const transform of view.htmlTransforms ?? ['sanitize', 'minimize']) {
-            this.log.info(`${this.url}: Applying HTML transform '${transform}'.`);
-
-            if (transform === 'sanitize') {
-                const doctype = /^<!DOCTYPE[^[>]*(\[[^\]]*\])?[^>]*>/i.exec(content)?.[0] ?? ''; // Preserve DOCTYPE
-                content = doctype + await ((window: GhostlyWindow) => this._page.evaluate((dirty) => {
-                    return window.__ghostly_message_proxy__.DOMPurify.sanitize(dirty, { WHOLE_DOCUMENT: true });
-                }, content))(null!);
-            }
-            else if (transform === 'minimize') {
-                content = minify(content, {
-                    collapseBooleanAttributes: true,
-                    collapseWhitespace: true,
-                    conservativeCollapse: true,
-                    decodeEntities: true,
-                    minifyCSS: true,
-                    preserveLineBreaks: true,
-                    removeAttributeQuotes: true,
-                    removeComments: true,
-                    removeScriptTypeAttributes: true,
-                    removeStyleLinkTypeAttributes: true,
-                    sortAttributes: true,
-                    sortClassName:  true,
-                });
-            }
-            else {
-                throw new GhostlyError(`${this.url}: Unknown HTML transform '${transform}'`, view);
-            }
-        }
-
-        return content;
     }
 
     async close(): Promise<void> {
