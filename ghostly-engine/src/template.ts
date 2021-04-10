@@ -8,14 +8,14 @@ export interface Worker {
     id:        number;
     load:      number;
     browser:   Browser;
-    pageCache: (PlaywrightDriver | undefined)[];
+    pageCache: PlaywrightDriver[];
 }
 
 export class TemplateEngineImpl implements TemplateEngine {
     private _url:  string;
     private _hash: string;
 
-    constructor(private _config: EngineConfig, private _workers: (Worker | undefined)[], url: string) {
+    constructor(private _config: EngineConfig, private _workers: Worker[], url: string) {
         this._url  = url.replace(/#.*/, '');
         this._hash = url.replace(/[^#]*#?/, '');
     }
@@ -25,7 +25,7 @@ export class TemplateEngineImpl implements TemplateEngine {
     }
 
     async render(document: string | object, contentType: string, format: string, params: unknown, onGhostlyEvent?: OnGhostlyEvent): Promise<Buffer> {
-        return (await this.renderViews(document, contentType, [{ contentType: format, params: params }], false, onGhostlyEvent))[0].data;
+        return (await this.renderViews(document, contentType, [{ contentType: format, params: params }], false, onGhostlyEvent))[0]!.data;
     }
 
     async renderViews(document: string | object, contentType: string, views: View[], renderAttachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]> {
@@ -99,7 +99,7 @@ export class TemplateEngineImpl implements TemplateEngine {
         return best;
     }
 
-    public static async purgeExpiredPages(workers: (Worker | undefined)[], config: EngineConfig): Promise<void> {
+    public static async purgeExpiredPages(workers: Worker[], config: EngineConfig): Promise<void> {
         for (const worker of workers) {
             for (const [index, driver] of worker?.pageCache.entries() ?? []) {
                 if (driver?.isExpired()) {

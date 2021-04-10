@@ -143,7 +143,7 @@ export class WSResponse {
 /** The Ghostly Engine API. */
 export class Engine {
     private _config: EngineConfig;
-    private _workers: (Worker | undefined)[];
+    private _workers: Worker[];
     private _cleaner?: NodeJS.Timeout;
 
     /**
@@ -306,11 +306,11 @@ export class Engine {
             throw new WSResponse(404, `Resource ${uri.pathname} not found`);
         }
 
-        let template    = uri.query.template as string | undefined;
-        let document    = uri.query.document as string | object | undefined;
-        let contentType = (uri.query.contentType || 'application/json') as string;
-        let view        = uri.query.view as string | undefined;
-        let params      = uri.query.params && JSON.parse(uri.query.params as string) as unknown;
+        let template    = uri.query['template'] as string | undefined;
+        let document    = uri.query['document'] as string | object | undefined;
+        let contentType = (uri.query['contentType'] || 'application/json') as string;
+        let view        = uri.query['view'] as string | undefined;
+        let params      = uri.query['params'] && JSON.parse(uri.query['params'] as string) as unknown;
         let attachments = false;
 
         if (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'POST') {
@@ -415,7 +415,7 @@ export class Engine {
                     throw new Error(`Expected 1 rendered view but got ${vr.length}`);
                 }
 
-                return new WSResponse(200, results[0].data, { 'Content-Type': results[0].contentType });
+                return new WSResponse(200, results[0]!.data, { 'Content-Type': results[0]!.contentType });
             }
             else {
                 return new WSResponse(200, results);

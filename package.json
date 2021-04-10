@@ -8,21 +8,21 @@
     "license": "Apache-2.0",
     "author": "Martin Blom <martin@blom.org>",
     "devDependencies": {
-        "@rollup/plugin-commonjs": "^17.1.0",
-        "@rollup/plugin-node-resolve": "^11.2.0",
-        "@types/jest": "^26.0.21",
-        "@typescript-eslint/eslint-plugin": "^4.18.0",
-        "@typescript-eslint/parser": "^4.18.0",
-        "eslint": "^7.22.0",
+        "@rollup/plugin-commonjs": "^18.0.0",
+        "@rollup/plugin-node-resolve": "^11.2.1",
+        "@types/jest": "^26.0.22",
+        "@typescript-eslint/eslint-plugin": "^4.21.0",
+        "@typescript-eslint/parser": "^4.21.0",
+        "eslint": "^7.24.0",
         "eslint-import-resolver-node": "~0.3.4",
         "eslint-plugin-import": "^2.22.1",
-        "eslint-plugin-jest": "^24.3.2",
+        "eslint-plugin-jest": "^24.3.4",
         "eslint-plugin-jsdoc": "^32.3.0",
         "jest": "^26.6.3",
         "jest-cli": "^26.6.3",
         "playwright": "~1.9.2",
-        "rollup": "^2.42.1",
+        "rollup": "^2.45.1",
         "rollup-plugin-sourcemaps": "~0.6.3",
-        "typescript": "~4.2.3"
+        "typescript": "~4.2.4"
     }
 }
