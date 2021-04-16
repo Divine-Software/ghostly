@@ -34,13 +34,13 @@
     ],
     "dependencies": {
         "@divine/ghostly-engine": "workspace:*",
-        "@divine/sysconsole": "^2.0",
-        "commander": "^7.1",
-        "daemonize-process": "^3.0",
-        "tslib": "^2.1"
+        "@divine/sysconsole": "^2.0.0",
+        "commander": "^7.2.0",
+        "daemonize-process": "^3.0.0",
+        "tslib": "^2.2.0"
     },
     "devDependencies": {
-        "@types/node": "^12"
+        "@types/node": "^12.20.7"
     },
     "engines": {
         "node": ">=12"

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf8">
+    <style>div div { display: inline-block; border: 2px solid black }</style>
+
+    <link rel=stylesheet href=css/link.css>                        <!-- Will not be processed -->
+    <link rel=stylesheet href=css/style.css ghostly-inline>        <!-- Will be replaced with a <style> elemement -->
+    <link rel=stylesheet href=css/inline-style.css ghostly-inline> <!-- Will be replaced with a <style> elemement w/ SVG inlined -->
+    <link rel=stylesheet href=css/inline-data.css?ghostly-inline>  <!-- Will be replaced with a data: URI w/ SVG inlined -->
+
+</head>
+
+<body>
+
+    <h2>Linked CSS</h2>
+    <div>
+        <div class="link-stripes">
+            <img src=img/interactive.svg>
+            <img src=img/interactive.svg?ghostly-inline>
+        </div>
+
+        <div class="link-stripes-use">
+            <img src=img/interactive.use.svg?ghostly-inline>
+        </div>
+
+        <div class="link-stripes-inline">
+            <img src=img/interactive.inline.svg?ghostly-inline>
+        </div>
+    </div>
+
+    <h2>CSS converted to &lt;style></h2>
+    <div>
+        <div class="style-stripes">
+            <img src=img/interactive.svg>
+            <img src=img/interactive.svg?ghostly-inline>
+        </div>
+
+        <div class="style-stripes-use">
+            <img src=img/interactive.use.svg?ghostly-inline>
+        </div>
+
+        <div class="style-stripes-inline">
+            <img src=img/interactive.inline.svg?ghostly-inline>
+        </div>
+    </div>
+
+    <h2>CSS converted to &lt;style> w/ inlined images</h2>
+    <div>
+        <div class="inline-style-stripes">
+            <img src=img/interactive.svg>
+            <img src=img/interactive.svg?ghostly-inline>
+        </div>
+
+        <div class="inline-style-stripes-use">
+            <img src=img/interactive.use.svg?ghostly-inline>
+        </div>
+
+        <div class="inline-style-stripes-inline">
+            <img src=img/interactive.inline.svg?ghostly-inline>
+        </div>
+    </div>
+
+    <h2>CSS converted to data: URI w/ inlined images</h2>
+    <div>
+        <div class="inline-data-stripes">
+            <img src=img/interactive.svg>
+            <img src=img/interactive.svg?ghostly-inline>
+        </div>
+
+        <div class="inline-data-stripes-use">
+            <img src=img/interactive.use.svg?ghostly-inline>
+        </div>
+
+        <div class="inline-data-stripes-inline">
+            <img src=img/interactive.inline.svg?ghostly-inline>
+        </div>
+    </div>
+</body>

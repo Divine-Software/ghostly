@@ -1,0 +1,349 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`the transformer can run identity transforms 1`] = `
+"<!DOCTYPE html><html><head>
+    <meta charset=\\"utf8\\">
+    <style>div div { display: inline-block; border: 2px solid black }</style>
+
+    <link rel=\\"stylesheet\\" href=\\"css/link.css\\">                        <!-- Will not be processed -->
+    <link rel=\\"stylesheet\\" href=\\"css/style.css\\" ghostly-inline=\\"\\">        <!-- Will be replaced with a <style> elemement -->
+    <link rel=\\"stylesheet\\" href=\\"css/inline-style.css\\" ghostly-inline=\\"\\"> <!-- Will be replaced with a <style> elemement w/ SVG inlined -->
+    <link rel=\\"stylesheet\\" href=\\"css/inline-data.css?ghostly-inline\\">  <!-- Will be replaced with a data: URI w/ SVG inlined -->
+
+</head>
+
+<body>
+
+    <h2>Linked CSS</h2>
+    <div>
+        <div class=\\"link-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"img/interactive.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"link-stripes-use\\">
+            <img src=\\"img/interactive.use.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"link-stripes-inline\\">
+            <img src=\\"img/interactive.inline.svg?ghostly-inline\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to &#x3C;style></h2>
+    <div>
+        <div class=\\"style-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"img/interactive.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"style-stripes-use\\">
+            <img src=\\"img/interactive.use.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"style-stripes-inline\\">
+            <img src=\\"img/interactive.inline.svg?ghostly-inline\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to &#x3C;style> w/ inlined images</h2>
+    <div>
+        <div class=\\"inline-style-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"img/interactive.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"inline-style-stripes-use\\">
+            <img src=\\"img/interactive.use.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"inline-style-stripes-inline\\">
+            <img src=\\"img/interactive.inline.svg?ghostly-inline\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to data: URI w/ inlined images</h2>
+    <div>
+        <div class=\\"inline-data-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"img/interactive.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"inline-data-stripes-use\\">
+            <img src=\\"img/interactive.use.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"inline-data-stripes-inline\\">
+            <img src=\\"img/interactive.inline.svg?ghostly-inline\\">
+        </div>
+    </div>
+
+</body></html>"
+`;
+
+exports[`the transformer can run inline transforms 1`] = `
+"<!DOCTYPE html><html><head>
+    <meta charset=\\"utf8\\">
+    <style>div div { display: inline-block; border: 2px solid black }</style>
+
+    <link rel=\\"stylesheet\\" href=\\"css/link.css\\">                        <!-- Will not be processed -->
+    <style type=\\"text/css\\">.style-stripes{background:url(\\"img/stripes.svg\\") #DFDBE5}.style-stripes-use{background:url(\\"img/stripes.use.svg\\") #DFDBE5}.style-stripes-inline{background:url(\\"img/stripes.inline.svg\\") #DFDBE5}</style>        <!-- Will be replaced with a <style> elemement -->
+    <style type=\\"text/css\\">.inline-style-stripes{background:url(\\"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+PHN2ZyB3aWR0aD0iNDBweCIgaGVpZ2h0PSIxcHgiIHZpZXdCb3g9IjAgMCA0MCAxIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjwhLS1HZW5lcmF0b3I6IFNrZXRjaCA0MC4xICgzMzgwNCkgLSBodHRwOi8vd3d3LmJvaGVtaWFuY29kaW5nLmNvbS9za2V0Y2gtLT48dGl0bGU+c3RyaXBlczwvdGl0bGU+PGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+PGRlZnMvPjxnIGlkPSJQYWdlLTEiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSIjOUM5MkFDIiBmaWxsLW9wYWNpdHk9IjAuNCIgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBpZD0ic3RyaXBlcyIgZmlsbD0iIzlDOTJBQyI+PHJlY3QgaWQ9IlJlY3RhbmdsZS0yNyIgeD0iMCIgeT0iMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEiLz48L2c+PC9nPjwvc3ZnPg==\\") #DFDBE5}.inline-style-stripes-use{background:url(\\"data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2240px%22%20height=%221px%22%20viewBox=%220%200%2040%201%22%3E%3Cuse%20href=%22img/stripes.svg%23Page-1%22/%3E%3C/svg%3E\\") #DFDBE5}.inline-style-stripes-inline{background:url(\\"data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2240px%22%20height=%221px%22%20viewBox=%220%200%2040%201%22%3E%3Cuse%20href=%22data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+PHN2ZyB3aWR0aD0iNDBweCIgaGVpZ2h0PSIxcHgiIHZpZXdCb3g9IjAgMCA0MCAxIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjwhLS1HZW5lcmF0b3I6IFNrZXRjaCA0MC4xICgzMzgwNCkgLSBodHRwOi8vd3d3LmJvaGVtaWFuY29kaW5nLmNvbS9za2V0Y2gtLT48dGl0bGU+c3RyaXBlczwvdGl0bGU+PGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+PGRlZnMvPjxnIGlkPSJQYWdlLTEiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSIjOUM5MkFDIiBmaWxsLW9wYWNpdHk9IjAuNCIgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBpZD0ic3RyaXBlcyIgZmlsbD0iIzlDOTJBQyI+PHJlY3QgaWQ9IlJlY3RhbmdsZS0yNyIgeD0iMCIgeT0iMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEiLz48L2c+PC9nPjwvc3ZnPg==%22/%3E%3C/svg%3E\\") #DFDBE5}</style> <!-- Will be replaced with a <style> elemement w/ SVG inlined -->
+    <link rel=\\"stylesheet\\" href=\\"data:text/css,.inline-data-stripes%7Bbackground:url(%22data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+PHN2ZyB3aWR0aD0iNDBweCIgaGVpZ2h0PSIxcHgiIHZpZXdCb3g9IjAgMCA0MCAxIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjwhLS1HZW5lcmF0b3I6IFNrZXRjaCA0MC4xICgzMzgwNCkgLSBodHRwOi8vd3d3LmJvaGVtaWFuY29kaW5nLmNvbS9za2V0Y2gtLT48dGl0bGU+c3RyaXBlczwvdGl0bGU+PGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+PGRlZnMvPjxnIGlkPSJQYWdlLTEiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSIjOUM5MkFDIiBmaWxsLW9wYWNpdHk9IjAuNCIgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBpZD0ic3RyaXBlcyIgZmlsbD0iIzlDOTJBQyI+PHJlY3QgaWQ9IlJlY3RhbmdsZS0yNyIgeD0iMCIgeT0iMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEiLz48L2c+PC9nPjwvc3ZnPg==%22)%20%23DFDBE5%7D.inline-data-stripes-use%7Bbackground:url(%22data:image/svg+xml,%253Csvg%2520xmlns=%2522http://www.w3.org/2000/svg%2522%2520width=%252240px%2522%2520height=%25221px%2522%2520viewBox=%25220%25200%252040%25201%2522%253E%253Cuse%2520href=%2522img/stripes.svg%2523Page-1%2522/%253E%253C/svg%253E%22)%20%23DFDBE5%7D.inline-data-stripes-inline%7Bbackground:url(%22data:image/svg+xml,%253Csvg%2520xmlns=%2522http://www.w3.org/2000/svg%2522%2520width=%252240px%2522%2520height=%25221px%2522%2520viewBox=%25220%25200%252040%25201%2522%253E%253Cuse%2520href=%2522data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+PHN2ZyB3aWR0aD0iNDBweCIgaGVpZ2h0PSIxcHgiIHZpZXdCb3g9IjAgMCA0MCAxIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjwhLS1HZW5lcmF0b3I6IFNrZXRjaCA0MC4xICgzMzgwNCkgLSBodHRwOi8vd3d3LmJvaGVtaWFuY29kaW5nLmNvbS9za2V0Y2gtLT48dGl0bGU+c3RyaXBlczwvdGl0bGU+PGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+PGRlZnMvPjxnIGlkPSJQYWdlLTEiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSIjOUM5MkFDIiBmaWxsLW9wYWNpdHk9IjAuNCIgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBpZD0ic3RyaXBlcyIgZmlsbD0iIzlDOTJBQyI+PHJlY3QgaWQ9IlJlY3RhbmdsZS0yNyIgeD0iMCIgeT0iMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEiLz48L2c+PC9nPjwvc3ZnPg==%2522/%253E%253C/svg%253E%22)%20%23DFDBE5%7D\\">  <!-- Will be replaced with a data: URI w/ SVG inlined -->
+
+</head>
+
+<body>
+
+    <h2>Linked CSS</h2>
+    <div>
+        <div class=\\"link-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"link-stripes-use\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHVzZSBocmVmPSJpbWcvaW50ZXJhY3RpdmUuc3ZnI2MxIi8+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"link-stripes-inline\\">
+            <img src=\\"data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22300%22%20height=%22400%22%20viewBox=%220%200%20300%20400%22%3E%3Cuse%20href=%22data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+%22/%3E%3C/svg%3E\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to &#x3C;style></h2>
+    <div>
+        <div class=\\"style-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"style-stripes-use\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHVzZSBocmVmPSJpbWcvaW50ZXJhY3RpdmUuc3ZnI2MxIi8+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"style-stripes-inline\\">
+            <img src=\\"data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22300%22%20height=%22400%22%20viewBox=%220%200%20300%20400%22%3E%3Cuse%20href=%22data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+%22/%3E%3C/svg%3E\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to &#x3C;style> w/ inlined images</h2>
+    <div>
+        <div class=\\"inline-style-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"inline-style-stripes-use\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHVzZSBocmVmPSJpbWcvaW50ZXJhY3RpdmUuc3ZnI2MxIi8+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"inline-style-stripes-inline\\">
+            <img src=\\"data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22300%22%20height=%22400%22%20viewBox=%220%200%20300%20400%22%3E%3Cuse%20href=%22data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+%22/%3E%3C/svg%3E\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to data: URI w/ inlined images</h2>
+    <div>
+        <div class=\\"inline-data-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"inline-data-stripes-use\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHVzZSBocmVmPSJpbWcvaW50ZXJhY3RpdmUuc3ZnI2MxIi8+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"inline-data-stripes-inline\\">
+            <img src=\\"data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22300%22%20height=%22400%22%20viewBox=%220%200%20300%20400%22%3E%3Cuse%20href=%22data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+%22/%3E%3C/svg%3E\\">
+        </div>
+    </div>
+
+</body></html>"
+`;
+
+exports[`the transformer can run inline,minimize transforms 1`] = `
+"<!DOCTYPE html><html><head><meta charset=utf8><style>div div{display:inline-block;border:2px solid #000}</style><link href=css/link.css rel=stylesheet><style>.style-stripes{background:url(img/stripes.svg) #dfdbe5}.style-stripes-use{background:url(img/stripes.use.svg) #dfdbe5}.style-stripes-inline{background:url(img/stripes.inline.svg) #dfdbe5}</style><style>.inline-style-stripes{background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMSIgdmlld0JveD0iMCAwIDQwIDEiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0iIzlDOTJBQyIgZmlsbC1vcGFjaXR5PSIuNCIgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBpZD0ic3RyaXBlcyIgZmlsbD0iIzlDOTJBQyI+PHJlY3QgaWQ9IlJlY3RhbmdsZS0yNyIgeD0iMCIgeT0iMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEiLz48L2c+PC9nPjwvc3ZnPg==) #dfdbe5}.inline-style-stripes-use{background:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSIxIiB2aWV3Qm94PSIwIDAgNDAgMSI+PHVzZSBocmVmPSJpbWcvc3RyaXBlcy5zdmcjUGFnZS0xIi8+PC9zdmc+) #dfdbe5}.inline-style-stripes-inline{background:url(data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2240%22%20height=%221%22%20viewBox=%220%200%2040%201%22%3E%3Cuse%20href=%22data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMSIgdmlld0JveD0iMCAwIDQwIDEiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0iIzlDOTJBQyIgZmlsbC1vcGFjaXR5PSIuNCIgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBpZD0ic3RyaXBlcyIgZmlsbD0iIzlDOTJBQyI+PHJlY3QgaWQ9IlJlY3RhbmdsZS0yNyIgeD0iMCIgeT0iMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEiLz48L2c+PC9nPjwvc3ZnPg==%22/%3E%3C/svg%3E) #dfdbe5}</style><link href=\\"data:text/css,.inline-data-stripes%7Bbackground:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMSIgdmlld0JveD0iMCAwIDQwIDEiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0iIzlDOTJBQyIgZmlsbC1vcGFjaXR5PSIuNCIgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBpZD0ic3RyaXBlcyIgZmlsbD0iIzlDOTJBQyI+PHJlY3QgaWQ9IlJlY3RhbmdsZS0yNyIgeD0iMCIgeT0iMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEiLz48L2c+PC9nPjwvc3ZnPg==)%20%23dfdbe5%7D.inline-data-stripes-use%7Bbackground:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSIxIiB2aWV3Qm94PSIwIDAgNDAgMSI+PHVzZSBocmVmPSJpbWcvc3RyaXBlcy5zdmcjUGFnZS0xIi8+PC9zdmc+)%20%23dfdbe5%7D.inline-data-stripes-inline%7Bbackground:url(data:image/svg+xml,%253Csvg%2520xmlns=%2522http://www.w3.org/2000/svg%2522%2520width=%252240%2522%2520height=%25221%2522%2520viewBox=%25220%25200%252040%25201%2522%253E%253Cuse%2520href=%2522data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMSIgdmlld0JveD0iMCAwIDQwIDEiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSIgZmlsbD0iIzlDOTJBQyIgZmlsbC1vcGFjaXR5PSIuNCIgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBpZD0ic3RyaXBlcyIgZmlsbD0iIzlDOTJBQyI+PHJlY3QgaWQ9IlJlY3RhbmdsZS0yNyIgeD0iMCIgeT0iMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEiLz48L2c+PC9nPjwvc3ZnPg==%2522/%253E%253C/svg%253E)%20%23dfdbe5%7D\\" rel=stylesheet></head><body><h2>Linked CSS</h2><div><div class=link-stripes><img src=img/interactive.svg>
+<img src=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+></div><div class=link-stripes-use><img src=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHVzZSBocmVmPSJpbWcvaW50ZXJhY3RpdmUuc3ZnI2MxIi8+PC9zdmc+></div><div class=link-stripes-inline><img src=\\"data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22300%22%20height=%22400%22%20viewBox=%220%200%20300%20400%22%3E%3Cuse%20href=%22data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+%22/%3E%3C/svg%3E\\"></div></div><h2>CSS converted to &lt;style></h2><div><div class=style-stripes><img src=img/interactive.svg>
+<img src=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+></div><div class=style-stripes-use><img src=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHVzZSBocmVmPSJpbWcvaW50ZXJhY3RpdmUuc3ZnI2MxIi8+PC9zdmc+></div><div class=style-stripes-inline><img src=\\"data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22300%22%20height=%22400%22%20viewBox=%220%200%20300%20400%22%3E%3Cuse%20href=%22data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+%22/%3E%3C/svg%3E\\"></div></div><h2>CSS converted to &lt;style> w/ inlined images</h2><div><div class=inline-style-stripes><img src=img/interactive.svg>
+<img src=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+></div><div class=inline-style-stripes-use><img src=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHVzZSBocmVmPSJpbWcvaW50ZXJhY3RpdmUuc3ZnI2MxIi8+PC9zdmc+></div><div class=inline-style-stripes-inline><img src=\\"data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22300%22%20height=%22400%22%20viewBox=%220%200%20300%20400%22%3E%3Cuse%20href=%22data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+%22/%3E%3C/svg%3E\\"></div></div><h2>CSS converted to data: URI w/ inlined images</h2><div><div class=inline-data-stripes><img src=img/interactive.svg>
+<img src=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+></div><div class=inline-data-stripes-use><img src=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHVzZSBocmVmPSJpbWcvaW50ZXJhY3RpdmUuc3ZnI2MxIi8+PC9zdmc+></div><div class=inline-data-stripes-inline><img src=\\"data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22300%22%20height=%22400%22%20viewBox=%220%200%20300%20400%22%3E%3Cuse%20href=%22data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+PHNjcmlwdCB0eXBlPSJ0ZXh0L0phdmFTY3JpcHQiPjwhW0NEQVRBWwogICAgICAgIGZ1bmN0aW9uIHNob3dDb2xvcigpIHsKICAgICAgICAgICBhbGVydCgiQ29sb3Igb2YgdGhlIFJlY3RhbmdsZSBpczogIiArCiAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJlY3QxIikuZ2V0QXR0cmlidXRlTlMobnVsbCwgImZpbGwiKSk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93QXJlYShldmVudCl7CiAgICAgICAgICAgdmFyIHdpZHRoID0gcGFyc2VGbG9hdChldmVudC50YXJnZXQuZ2V0QXR0cmlidXRlTlMobnVsbCwgIndpZHRoIikpOwogICAgICAgICAgIHZhciBoZWlnaHQgPSBwYXJzZUZsb2F0KGV2ZW50LnRhcmdldC5nZXRBdHRyaWJ1dGVOUyhudWxsLCAiaGVpZ2h0IikpOwogICAgICAgICAgIGFsZXJ0KCJBcmVhIG9mIHRoZSByZWN0YW5nbGUgaXM6ICIgKyB3aWR0aCArICJ4IiArIGhlaWdodCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93Um9vdENoaWxkcmVuQ291bnQoKSB7CiAgICAgICAgICAgYWxlcnQoIlRvdGFsIENoaWxkcmVuOiAiICsgZG9jdW1lbnQuZG9jdW1lbnRFbGVtZW50LmNoaWxkTm9kZXMubGVuZ3RoKTsKICAgICAgICB9CiAgICAgXV0+PC9zY3JpcHQ+PGcgaWQ9ImMxIj48dGV4dCB4PSIzMCIgeT0iNTAiIG9uQ2xpY2s9InNob3dDb2xvcigpIj5DbGljayBtZSB0byBzaG93IHJlY3RhbmdsZSBjb2xvci48L3RleHQ+PHJlY3QgaWQ9InJlY3QxIiB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgc3Ryb2tlPSJncmVlbiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIG9uQ2xpY2s9InNob3dBcmVhKGV2ZW50KSIvPjx0ZXh0IHg9IjMwIiB5PSI0MDAiIG9uQ2xpY2s9InNob3dSb290Q2hpbGRyZW5Db3VudCgpIj4KICAgICBDbGljayBtZSB0byBwcmludCBjaGlsZCBub2RlIGNvdW50LjwvdGV4dD48L2c+PC9zdmc+%22/%3E%3C/svg%3E\\"></div></div></body></html>"
+`;
+
+exports[`the transformer can run inline,sanitize transforms 1`] = `
+"<!DOCTYPE html><html><head>
+    
+    <style>div div { display: inline-block; border: 2px solid black }</style>
+
+                            
+    <style type=\\"text/css\\">.style-stripes{background:url(\\"img/stripes.svg\\") #DFDBE5}.style-stripes-use{background:url(\\"img/stripes.use.svg\\") #DFDBE5}.style-stripes-inline{background:url(\\"img/stripes.inline.svg\\") #DFDBE5}</style>        
+    <style type=\\"text/css\\">.inline-style-stripes{background:url(\\"data:image/svg+xml;base64,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCA0MCAxIiBoZWlnaHQ9IjFweCIgd2lkdGg9IjQwcHgiPjx0aXRsZT5zdHJpcGVzPC90aXRsZT48ZGVzYz5DcmVhdGVkIHdpdGggU2tldGNoLjwvZGVzYz48ZGVmcz48L2RlZnM+PGcgZmlsbC1ydWxlPSJldmVub2RkIiBmaWxsLW9wYWNpdHk9IjAuNCIgZmlsbD0iIzlDOTJBQyIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2U9Im5vbmUiIGlkPSJQYWdlLTEiPjxnIGZpbGw9IiM5QzkyQUMiIGlkPSJzdHJpcGVzIj48cmVjdCBoZWlnaHQ9IjEiIHdpZHRoPSIyMCIgeT0iMCIgeD0iMCIgaWQ9IlJlY3RhbmdsZS0yNyI+PC9yZWN0PjwvZz48L2c+PC9zdmc+\\") #DFDBE5}.inline-style-stripes-use{background:url(\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%2040%201%22%20height=%221px%22%20width=%2240px%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E\\") #DFDBE5}.inline-style-stripes-inline{background:url(\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%2040%201%22%20height=%221px%22%20width=%2240px%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E\\") #DFDBE5}</style> 
+      
+
+</head>
+
+<body>
+
+    <h2>Linked CSS</h2>
+    <div>
+        <div class=\\"link-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgaWQ9ImMxIj48dGV4dCB5PSI1MCIgeD0iMzAiPkNsaWNrIG1lIHRvIHNob3cgcmVjdGFuZ2xlIGNvbG9yLjwvdGV4dD48cmVjdCBmaWxsPSJyZWQiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlPSJncmVlbiIgaGVpZ2h0PSIyMDAiIHdpZHRoPSIyMDAiIHk9IjEwMCIgeD0iNTAiIGlkPSJyZWN0MSI+PC9yZWN0Pjx0ZXh0IHk9IjQwMCIgeD0iMzAiPgogICAgIENsaWNrIG1lIHRvIHByaW50IGNoaWxkIG5vZGUgY291bnQuPC90ZXh0PjwvZz48L3N2Zz4=\\">
+        </div>
+
+        <div class=\\"link-stripes-use\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"link-stripes-inline\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PC9zdmc+\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to &#x3C;style></h2>
+    <div>
+        <div class=\\"style-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgaWQ9ImMxIj48dGV4dCB5PSI1MCIgeD0iMzAiPkNsaWNrIG1lIHRvIHNob3cgcmVjdGFuZ2xlIGNvbG9yLjwvdGV4dD48cmVjdCBmaWxsPSJyZWQiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlPSJncmVlbiIgaGVpZ2h0PSIyMDAiIHdpZHRoPSIyMDAiIHk9IjEwMCIgeD0iNTAiIGlkPSJyZWN0MSI+PC9yZWN0Pjx0ZXh0IHk9IjQwMCIgeD0iMzAiPgogICAgIENsaWNrIG1lIHRvIHByaW50IGNoaWxkIG5vZGUgY291bnQuPC90ZXh0PjwvZz48L3N2Zz4=\\">
+        </div>
+
+        <div class=\\"style-stripes-use\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"style-stripes-inline\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PC9zdmc+\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to &#x3C;style> w/ inlined images</h2>
+    <div>
+        <div class=\\"inline-style-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgaWQ9ImMxIj48dGV4dCB5PSI1MCIgeD0iMzAiPkNsaWNrIG1lIHRvIHNob3cgcmVjdGFuZ2xlIGNvbG9yLjwvdGV4dD48cmVjdCBmaWxsPSJyZWQiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlPSJncmVlbiIgaGVpZ2h0PSIyMDAiIHdpZHRoPSIyMDAiIHk9IjEwMCIgeD0iNTAiIGlkPSJyZWN0MSI+PC9yZWN0Pjx0ZXh0IHk9IjQwMCIgeD0iMzAiPgogICAgIENsaWNrIG1lIHRvIHByaW50IGNoaWxkIG5vZGUgY291bnQuPC90ZXh0PjwvZz48L3N2Zz4=\\">
+        </div>
+
+        <div class=\\"inline-style-stripes-use\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"inline-style-stripes-inline\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PC9zdmc+\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to data: URI w/ inlined images</h2>
+    <div>
+        <div class=\\"inline-data-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgaWQ9ImMxIj48dGV4dCB5PSI1MCIgeD0iMzAiPkNsaWNrIG1lIHRvIHNob3cgcmVjdGFuZ2xlIGNvbG9yLjwvdGV4dD48cmVjdCBmaWxsPSJyZWQiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlPSJncmVlbiIgaGVpZ2h0PSIyMDAiIHdpZHRoPSIyMDAiIHk9IjEwMCIgeD0iNTAiIGlkPSJyZWN0MSI+PC9yZWN0Pjx0ZXh0IHk9IjQwMCIgeD0iMzAiPgogICAgIENsaWNrIG1lIHRvIHByaW50IGNoaWxkIG5vZGUgY291bnQuPC90ZXh0PjwvZz48L3N2Zz4=\\">
+        </div>
+
+        <div class=\\"inline-data-stripes-use\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PC9zdmc+\\">
+        </div>
+
+        <div class=\\"inline-data-stripes-inline\\">
+            <img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PC9zdmc+\\">
+        </div>
+    </div>
+
+</body></html>"
+`;
+
+exports[`the transformer can run inline,sanitize,minimize transforms 1`] = `
+"<!DOCTYPE html><html><head><style>div div{display:inline-block;border:2px solid #000}</style><style>.style-stripes{background:url(img/stripes.svg) #dfdbe5}.style-stripes-use{background:url(img/stripes.use.svg) #dfdbe5}.style-stripes-inline{background:url(img/stripes.inline.svg) #dfdbe5}</style><style>.inline-style-stripes{background:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDQwIDEiIGhlaWdodD0iMSIgd2lkdGg9IjQwIj48ZyBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGZpbGwtb3BhY2l0eT0iLjQiIGZpbGw9IiM5QzkyQUMiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlPSJub25lIiBpZD0iUGFnZS0xIj48ZyBmaWxsPSIjOUM5MkFDIiBpZD0ic3RyaXBlcyI+PHJlY3QgaGVpZ2h0PSIxIiB3aWR0aD0iMjAiIHk9IjAiIHg9IjAiIGlkPSJSZWN0YW5nbGUtMjciLz48L2c+PC9nPjwvc3ZnPg==) #dfdbe5}.inline-style-stripes-inline,.inline-style-stripes-use{background:url(data:image/svg+xml,%3Csvg%20viewBox=%220%200%2040%201%22%20height=%221%22%20width=%2240%22%20xmlns=%22http://www.w3.org/2000/svg%22/%3E) #dfdbe5}</style></head><body><h2>Linked CSS</h2><div><div class=link-stripes><img src=img/interactive.svg>
+<img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgaWQ9ImMxIj48dGV4dCB5PSI1MCIgeD0iMzAiPkNsaWNrIG1lIHRvIHNob3cgcmVjdGFuZ2xlIGNvbG9yLjwvdGV4dD48cmVjdCBmaWxsPSJyZWQiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlPSJncmVlbiIgaGVpZ2h0PSIyMDAiIHdpZHRoPSIyMDAiIHk9IjEwMCIgeD0iNTAiIGlkPSJyZWN0MSIvPjx0ZXh0IHk9IjQwMCIgeD0iMzAiPgogICAgIENsaWNrIG1lIHRvIHByaW50IGNoaWxkIG5vZGUgY291bnQuPC90ZXh0PjwvZz48L3N2Zz4=\\"></div><div class=link-stripes-use><img src=\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%20300%20400%22%20height=%22400%22%20width=%22300%22%20xmlns=%22http://www.w3.org/2000/svg%22/%3E\\"></div><div class=link-stripes-inline><img src=\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%20300%20400%22%20height=%22400%22%20width=%22300%22%20xmlns=%22http://www.w3.org/2000/svg%22/%3E\\"></div></div><h2>CSS converted to &lt;style></h2><div><div class=style-stripes><img src=img/interactive.svg>
+<img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgaWQ9ImMxIj48dGV4dCB5PSI1MCIgeD0iMzAiPkNsaWNrIG1lIHRvIHNob3cgcmVjdGFuZ2xlIGNvbG9yLjwvdGV4dD48cmVjdCBmaWxsPSJyZWQiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlPSJncmVlbiIgaGVpZ2h0PSIyMDAiIHdpZHRoPSIyMDAiIHk9IjEwMCIgeD0iNTAiIGlkPSJyZWN0MSIvPjx0ZXh0IHk9IjQwMCIgeD0iMzAiPgogICAgIENsaWNrIG1lIHRvIHByaW50IGNoaWxkIG5vZGUgY291bnQuPC90ZXh0PjwvZz48L3N2Zz4=\\"></div><div class=style-stripes-use><img src=\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%20300%20400%22%20height=%22400%22%20width=%22300%22%20xmlns=%22http://www.w3.org/2000/svg%22/%3E\\"></div><div class=style-stripes-inline><img src=\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%20300%20400%22%20height=%22400%22%20width=%22300%22%20xmlns=%22http://www.w3.org/2000/svg%22/%3E\\"></div></div><h2>CSS converted to &lt;style> w/ inlined images</h2><div><div class=inline-style-stripes><img src=img/interactive.svg>
+<img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgaWQ9ImMxIj48dGV4dCB5PSI1MCIgeD0iMzAiPkNsaWNrIG1lIHRvIHNob3cgcmVjdGFuZ2xlIGNvbG9yLjwvdGV4dD48cmVjdCBmaWxsPSJyZWQiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlPSJncmVlbiIgaGVpZ2h0PSIyMDAiIHdpZHRoPSIyMDAiIHk9IjEwMCIgeD0iNTAiIGlkPSJyZWN0MSIvPjx0ZXh0IHk9IjQwMCIgeD0iMzAiPgogICAgIENsaWNrIG1lIHRvIHByaW50IGNoaWxkIG5vZGUgY291bnQuPC90ZXh0PjwvZz48L3N2Zz4=\\"></div><div class=inline-style-stripes-use><img src=\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%20300%20400%22%20height=%22400%22%20width=%22300%22%20xmlns=%22http://www.w3.org/2000/svg%22/%3E\\"></div><div class=inline-style-stripes-inline><img src=\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%20300%20400%22%20height=%22400%22%20width=%22300%22%20xmlns=%22http://www.w3.org/2000/svg%22/%3E\\"></div></div><h2>CSS converted to data: URI w/ inlined images</h2><div><div class=inline-data-stripes><img src=img/interactive.svg>
+<img src=\\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDQwMCIgaGVpZ2h0PSI0MDAiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgaWQ9ImMxIj48dGV4dCB5PSI1MCIgeD0iMzAiPkNsaWNrIG1lIHRvIHNob3cgcmVjdGFuZ2xlIGNvbG9yLjwvdGV4dD48cmVjdCBmaWxsPSJyZWQiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlPSJncmVlbiIgaGVpZ2h0PSIyMDAiIHdpZHRoPSIyMDAiIHk9IjEwMCIgeD0iNTAiIGlkPSJyZWN0MSIvPjx0ZXh0IHk9IjQwMCIgeD0iMzAiPgogICAgIENsaWNrIG1lIHRvIHByaW50IGNoaWxkIG5vZGUgY291bnQuPC90ZXh0PjwvZz48L3N2Zz4=\\"></div><div class=inline-data-stripes-use><img src=\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%20300%20400%22%20height=%22400%22%20width=%22300%22%20xmlns=%22http://www.w3.org/2000/svg%22/%3E\\"></div><div class=inline-data-stripes-inline><img src=\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%20300%20400%22%20height=%22400%22%20width=%22300%22%20xmlns=%22http://www.w3.org/2000/svg%22/%3E\\"></div></div></body></html>"
+`;
+
+exports[`the transformer can run minimize transforms 1`] = `
+"<!DOCTYPE html><html><head><meta charset=utf8><style>div div{display:inline-block;border:2px solid #000}</style><link href=css/link.css rel=stylesheet><link href=css/style.css rel=stylesheet ghostly-inline><link href=css/inline-style.css rel=stylesheet ghostly-inline><link href=css/inline-data.css?ghostly-inline rel=stylesheet></head><body><h2>Linked CSS</h2><div><div class=link-stripes><img src=img/interactive.svg>
+<img src=img/interactive.svg?ghostly-inline></div><div class=link-stripes-use><img src=img/interactive.use.svg?ghostly-inline></div><div class=link-stripes-inline><img src=img/interactive.inline.svg?ghostly-inline></div></div><h2>CSS converted to &lt;style></h2><div><div class=style-stripes><img src=img/interactive.svg>
+<img src=img/interactive.svg?ghostly-inline></div><div class=style-stripes-use><img src=img/interactive.use.svg?ghostly-inline></div><div class=style-stripes-inline><img src=img/interactive.inline.svg?ghostly-inline></div></div><h2>CSS converted to &lt;style> w/ inlined images</h2><div><div class=inline-style-stripes><img src=img/interactive.svg>
+<img src=img/interactive.svg?ghostly-inline></div><div class=inline-style-stripes-use><img src=img/interactive.use.svg?ghostly-inline></div><div class=inline-style-stripes-inline><img src=img/interactive.inline.svg?ghostly-inline></div></div><h2>CSS converted to data: URI w/ inlined images</h2><div><div class=inline-data-stripes><img src=img/interactive.svg>
+<img src=img/interactive.svg?ghostly-inline></div><div class=inline-data-stripes-use><img src=img/interactive.use.svg?ghostly-inline></div><div class=inline-data-stripes-inline><img src=img/interactive.inline.svg?ghostly-inline></div></div></body></html>"
+`;
+
+exports[`the transformer can run sanitize transforms 1`] = `
+"<!DOCTYPE html><html><head>
+    
+    <style>div div { display: inline-block; border: 2px solid black }</style>
+
+                            
+            
+     
+      
+
+</head>
+
+<body>
+
+    <h2>Linked CSS</h2>
+    <div>
+        <div class=\\"link-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"img/interactive.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"link-stripes-use\\">
+            <img src=\\"img/interactive.use.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"link-stripes-inline\\">
+            <img src=\\"img/interactive.inline.svg?ghostly-inline\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to &#x3C;style></h2>
+    <div>
+        <div class=\\"style-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"img/interactive.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"style-stripes-use\\">
+            <img src=\\"img/interactive.use.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"style-stripes-inline\\">
+            <img src=\\"img/interactive.inline.svg?ghostly-inline\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to &#x3C;style> w/ inlined images</h2>
+    <div>
+        <div class=\\"inline-style-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"img/interactive.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"inline-style-stripes-use\\">
+            <img src=\\"img/interactive.use.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"inline-style-stripes-inline\\">
+            <img src=\\"img/interactive.inline.svg?ghostly-inline\\">
+        </div>
+    </div>
+
+    <h2>CSS converted to data: URI w/ inlined images</h2>
+    <div>
+        <div class=\\"inline-data-stripes\\">
+            <img src=\\"img/interactive.svg\\">
+            <img src=\\"img/interactive.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"inline-data-stripes-use\\">
+            <img src=\\"img/interactive.use.svg?ghostly-inline\\">
+        </div>
+
+        <div class=\\"inline-data-stripes-inline\\">
+            <img src=\\"img/interactive.inline.svg?ghostly-inline\\">
+        </div>
+    </div>
+
+</body></html>"
+`;

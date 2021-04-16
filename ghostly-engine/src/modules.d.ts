@@ -55,3 +55,27 @@ declare module 'hast-util-from-string' {
     function fromString(node: Node, value?: string | null): Node;
     export = fromString;
 }
+
+interface JSAPI {
+    type: 'root' | 'doctype' | 'instruction' | 'comment' | 'cdata' | 'element' | 'text';
+    name?: string;
+    data?: {
+        doctype: string;
+    },
+    value?: string;
+    attributes?: { [attr: string]: string | undefined };
+    children?: JSAPI[];
+    error?: string;
+}
+
+declare module 'svgo/lib/svgo/svg2js' {
+    function svg2js(content: string | Buffer): JSAPI;
+    export = svg2js;
+}
+
+declare module 'svgo/lib/svgo/js2svg' {
+    import { Js2SvgOptions, OptimizedSvg } from 'svgo';
+
+    function js2svg(root: JSAPI, config: Js2SvgOptions): OptimizedSvg;
+    export = js2svg;
+}

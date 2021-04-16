@@ -11,7 +11,7 @@ build:		prepare
 	pnpx tsc --build
 
 test:		build
-	pnpx jest --passWithNoTests
+	pnpx jest
 
 clean:
 	rm -rf build coverage

@@ -1,0 +1,11 @@
+.link-stripes {
+    background: url("../img/stripes.svg") #DFDBE5;
+}
+
+.link-stripes-use {
+    background: url("../img/stripes.use.svg") #DFDBE5;
+}
+
+.link-stripes-inline {
+    background: url("../img/stripes.inline.svg") #DFDBE5;
+}

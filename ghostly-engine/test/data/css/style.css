@@ -1,0 +1,11 @@
+.style-stripes {
+    background: url("../img/stripes.svg") #DFDBE5;
+}
+
+.style-stripes-use {
+    background: url("../img/stripes.use.svg") #DFDBE5;
+}
+
+.style-stripes-inline {
+    background: url("../img/stripes.inline.svg") #DFDBE5;
+}

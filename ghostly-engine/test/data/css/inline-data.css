@@ -1,0 +1,11 @@
+.inline-data-stripes {
+    background: url("../img/stripes.svg?ghostly-inline") #DFDBE5;
+}
+
+.inline-data-stripes-use {
+    background: url("../img/stripes.use.svg?ghostly-inline") #DFDBE5;
+}
+
+.inline-data-stripes-inline {
+    background: url("../img/stripes.inline.svg?ghostly-inline") #DFDBE5;
+}

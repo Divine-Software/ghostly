@@ -13,7 +13,7 @@ const domPurifyJS = fs.readFile(require.resolve('dompurify/dist/purify.min.js'),
 
 interface GhostlyProxyWindow extends Window {
     sendGhostlyMessage: typeof sendGhostlyMessage;
-    DOMPurify: { sanitize(dirty: string, options: { WHOLE_DOCUMENT: boolean }): string; }
+    DOMPurify: { sanitize(dirty: string, options: { ALLOW_UNKNOWN_PROTOCOLS: boolean, WHOLE_DOCUMENT: boolean }): string; }
 }
 
 interface GhostlyWindow extends Window {
@@ -192,9 +192,9 @@ export class PlaywrightDriver extends TemplateDriver {
         else if (data === null || data === undefined) {
             switch (ct.type) {
                 case 'text/html': {
-                    const sanitizer = (dirty: string) => ((window: GhostlyWindow) => this._page.evaluate((dirty) => {
-                        return window.__ghostly_message_proxy__.DOMPurify.sanitize(dirty, { WHOLE_DOCUMENT: true });
-                    }, dirty))(null!);
+                    const sanitizer = (dirty: string, fragment: boolean) => ((window: GhostlyWindow) => this._page.evaluate(([dirty, fragment]) => {
+                        return window.__ghostly_message_proxy__.DOMPurify.sanitize(dirty, { ALLOW_UNKNOWN_PROTOCOLS: true, WHOLE_DOCUMENT: !fragment });
+                    }, [dirty, fragment] as const))(null!);
 
                     data = await new HTMLTransforms(this.url, this._config, sanitizer).apply(await this._page.content(), view);
                     break;
