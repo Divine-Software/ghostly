@@ -175,10 +175,10 @@ exports[`the transformer can run inline,sanitize transforms 1`] = `
     
     <style>div div { display: inline-block; border: 2px solid black }</style>
 
-                            
-    <style type=\\"text/css\\">.style-stripes{background:url(\\"img/stripes.svg\\") #DFDBE5}.style-stripes-use{background:url(\\"img/stripes.use.svg\\") #DFDBE5}.style-stripes-inline{background:url(\\"img/stripes.inline.svg\\") #DFDBE5}</style>        
-    <style type=\\"text/css\\">.inline-style-stripes{background:url(\\"data:image/svg+xml;base64,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCA0MCAxIiBoZWlnaHQ9IjFweCIgd2lkdGg9IjQwcHgiPjx0aXRsZT5zdHJpcGVzPC90aXRsZT48ZGVzYz5DcmVhdGVkIHdpdGggU2tldGNoLjwvZGVzYz48ZGVmcz48L2RlZnM+PGcgZmlsbC1ydWxlPSJldmVub2RkIiBmaWxsLW9wYWNpdHk9IjAuNCIgZmlsbD0iIzlDOTJBQyIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2U9Im5vbmUiIGlkPSJQYWdlLTEiPjxnIGZpbGw9IiM5QzkyQUMiIGlkPSJzdHJpcGVzIj48cmVjdCBoZWlnaHQ9IjEiIHdpZHRoPSIyMCIgeT0iMCIgeD0iMCIgaWQ9IlJlY3RhbmdsZS0yNyI+PC9yZWN0PjwvZz48L2c+PC9zdmc+\\") #DFDBE5}.inline-style-stripes-use{background:url(\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%2040%201%22%20height=%221px%22%20width=%2240px%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E\\") #DFDBE5}.inline-style-stripes-inline{background:url(\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%2040%201%22%20height=%221px%22%20width=%2240px%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E\\") #DFDBE5}</style> 
-      
+                            <!-- Will not be processed -->
+    <style type=\\"text/css\\">.style-stripes{background:url(\\"img/stripes.svg\\") #DFDBE5}.style-stripes-use{background:url(\\"img/stripes.use.svg\\") #DFDBE5}.style-stripes-inline{background:url(\\"img/stripes.inline.svg\\") #DFDBE5}</style>        <!-- Will be replaced with a <style> elemement -->
+    <style type=\\"text/css\\">.inline-style-stripes{background:url(\\"data:image/svg+xml;base64,PHN2ZyB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCA0MCAxIiBoZWlnaHQ9IjFweCIgd2lkdGg9IjQwcHgiPjwhLS1HZW5lcmF0b3I6IFNrZXRjaCA0MC4xICgzMzgwNCkgLSBodHRwOi8vd3d3LmJvaGVtaWFuY29kaW5nLmNvbS9za2V0Y2gtLT48dGl0bGU+c3RyaXBlczwvdGl0bGU+PGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+PGRlZnM+PC9kZWZzPjxnIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbC1vcGFjaXR5PSIwLjQiIGZpbGw9IiM5QzkyQUMiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlPSJub25lIiBpZD0iUGFnZS0xIj48ZyBmaWxsPSIjOUM5MkFDIiBpZD0ic3RyaXBlcyI+PHJlY3QgaGVpZ2h0PSIxIiB3aWR0aD0iMjAiIHk9IjAiIHg9IjAiIGlkPSJSZWN0YW5nbGUtMjciPjwvcmVjdD48L2c+PC9nPjwvc3ZnPg==\\") #DFDBE5}.inline-style-stripes-use{background:url(\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%2040%201%22%20height=%221px%22%20width=%2240px%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E\\") #DFDBE5}.inline-style-stripes-inline{background:url(\\"data:image/svg+xml,%3Csvg%20viewBox=%220%200%2040%201%22%20height=%221px%22%20width=%2240px%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E\\") #DFDBE5}</style> <!-- Will be replaced with a <style> elemement w/ SVG inlined -->
+      <!-- Will be replaced with a data: URI w/ SVG inlined -->
 
 </head>
 
@@ -272,10 +272,10 @@ exports[`the transformer can run sanitize transforms 1`] = `
     
     <style>div div { display: inline-block; border: 2px solid black }</style>
 
-                            
-            
-     
-      
+                            <!-- Will not be processed -->
+            <!-- Will be replaced with a <style> elemement -->
+     <!-- Will be replaced with a <style> elemement w/ SVG inlined -->
+      <!-- Will be replaced with a data: URI w/ SVG inlined -->
 
 </head>
 

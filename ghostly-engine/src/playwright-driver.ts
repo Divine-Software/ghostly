@@ -2,6 +2,7 @@ import { parseGhostlyPacket, sendGhostlyMessage, TemplateDriver } from '@divine/
 import { AttachmentInfo, GhostlyError, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, View, ViewportSize } from '@divine/ghostly-runtime/build/src/types'; // Avoid DOM types leaks
 import { ContentType } from '@divine/headers';
 import { Parser } from '@divine/uri';
+import type { sanitize, Config } from 'dompurify';
 import { promises as fs } from 'fs';
 import { Browser, Page } from 'playwright-chromium';
 import packageJSON from '../package.json';
@@ -11,9 +12,15 @@ import { browserVersion, deleteUndefined, paperDimensions, toFilename } from './
 
 const domPurifyJS = fs.readFile(require.resolve('dompurify/dist/purify.min.js'), { encoding: 'utf8' });
 
+export const sanitizeConfig = (fragment: boolean): Config & { RETURN_DOM_FRAGMENT?: false; RETURN_DOM?: false } => ({
+    ADD_TAGS:                ['#comment'],
+    ALLOW_UNKNOWN_PROTOCOLS: true,
+    WHOLE_DOCUMENT:          !fragment,
+});
+
 interface GhostlyProxyWindow extends Window {
     sendGhostlyMessage: typeof sendGhostlyMessage;
-    DOMPurify: { sanitize(dirty: string, options: { ALLOW_UNKNOWN_PROTOCOLS: boolean, WHOLE_DOCUMENT: boolean }): string; }
+    DOMPurify: { sanitize: typeof sanitize };
 }
 
 interface GhostlyWindow extends Window {
@@ -192,9 +199,9 @@ export class PlaywrightDriver extends TemplateDriver {
         else if (data === null || data === undefined) {
             switch (ct.type) {
                 case 'text/html': {
-                    const sanitizer = (dirty: string, fragment: boolean) => ((window: GhostlyWindow) => this._page.evaluate(([dirty, fragment]) => {
-                        return window.__ghostly_message_proxy__.DOMPurify.sanitize(dirty, { ALLOW_UNKNOWN_PROTOCOLS: true, WHOLE_DOCUMENT: !fragment });
-                    }, [dirty, fragment] as const))(null!);
+                    const sanitizer = (dirty: string, fragment: boolean) => ((window: GhostlyWindow) => this._page.evaluate(([dirty, config]) => {
+                        return window.__ghostly_message_proxy__.DOMPurify.sanitize(dirty, config);
+                    }, [dirty, sanitizeConfig(fragment)] as const))(null!);
 
                     data = await new HTMLTransforms(this.url, this._config, sanitizer).apply(await this._page.content(), view);
                     break;

@@ -2,12 +2,10 @@ import { URI } from '@divine/uri';
 import { HTMLTransforms } from '../src/html-transforms';
 import createDOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
+import { sanitizeConfig } from '../src/playwright-driver';
 
 const DOMPurify = createDOMPurify(new JSDOM('').window as any);
-const sanitizer = async (content: string, fragment: boolean) => DOMPurify.sanitize(content, {
-    ALLOW_UNKNOWN_PROTOCOLS: true,
-    WHOLE_DOCUMENT: !fragment,
-});
+const sanitizer = async (content: string, fragment: boolean) => DOMPurify.sanitize(content, sanitizeConfig(fragment));
 
 describe('the transformer', () => {
     it.each([
