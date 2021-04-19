@@ -4,6 +4,7 @@
     <title>stripes</title>
     <desc>Created with Sketch.</desc>
     <defs></defs>
+    <script>alert(`in stripes.svg`)</script>
     <g id="Page-1" stroke="none" stroke-width="1" fill="#9C92AC" fill-opacity='0.4' fill-rule="evenodd">
         <g id="stripes" fill="#9C92AC">
             <rect id="Rectangle-27" x="0" y="0" width="20" height="1"></rect>
