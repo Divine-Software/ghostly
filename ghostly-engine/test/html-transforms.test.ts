@@ -12,9 +12,12 @@ describe('the transformer', () => {
         'identity',
         'inline',
         'minimize',
+        'noscript',
         'sanitize',
         'inline,minimize',
+        'inline,noscript',
         'inline,sanitize',
+        'inline,noscript,minimize',
         'inline,sanitize,minimize',
     ])('can run %s transforms', async (transforms) => {
         expect.assertions(1);

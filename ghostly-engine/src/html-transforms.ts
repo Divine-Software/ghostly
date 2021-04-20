@@ -2,13 +2,14 @@ import { GhostlyError, HTMLTransform, View } from "@divine/ghostly-runtime";
 import { ContentType } from '@divine/headers';
 import { guessContentType, HEADERS, StringParser, URI } from '@divine/uri';
 import csso from 'csso';
-import { Element, Root } from 'hast';
+import { Element, Parent, Root } from 'hast';
 import fromString from 'hast-util-from-string';
 import hasProperty from 'hast-util-has-property';
 import isCSSLink from 'hast-util-is-css-link';
 import isElement from 'hast-util-is-element';
 import isJavascript from 'hast-util-is-javascript';
 import javascriptTypes from 'hast-util-is-javascript/index.json';
+import isScriptSupporting from 'hast-util-script-supporting';
 import urlAttributes from 'html-url-attributes';
 import rehype, { RehypeOptions } from 'rehype';
 import minifyWhitespace from 'rehype-minify-whitespace';
@@ -23,7 +24,7 @@ import visit from 'unist-util-visit';
 import { URL } from 'url';
 import { EngineConfig } from './engine';
 
-const DEFAULT_TRANSFORMS: HTMLTransform[] = ['inline', 'sanitize', 'minimize'];
+const DEFAULT_TRANSFORMS: HTMLTransform[] = ['inline', 'noscript', 'minimize'];
 
 export type HTMLTransformsConfig = Pick<EngineConfig, 'logger' | 'templatePattern'>
 
@@ -70,6 +71,10 @@ export class HTMLTransforms {
 
                 case 'inline':
                     pipeline.use(this.htmlInliner(transforms));
+                    break;
+
+                case 'noscript':
+                    pipeline.use(this.htmlNoScript());
                     break;
 
                 case 'sanitize':
@@ -152,6 +157,26 @@ export class HTMLTransforms {
 
             await Promise.all(tasks);
         }
+    }
+
+    private htmlNoScript(): Attacher {
+        return () => (tree) => {
+            const trash: [Parent, Element][] = [];
+
+            visit(tree, 'element', (node, _index, parent) => {
+                if (element(parent) && element(node)) {
+                    if (isScriptSupporting(node) && node.properties?.['ghostly-noscript'] !== 'false') {
+                        trash.push([parent, node]);
+                    }
+
+                    delete node.properties?.['ghostly-noscript'];
+                }
+            });
+
+            for (const [parent, node] of trash) {
+                parent.children.splice(parent.children.indexOf(node), 1)
+            }
+        };
     }
 
     private htmlSanitizer(pipeline: ReturnType<typeof rehype>): Attacher {
@@ -244,8 +269,9 @@ export class HTMLTransforms {
                     // Do nothing
                     break;
 
-                    case 'inline':
-                    // This transform do not apply to JS
+                case 'inline':
+                case 'noscript':
+                    // These transforms do not apply to raw JS content
                     break;
 
                 case 'sanitize':
@@ -311,7 +337,7 @@ export class HTMLTransforms {
      * @param css         The CSS document to process.
      * @param base        The (new) base URL. Differs from `url` if this stylesheet was previously inlined.
      * @param url         The original URL of the CSS document.
-     * @param transforms  The transforms to appy to the document. 'sanitize' is a no-op for CSS documents.
+     * @param transforms  The transforms to appy to the document. 'noscript'/'sanitize' are no-ops for CSS documents.
      * @returns           The processed stylesheet.
      */
     private async processStylesheet(css: string, base: URL, url: URL, transforms: HTMLTransform[]): Promise<string> {
@@ -321,8 +347,9 @@ export class HTMLTransforms {
         for (const transform of transforms) {
             switch (transform) {
                 case 'identity':
-                case 'sanitize':
                 case 'inline':
+                case 'noscript':
+                case 'sanitize':
                     break;
 
                 case 'minimize':
@@ -373,24 +400,37 @@ export class HTMLTransforms {
                     // Do nothing
                     break;
 
-                    case 'inline': {
-                        const root = svg2js(svg);
+                case 'inline': {
+                    const root = svg2js(svg);
 
-                        if (root.error) {
-                            throw new Error(`Failed to parse SVG document at ${url}: ${root.error}`);
-                        }
-
-                        const inliner = async (node: JSAPI) => {
-                            if (node.attributes?.['href']) {
-                                node.attributes['href'] = await this.processLink(node.attributes['href'], base, url, transforms);
-                            }
-
-                            await Promise.all(node.children?.map(inliner) ?? []);
-                            return node;
-                        }
-
-                        svg = js2svg(await inliner(root), {}).data;
+                    if (root.error) {
+                        throw new Error(`Failed to parse SVG document at ${url}: ${root.error}`);
                     }
+
+                    const inliner = async (node: JSAPI) => {
+                        if (node.attributes?.['href']) {
+                            node.attributes['href'] = await this.processLink(node.attributes['href'], base, url, transforms);
+                        }
+
+                        await Promise.all(node.children?.map(inliner) ?? []);
+                        return node;
+                    }
+
+                    svg = js2svg(await inliner(root), {}).data;
+                }
+                break;
+
+                case 'noscript':
+                    svg = svgo.optimize(svg, { plugins: [{
+                        name: 'svgNoScript',
+                        type: 'perItem',
+                        fn: (item) => {
+                            const remove = item.isElem('script') && !item.hasAttr('ghostly-noscript', 'false');
+                            item.removeAttr('ghostly-noscript');
+
+                            return !remove;
+                        }
+                    }]}).data;
                     break;
 
                 case 'sanitize':

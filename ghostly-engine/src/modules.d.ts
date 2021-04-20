@@ -49,6 +49,13 @@ declare module 'hast-util-is-javascript' {
     export = javascript;
 }
 
+declare module 'hast-util-script-supporting' {
+    import { Node } from 'hast';
+
+    function scriptSupporting(node: Node): Node;
+    export = scriptSupporting;
+}
+
 declare module 'hast-util-from-string' {
     import { Node } from 'hast';
 

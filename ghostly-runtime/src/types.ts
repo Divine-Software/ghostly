@@ -128,14 +128,15 @@ export type OnGhostlyEvent  = (event: object) => void;
 /**
  * An operation to apply to the HTML view before returning the result.
  *
- * * `identity`: Do nothing.
- * * `inline`:   Inlines external resources for all element which have an `ghostly-inline` attribute or URL query
- *               parameter. The attribute/parameter may optionally include a comma-separated list of operations to apply
- *               to the inlined resource (default is all current transforms).
- * * `sanitize`: Removes all scripts or otherwise dangerous markup.
- * * `minimize`: Minifies the HTML and CSS.
+ * * `identity`:  Do nothing.
+ * * `inline`:    Inlines external resources for all element which have an `ghostly-inline` attribute or URL query
+ *                parameter. The attribute/parameter may optionally include a comma-separated list of operations to apply
+ *                to the inlined resource (default is all current transforms).
+ * * `noscript`:  Removes all script elements (unless attribute 'ghostly-noscript' is set to 'false').
+ * * `sanitize`:  Removes all scripts or otherwise dangerous markup/XSS using DOMPurify (way more strict than 'noscript'!).
+ * * `minimize`:  Minifies the HTML and CSS.
  */
-export type HTMLTransform   = 'identity' | 'inline' | 'sanitize' | 'minimize';
+export type HTMLTransform   = 'identity' | 'inline' | 'noscript' | 'sanitize' | 'minimize';
 
 export type PaperFormat     = "A0" | "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "Letter" | "Legal" | "Tabloid" | "Ledger";
 export type PaperSize       = { format?: PaperFormat, orientation?: 'portrait' | 'landscape' };

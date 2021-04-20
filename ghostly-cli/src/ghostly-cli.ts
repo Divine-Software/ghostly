@@ -47,7 +47,7 @@ function parseArgs() {
         .option('    --render-height <pixels>',                       'height of rendered image in pixels', int)
         .option('    --render-format <paper-size>',                   'physical size of rendered PDF [A4]')
         .option('    --render-orientation <portrait|landscape>',      'whether to render in portrait or landscape mode [portrait]')
-        .option('    --render-html-transforms <list>',                'comma-separated list of HTML transformations to apply [sanitize,minimize]')
+        .option('    --render-html-transforms <list>',                'comma-separated list of HTML transformations (identity/inline/noscript/sanitize) to apply')
         .option('-H, --http <host:port>',                             'run an HTTP server on this host and port')
         .option('-o  --output <file>',                                'template output filename [standard output]')
         .option('-O  --output-dir <directory>',                       'attachments output directory [disabled]')
