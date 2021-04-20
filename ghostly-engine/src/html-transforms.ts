@@ -8,6 +8,7 @@ import hasProperty from 'hast-util-has-property';
 import isCSSLink from 'hast-util-is-css-link';
 import isElement from 'hast-util-is-element';
 import isJavascript from 'hast-util-is-javascript';
+import javascriptTypes from 'hast-util-is-javascript/index.json';
 import urlAttributes from 'html-url-attributes';
 import rehype, { RehypeOptions } from 'rehype';
 import minifyWhitespace from 'rehype-minify-whitespace';
@@ -252,15 +253,7 @@ export class HTMLTransforms {
                     break;
 
                 case 'minimize': {
-                    const output = uglify.minify({ [url.href]: script });
-
-                    if (output.error) {
-                        throw output.error;
-                    }
-                    else {
-                        script = output.code.replace(/;$/, '');
-                    }
-
+                    script = this.jsMinimizer(script, url);
                     break;
                 }
 
@@ -270,6 +263,17 @@ export class HTMLTransforms {
         }
 
         return script;
+    }
+
+    private jsMinimizer(script: string, url: URL): string {
+        const output = uglify.minify({ [url.href]: script });
+
+        if (output.error) {
+            throw output.error;
+        }
+        else {
+            return output.code.replace(/;$/, '');
+        }
     }
 
     /**
@@ -405,6 +409,19 @@ export class HTMLTransforms {
                             { active: false, name: 'removeUselessDefs'          },
                             { active: false, name: 'removeUselessStrokeAndFill' },
                             { active: false, name: 'removeViewBox'              },
+                            { name: 'svgMinifyScript', type: 'perItem', fn: (item) => {
+                                if (item.isElem('script') && !item.hasAttr('href') && (item.children?.[0].type === 'text' || item.children?.[0].type === 'cdata')) {
+                                    if (!item.hasAttr('type') || javascriptTypes.includes(item.attributes['type'].toLowerCase())) {
+                                        // Kind of like the minifyStyles plugin, but for JS
+                                        const scriptJS = item.children[0].value;
+                                        const minified = this.jsMinimizer(scriptJS, url);
+
+                                        item.children[0].type  = /[&'"<>]/.test(minified) ? 'cdata' : 'text';
+                                        item.children[0].value = minified;
+                                        item.removeAttr('type');
+                                    }
+                                }
+                            }},
                         ]),
                     }).data;
                     break;
