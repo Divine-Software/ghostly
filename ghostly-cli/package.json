@@ -1,6 +1,6 @@
 {
     "name": "@divine/ghostly-cli",
-    "version": "2.1.0-beta-1",
+    "version": "2.1.0-beta-2",
     "description": "Ghostly template/print formatter command line utility",
     "keywords": [
         "fop",
