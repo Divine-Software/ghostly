@@ -183,6 +183,7 @@ export class HTMLTransforms {
                     useShortestReferences: true,
                 },
 
+                omitOptionalTags: true,
                 quoteSmart: true,
                 preferUnquoted: true,
                 collapseEmptyAttributes: true,
