@@ -364,7 +364,7 @@ export class HTMLTransforms {
         let stylesheet = csso.syntax.parse(css, { filename: url.href, parseRulePrelude: minimize /* No shortcuts when minifying as well */ })
 
         // Rebase or inline URLs
-        csso.syntax.walk(stylesheet, (cn) => {
+        csso.syntax.walk(stylesheet, (cn, item, list) => {
             if (cn.type === 'Atrule' && cn.name === 'import' && cn.prelude?.type === 'AtrulePrelude') {
                 const child = cn.prelude?.children.first()
 
@@ -373,6 +373,9 @@ export class HTMLTransforms {
                         child.value = JSON.stringify(href);
                     }));
                 }
+            }
+            else if (cn.type === 'Atrule' && cn.name === 'charset') {
+                list.remove(item);
             }
             else if (cn.type === 'Url') {
                 const value = cn.value.type === 'String' ? cn.value.value.slice(1, -1) : cn.value.value;
