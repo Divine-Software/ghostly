@@ -4,7 +4,7 @@
     <meta charset="utf8">
     <style>div div { display: inline-block; border: 2px solid black }</style>
 
-    <link rel=stylesheet href=css/link.css>                        <!-- Will not be processed -->
+    <link rel=stylesheet href=css/link.css ghostly-inline=false>   <!-- Will not be processed -->
     <link rel=stylesheet href=css/style.css ghostly-inline>        <!-- Will be replaced with a <style> elemement -->
     <link rel=stylesheet href=css/inline-style.css ghostly-inline> <!-- Will be replaced with a <style> elemement w/ SVG inlined -->
     <link rel=stylesheet href=css/inline-data.css?ghostly-inline>  <!-- Will be replaced with a data: URI w/ SVG inlined -->
@@ -18,7 +18,7 @@
     <h2>Linked CSS</h2>
     <div>
         <div class="link-stripes">
-            <img src=img/interactive.svg>
+            <img src=img/interactive.svg?ghostly-inline=false>
             <img src=img/interactive.svg?ghostly-inline>
         </div>
 

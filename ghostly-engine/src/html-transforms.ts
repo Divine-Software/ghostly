@@ -112,6 +112,7 @@ export class HTMLTransforms {
                     // Check elements for magic attribute
                     const properties = node.properties!;
                     const inlineAttr = parseTransforms(properties['ghostly-inline']?.toString(), defaultTransforms);
+                    delete properties['ghostly-inline'];
 
                     if (inlineAttr) {
                         if (isCSSLink(node) && hasProperty(node, 'href')) { // <link rel=stylesheet href=... ghostly-inline ...>
@@ -120,7 +121,6 @@ export class HTMLTransforms {
                                 fromString(node, body.toString());
                             }));
 
-                            delete properties['ghostly-inline'];
                             delete properties['href'];
                             delete properties['rel'];
                             node.tagName = 'style';
@@ -131,7 +131,6 @@ export class HTMLTransforms {
                                 fromString(node, body.toString());
                             }));
 
-                            delete properties['ghostly-inline'];
                             delete properties['src'];
                         }
                         else {
@@ -486,7 +485,10 @@ const hasOwnProperty = Object.prototype.hasOwnProperty.call.bind(Object.prototyp
 
 function parseTransforms(transforms: string | undefined | null | URL, defaultTransforms: HTMLTransform[]): HTMLTransform[] | undefined {
     transforms = transforms instanceof URL ? transforms.searchParams.get('ghostly-inline') : transforms;
-    return transforms === '' ? defaultTransforms : transforms?.split(',').map((t) => t.trim() as HTMLTransform);
+
+    return transforms === 'false' ? undefined :
+           transforms === ''      ? defaultTransforms :
+           transforms?.split(',').map((t) => t.trim() as HTMLTransform);
 }
 
 function makeDataURI(body: string | Buffer, mime: ContentType): string {
