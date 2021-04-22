@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.9.2-focal
+FROM mcr.microsoft.com/playwright:v1.10.0-focal
 ARG version
 RUN apt-get update && \
     apt-get install -y tini && \

@@ -47,7 +47,7 @@ function parseArgs() {
         .option('    --render-height <pixels>',                       'height of rendered image in pixels', int)
         .option('    --render-format <paper-size>',                   'physical size of rendered PDF [A4]')
         .option('    --render-orientation <portrait|landscape>',      'whether to render in portrait or landscape mode [portrait]')
-        .option('    --render-html-transforms <list>',                'comma-separated list of HTML transformations to apply [sanitize,minimize]')
+        .option('    --render-html-transforms <list>',                'comma-separated list of HTML transformations (identity/inline/noscript/sanitize) to apply')
         .option('-H, --http <host:port>',                             'run an HTTP server on this host and port')
         .option('-o  --output <file>',                                'template output filename [standard output]')
         .option('-O  --output-dir <directory>',                       'attachments output directory [disabled]')
@@ -63,35 +63,35 @@ function parseArgs() {
         .parse(process.argv)
         .opts();
 
-    if (argv.template) {
+    if (argv['template']) {
         check(cmd.args.length >= 1, 'No input document specified');
         check(cmd.args.length <= 1, 'Only one input document may be specified');
     }
     else {
-        check(!cmd.args.length,            'Cannot specify document without --template');
-        check(!argv.contentType,           '--content-type requires --template');
-        check(!argv.format,                '--format requires --template');
-        check(!argv.renderDpi,             '--render-dpi requires --template');
-        check(!argv.renderWidth,           '--render-width requires --template');
-        check(!argv.renderHeight,          '--render-height requires --template');
-        check(!argv.renderFormat,          '--render-format requires --template');
-        check(!argv.renderOrientation,     '--render-orientation requires --template');
-        check(!argv.renderHtmlTransforms,  '--render-html-transforms requires --template');
-        check(!argv.output,                '--output requires --template');
-        check(!argv.outputDir,             '--output-dir requires --template');
+        check(!cmd.args.length,               'Cannot specify document without --template');
+        check(!argv['contentType'],           '--content-type requires --template');
+        check(!argv['format'],                '--format requires --template');
+        check(!argv['renderDpi'],             '--render-dpi requires --template');
+        check(!argv['renderWidth'],           '--render-width requires --template');
+        check(!argv['renderHeight'],          '--render-height requires --template');
+        check(!argv['renderFormat'],          '--render-format requires --template');
+        check(!argv['renderOrientation'],     '--render-orientation requires --template');
+        check(!argv['renderHtmlTransforms'],  '--render-html-transforms requires --template');
+        check(!argv['output'],                '--output requires --template');
+        check(!argv['outputDir'],             '--output-dir requires --template');
     }
 
-    if (argv.http) {
-        argv.http = ['localhost'].concat(argv.http.split(':')).splice(-2);
-        argv.http[0] = argv.http[0] || os.hostname();
-        check(!!Number(argv.http[1]), 'Invalid --http argument');
+    if (argv['http']) {
+        argv['http'] = ['localhost'].concat(argv['http'].split(':')).splice(-2);
+        argv['http'][0] = argv['http'][0] || os.hostname();
+        check(!!Number(argv['http'][1]), 'Invalid --http argument');
     }
     else {
-        check(!argv.user,    '--user can only be used in --http mode');
-        check(!argv.pidfile, '--pidfile can only be used in --http mode');
+        check(!argv['user'],    '--user can only be used in --http mode');
+        check(!argv['pidfile'], '--pidfile can only be used in --http mode');
     }
 
-    check(!!argv.http != !!argv.template, 'Either --http or --template must be specified, but not both');
+    check(!!argv['http'] != !!argv['template'], 'Either --http or --template must be specified, but not both');
 
     return { cmd, argv };
 }
@@ -101,11 +101,11 @@ export async function main(): Promise<void> {
 
     const config: Partial<EngineConfig> = {};
 
-    if (argv.debug) {
+    if (argv['debug']) {
         config.logger = sysconsole;
     }
 
-    const [ browserType, ...browserPath ] = argv.browser?.split(':') ?? [];
+    const [ browserType, ...browserPath ] = argv['browser']?.split(':') ?? [];
     config.browser     = browserType;
     config.browserPath = browserPath.join(':') || undefined;
 
@@ -121,56 +121,56 @@ export async function main(): Promise<void> {
 
     const engine = new Engine(config);
 
-    if (argv.template) {
-        const template = (await engine.start()).template(argv.template);
+    if (argv['template']) {
+        const template = (await engine.start()).template(argv['template']);
 
         for (const file of cmd.args) {
             const view: View = {
-                contentType:    argv.format || 'text/html',
+                contentType:    argv['format'] || 'text/html',
                 params:         null,
-                dpi:            argv.renderDpi,
-                paperSize:      { format: argv.renderFormat, orientation: argv.renderOrientation },
-                viewportSize:   { width: argv.renderWidth, height: argv.renderHeight },
-                htmlTransforms: (argv.renderHtmlTransforms as string)?.split(',').map(t => t.trim()).filter(t => !!t) as HTMLTransform[],
+                dpi:            argv['renderDpi'],
+                paperSize:      { format: argv['renderFormat'], orientation: argv['renderOrientation'] },
+                viewportSize:   { width: argv['renderWidth'], height: argv['renderHeight'] },
+                htmlTransforms: (argv['renderHtmlTransforms'] as string)?.split(',').map(t => t.trim()).filter(t => !!t) as HTMLTransform[],
             };
 
             const evlog  = (data: object) => sysconsole.notice(data);
             const data   = await fs.readFile(file !== '-' ? file : '/dev/stdin');
-            const result = (await template.renderViews(data.toString(), argv.contentType || 'application/json', [ view ], !!argv.outputDir, evlog));
+            const result = (await template.renderViews(data.toString(), argv['contentType'] || 'application/json', [ view ], !!argv['outputDir'], evlog));
 
             // Write rendered view (which is always the first RenderResult)
-            if (argv.output) {
-                await fs.writeFile(argv.output, result[0].data);
+            if (argv['output']) {
+                await fs.writeFile(argv['output'], result[0]!.data);
             }
             else {
-                await new Promise<void>((resolve, reject) => process.stdout.write(result[0].data) ? resolve() : process.stdout.once('drain', resolve).once('error', reject));
+                await new Promise<void>((resolve, reject) => process.stdout.write(result[0]!.data) ? resolve() : process.stdout.once('drain', resolve).once('error', reject));
             }
 
             // Write attachments
             for (const rr of result) {
-                if (argv.outputDir && rr.type === 'attachment' && rr.name) {
-                    await fs.writeFile(path.resolve(argv.outputDir, rr.name), rr.data);
+                if (argv['outputDir'] && rr.type === 'attachment' && rr.name) {
+                    await fs.writeFile(path.resolve(argv['outputDir'], rr.name), rr.data);
                 }
             }
         }
     }
-    else if (argv.http) {
+    else if (argv['http']) {
         const server = http.createServer((request, response) => engine.httpRequestHandler(request, response));
 
         const address = await new Promise<{port: number, address: string}>((resolve, _reject) => {
-            server.listen(argv.http[1], argv.http[0], () => resolve(server.address() as AddressInfo));
+            server.listen(argv['http'][1], argv['http'][0], () => resolve(server.address() as AddressInfo));
         });
 
         sysconsole.log(`Listening for requests on http://${address.address}:${address.port}/`);
 
-        if (argv.pidfile) {
+        if (argv['pidfile']) {
             daemon();
-            writeFileSync(argv.pidfile, process.pid);
+            writeFileSync(argv['pidfile'], process.pid);
         }
 
-        if (argv.user) {
-            process.setgid(Number(childProcess.execSync(`id -g ${argv.user}`)));
-            process.setuid(argv.user);
+        if (argv['user']) {
+            process.setgid(Number(childProcess.execSync(`id -g ${argv['user']}`)));
+            process.setuid(argv['user']);
         }
 
         process.once('SIGINT', () => server.close());

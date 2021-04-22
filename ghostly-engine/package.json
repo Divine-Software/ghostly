@@ -1,6 +1,6 @@
 {
     "name": "@divine/ghostly-engine",
-    "version": "2.0.1",
+    "version": "2.1.0",
     "description": "Ghostly template/print formatter engine",
     "keywords": [
         "fop",
@@ -30,18 +30,49 @@
         "build/src",
         "src"
     ],
+    "jest": {
+        "testEnvironment": "node",
+        "testMatch": [
+            "<rootDir>/build/test/**/*.test.js"
+        ],
+        "snapshotResolver": "../snapshot-resolver",
+        "collectCoverage": true
+    },
     "dependencies": {
-        "@divine/ghostly-runtime": "^2.0.1",
-        "@divine/headers": "^1.3.0",
+        "@divine/ghostly-runtime": "workspace:*",
+        "@divine/headers": "^1.3.1",
         "@divine/uri": "~0.3.2",
-        "dompurify": "^2.2",
-        "html-minifier": "^4.0",
-        "playwright-chromium": "~1.9",
-        "tslib": "^2.1"
+        "csso": "^4.2.0",
+        "dompurify": "^2.2.7",
+        "hast-util-from-string": "^1.0.4",
+        "hast-util-has-property": "^1.0.4",
+        "hast-util-is-css-link": "^1.0.4",
+        "hast-util-is-element": "^1.1.0",
+        "hast-util-is-javascript": "^1.0.5",
+        "hast-util-script-supporting": "^1.0.4",
+        "html-url-attributes": "^1.0.3",
+        "playwright-chromium": "~1.10.0",
+        "rehype": "^11.0.0",
+        "rehype-minify-whitespace": "^4.0.5",
+        "rehype-preset-minify": "^5.1.0",
+        "relateurl": "~0.2.7",
+        "svgo": "~2.3.0",
+        "tslib": "^2.2.0",
+        "uglify-js": "^3.13.4",
+        "unified": "^9.2.1",
+        "unist-util-is": "^4.1.0",
+        "unist-util-visit": "^2.0.3"
     },
     "devDependencies": {
-        "@types/html-minifier": "^4.0",
-        "@types/node": "^12"
+        "@types/csso": "^3.5.1",
+        "@types/dompurify": "^2.2.1",
+        "@types/hast": "^2.3.1",
+        "@types/jsdom": "^16.2.10",
+        "@types/node": "^12.20.10",
+        "@types/relateurl": "^0.2.28",
+        "@types/svgo": "~2.3.0",
+        "@types/uglify-js": "^3.13.0",
+        "jsdom": "^16.5.3"
     },
     "engines": {
         "node": ">=12"

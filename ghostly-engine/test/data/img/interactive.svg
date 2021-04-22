@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400">
+  <script type="text/JavaScript" ghostly-noscript="false">
+     <![CDATA[
+        function showColor() {
+           alert("Color of the Rectangle is: " +
+           document.getElementById("rect1").getAttributeNS(null, "fill"));
+        }
+
+        function showArea(event){
+           var width = parseFloat(event.target.getAttributeNS(null, "width"));
+           var height = parseFloat(event.target.getAttributeNS(null, "height"));
+           alert("Area of the rectangle is: " + width + "x" + height);
+        }
+
+        function showRootChildrenCount() {
+           alert("Total Children: " + document.documentElement.childNodes.length);
+        }
+     ]]>
+  </script>
+  <g id="c1">
+     <text x="30" y="50" onClick="showColor()">Click me to show rectangle color.</text>
+     <rect id="rect1" x="50" y="100" width="200" height="200" 
+        stroke="green" stroke-width="3" fill="red" 
+        onClick="showArea(event)"  	  
+     />  
+     <text x="30" y="400" onClick="showRootChildrenCount()">
+     Click me to print child node count.</text>	 
+  </g>  
+</svg>

@@ -1,4 +1,5 @@
+.pnpm-debug.log
 .vscode
 build
+coverage
 node_modules
-yarn-error.log
