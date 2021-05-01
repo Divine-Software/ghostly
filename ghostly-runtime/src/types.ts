@@ -84,7 +84,9 @@ export interface View<Params = unknown> {
     /** The size of the viewport to use, in pixels. Will be calculated from `dpi` and `paperSize`, if not provided. */
     viewportSize?: ViewportSize;
 
-    /** An array of transformations to apply when producing HTML results. Defaults to `[ sanitize, minimize ]`. */
+    /** An array of transformations to apply when producing HTML results. Defaults to `[ 'inline', 'noscript',
+     * 'minimize' ]`.
+     */
     htmlTransforms?: HTMLTransform[];
 }
 
