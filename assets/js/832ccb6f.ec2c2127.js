@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[24],{96:function(e){e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Version 2.1 released","permalink":"/ghostly/blog/2021/04/22/version-2.1"},{"title":"Welcome","permalink":"/ghostly/blog/2021/03/15/welcome"}]}')}}]);

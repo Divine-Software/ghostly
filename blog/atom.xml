@@ -2,16 +2,23 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://divine-software.github.io/blog</id>
     <title>Ghostly Blog</title>
-    <updated>2020-03-15T00:00:00.000Z</updated>
+    <updated>2021-04-22T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://divine-software.github.io/blog"/>
     <subtitle>Ghostly Blog</subtitle>
     <icon>https://divine-software.github.io/img/favicon.ico</icon>
     <entry>
+        <title type="html"><![CDATA[Version 2.1 released]]></title>
+        <id>Version 2.1 released</id>
+        <link href="https://divine-software.github.io/ghostly/blog/2021/04/22/version-2.1"/>
+        <updated>2021-04-22T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Today, I'm glad to let you know that Ghostly version 2.1 has been released.]]></summary>
+    </entry>
+    <entry>
         <title type="html"><![CDATA[Welcome]]></title>
         <id>Welcome</id>
-        <link href="https://divine-software.github.io/ghostly/blog/2020/03/15/welcome"/>
-        <updated>2020-03-15T00:00:00.000Z</updated>
+        <link href="https://divine-software.github.io/ghostly/blog/2021/03/15/welcome"/>
+        <updated>2021-03-15T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[I'm happy to announce that Ghostly v2 is now released! Version 2.0 is an substantial upgrade over last release.]]></summary>
     </entry>
 </feed>
