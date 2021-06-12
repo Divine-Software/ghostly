@@ -33,7 +33,7 @@
         "src"
     ],
     "dependencies": {
-        "@divine/ghostly-engine": "workspace:*",
+        "@divine/ghostly-engine": "workspace:^",
         "@divine/sysconsole": "^2.0.0",
         "commander": "^7.2.0",
         "daemonize-process": "^3.0.0",
