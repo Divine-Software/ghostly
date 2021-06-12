@@ -21,8 +21,8 @@ build::		prepare
 docker:
 	docker buildx build . -t divinesoftware/ghostly:$(DOCKER_VERSION) -t divinesoftware/ghostly:latest --build-arg version=$(DOCKER_VERSION)
 
-test::		build
-	pnpx jest
+#test::		build
+#	pnpx jest
 
 clean::
 	rm -rf coverage
@@ -34,7 +34,7 @@ distclean::
 	make -C examples $@
 	make -C website $@
 
-build clean distclean publish::
+build test clean distclean publish::
 	$(MAKE) -C ghostly-cli $@
 	$(MAKE) -C ghostly-engine $@
 	$(MAKE) -C ghostly-runtime $@
