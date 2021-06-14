@@ -18,8 +18,12 @@ build::		prepare
 	ln -f README.md ghostly-cli/README.md
 	ln -f README.md ghostly-runtime/README.md
 
-docker:
+build-docker:
 	docker buildx build . -t divinesoftware/ghostly:$(DOCKER_VERSION) -t divinesoftware/ghostly:latest --build-arg version=$(DOCKER_VERSION)
+
+publish-docker:
+	docker push divinesoftware/ghostly:$(DOCKER_VERSION)
+	docker push divinesoftware/ghostly:latest
 
 #test::		build
 #	pnpx jest
