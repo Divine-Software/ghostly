@@ -1,7 +1,7 @@
 import { GhostlyError, OnGhostlyEvent, PaperSize, View, ViewportSize } from '@divine/ghostly-runtime/build/src/types'; // Avoid DOM types leaks
 import { guessFileExtension } from '@divine/uri';
 import { Browser } from 'playwright-chromium';
-import { EngineConfig, RenderResult, TemplateEngine } from './engine';
+import { EngineConfig, RenderRequest, RenderResult, TemplateEngine } from './engine';
 import { PlaywrightDriver } from './playwright-driver';
 
 export interface Worker {
@@ -28,7 +28,13 @@ export class TemplateEngineImpl implements TemplateEngine {
         return (await this.renderViews(document, contentType, [{ contentType: format, params: params }], false, onGhostlyEvent))[0]!.data;
     }
 
-    async renderViews(document: string | object, contentType: string, views: View[], renderAttachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]> {
+    async renderViews(document: string | object, contentType: string, views: View[], attachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]> {
+        return await this.renderRequest({ document, contentType, views, attachments }, onGhostlyEvent);
+    }
+
+    async renderRequest(request: RenderRequest, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]> {
+        const { document, contentType, views, attachments: renderAttachments, locale, timeZone } = request;
+
         const worker = this._selectWorker();
         const result = [] as RenderResult[];
         const events = [] as object[];
@@ -40,21 +46,22 @@ export class TemplateEngineImpl implements TemplateEngine {
             ++worker.load;
 
             // Find a cached template ...
-            let driver = worker.pageCache.find((driver) => driver?.url === this._url);
+            const  env = { url: this._url, locale: (locale ?? this._config.locale).toLowerCase(), timeZone: timeZone ?? this._config.timeZone };
+            let driver = worker.pageCache.find((driver) => driver.matches(env));
 
             try {
                 if (driver) {
-                    this.log.info(`${this._url}: Using cached template.`);
+                    this.log.info(`${this._url}: Using cached template [${env.locale}, ${env.timeZone}].`);
                     worker.pageCache = worker.pageCache.filter((d) => d !== driver);
                 }
                 else {
                     // ... or create a new one
-                    this.log.info(`${this._url}: Creating new template.`);
-                    driver = await new PlaywrightDriver(this._url, this._config).initialize(worker.browser);
+                    this.log.info(`${this._url}: Creating new template [${env.locale}, ${env.timeZone}].`);
+                    driver = await new PlaywrightDriver(env, this._config).initialize(worker.browser);
                 }
 
                 // Render all views and attachments
-                result.push(...await driver.renderViews(this._hash, document, contentType, views, renderAttachments, onGhostlyEvent));
+                result.push(...await driver.renderViews(this._hash, document, contentType, views, !!renderAttachments, onGhostlyEvent));
 
                 // Add events to result, if no onGhostlyEvent handler was provided
                 result.push(...events.map((event) => ({ type: 'event' as const, 'contentType': 'application/json', data: Buffer.from(JSON.stringify(event))})));

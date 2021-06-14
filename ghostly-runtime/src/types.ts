@@ -120,7 +120,7 @@ export class GhostlyError extends Error {
         }
     }
 
-    toString(): string {
+    override toString(): string {
         return `GhostlyError: ${this.message}: ${this.data instanceof Error ? String(this.data) : JSON.stringify(this.data)}`;
     }
 }

@@ -132,7 +132,7 @@ module.exports =  {
         excludePrivate: true,
         excludeInternal: true,
         tsconfig: '../tsconfig.json',
-        watch: process.env.TYPEDOC_WATCH === 'true',
+        watch: typeof process !== 'undefined' && process.env.TYPEDOC_WATCH === 'true',
       },
     ],
   ],

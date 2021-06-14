@@ -4,5 +4,8 @@ module.exports = {
     [
       require.resolve('@babel/plugin-proposal-class-properties'),
     ],
+    [
+      require.resolve('@babel/plugin-proposal-private-methods'), { "loose": false }
+    ]
   ],
 };

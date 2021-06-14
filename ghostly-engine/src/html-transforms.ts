@@ -1,4 +1,4 @@
-import { GhostlyError, HTMLTransform, View } from "@divine/ghostly-runtime";
+import { GhostlyError, HTMLTransform, View } from '@divine/ghostly-runtime';
 import { ContentType } from '@divine/headers';
 import { guessContentType, HEADERS, StringParser, URI } from '@divine/uri';
 import csso from 'csso';
