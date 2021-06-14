@@ -15,6 +15,9 @@ export interface EngineConfig {
     /** Override browser executable path. */
     browserPath: string | null;
 
+    /** Override the default browser locale. Defaults to system locale or `en-US`. */
+    locale: string;
+
     /** A `Console` to use for debug logging. */
     logger: Console;
 
@@ -32,6 +35,9 @@ export interface EngineConfig {
 
     /** Timeout while waiting for a command response from the template. Defaults to 10 s. */
     timeout: number;
+
+    /** Override the default browser time zone. Defaults to system time zone or `UTC`. */
+    timeZone: string;
 
     /** The number of browser instances to launch. Defaults to 1. */
     workers: number;
@@ -61,11 +67,8 @@ export interface WSRenderResult extends Omit<RenderResult, 'data'> {
     data: string;
 }
 
-/** The HTTP request message. */
-export interface WSRenderRequest {
-    /** URL to the template to use. */
-    template: string;
-
+/** The source document and parameters that should be rendered. */
+export interface RenderRequest {
     /** The model to render, as a string or embedded JSON object. */
     document: string | object;
 
@@ -77,6 +80,18 @@ export interface WSRenderRequest {
 
     /** Set to `true` if attachments, if any, should be generated as well. */
     attachments?: boolean;
+
+    /** The locale to use when rendering. Defaults to the [[EngineConfig]] locale. */
+    locale?: string;
+
+    /** The time zone to use when rendering. Defaults to the [[EngineConfig]] time zone. */
+    timeZone?: string;
+}
+
+/** The HTTP request message. */
+export interface WSRenderRequest extends RenderRequest {
+    /** URL to the template to use. */
+    template: string;
 }
 
 /** The HTTP response message. */
@@ -96,7 +111,7 @@ export interface TemplateEngine {
      * @param contentType     The model's media type.
      * @param format          The media type of the view to render (`text/html`, `image/png`, `application/pdf` ...).
      * @param params          Optional view params as parsed JSON.
-     * @param onGhostlyEvent  Callback to invoke if the template emits an event using [[notify]].
+     * @param onGhostlyEvent  Optional callback to invoke if the template emits an event using [[notify]].
      * @returns               A `Buffer` containing the rendered document.
      * @throws GhostlyError   Template-related errors.
      * @throws Error          Other internal errors.
@@ -106,14 +121,26 @@ export interface TemplateEngine {
     /**
      * Render multiple views and/or attachments from a model and return the results as a [[RenderResult]] array.
      *
+     * @param request         Render parameters/options.
+     * @param onGhostlyEvent  Optional callback to invoke if the template emits an event using [[notify]].
+     * @returns               A `Buffer` containing the rendered document.
+     * @throws GhostlyError   Template-related errors.
+     * @throws Error          Other internal errors.
+     */
+     renderRequest(request: RenderRequest, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]>;
+
+    /**
+     * Render multiple views and/or attachments from a model and return the results as a [[RenderResult]] array.
+     *
      * @param document        The model to render.
      * @param contentType     The model's media type.
      * @param views           View definitions.
      * @param attachments     Set to `true` if you also want to render the attachments (if any).
-     * @param onGhostlyEvent  Callback to invoke if the template emits an event using [[notify]].
+     * @param onGhostlyEvent  Optional callback to invoke if the template emits an event using [[notify]].
      * @returns               A `Buffer` containing the rendered document.
      * @throws GhostlyError   Template-related errors.
      * @throws Error          Other internal errors.
+     * @deprecated            Use [[renderRequest]] instead.
      */
     renderViews(document: string | object, contentType: string, views: View[], attachments: boolean, onGhostlyEvent?: OnGhostlyEvent): Promise<RenderResult[]>;
 }
@@ -152,6 +179,8 @@ export class Engine {
      * @param config Optional Ghostly Engine configuration.
      */
     constructor(config: Partial<EngineConfig> = {}) {
+        const intl = Intl.DateTimeFormat().resolvedOptions();
+
         this._config = {
             timeout:         10,
             logger:          nullConsole,
@@ -162,6 +191,8 @@ export class Engine {
             workers:         1,
             pageCache:       0,
             pageMaxAge:      60,
+            locale:          intl.locale || 'en-US',
+            timeZone:        intl.timeZone !== 'Etc/Unknown' && intl.timeZone || 'UTC',
             ...deleteUndefined(config)
         };
 
@@ -312,6 +343,8 @@ export class Engine {
         let view        = uri.query['view'] as string | undefined;
         let params      = uri.query['params'] && JSON.parse(uri.query['params'] as string) as unknown;
         let attachments = false;
+        let locale      = undefined as string | undefined;
+        let timeZone    = undefined as string | undefined;
 
         if (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'POST') {
             throw new WSResponse(405, 'Only GET, HEAD and POST requests are accepted');
@@ -389,6 +422,8 @@ export class Engine {
             template    = message.template;
             document    = message.document;
             contentType = message.contentType || 'application/json';
+            locale      = message.locale;
+            timeZone    = message.timeZone;
             views       = message.views.map((view: View) => {
                 const { contentType, params, dpi, paperSize, viewportSize } = view;
                 return { contentType, params, dpi, paperSize, viewportSize };
@@ -406,7 +441,7 @@ export class Engine {
         }
 
         try {
-            const results = await tpl.renderViews(document as string | object, contentType, views, attachments, undefined);
+            const results = await tpl.renderRequest({ document: document!, contentType, views, attachments, locale, timeZone }, undefined);
 
             if (view) {
                 const vr = results.filter((rr) => rr.type === 'view');

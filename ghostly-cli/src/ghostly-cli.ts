@@ -42,6 +42,7 @@ function parseArgs() {
         .option('    --content-type <content-type>',                  'input document format [application/json]')
         .option('-d, --debug',                                        'enable debug logging')
         .option('    --format <content-type>',                        'template output format [text/html]')
+        .option('    --locale <lang>',                                'browser locale to use')
         .option('    --render-dpi <dpi>',                             'dots per inch when rendering images [96]', int)
         .option('    --render-width <pixels>',                        'width of rendered image in pixels', int)
         .option('    --render-height <pixels>',                       'height of rendered image in pixels', int)
@@ -58,6 +59,7 @@ function parseArgs() {
         .option('    --relaunch-delay <seconds>',                     'delay in seconds before relaunching a crashed worker [1]', int)
         .option('-t, --template <url>',                               'execute this Ghostly template')
         .option('-T, --template-pattern <regexp>',                    'restrict template URIs to this regular expression')
+        .option('    --time-zone <tz>',                               'browser time zone to use')
         .option('-u, --user <user>',                                  'run as this user')
         .option('    --workers <num>',                                'number of worker processes [1]', int)
         .parse(process.argv)
@@ -113,10 +115,12 @@ export async function main(): Promise<void> {
         if (argv[name] !== undefined) (config as any /* why?? */)[name] = type(argv[name]);
     }
 
+    arg('locale',          String);
     arg('templatePattern', RegExp);
     arg('pageCache',       Number);
     arg('pageMaxAge',      Number);
     arg('relaunchDelay',   Number);
+    arg('timeZone',        String);
     arg('workers',         Number);
 
     const engine = new Engine(config);

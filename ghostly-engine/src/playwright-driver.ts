@@ -12,6 +12,12 @@ import { browserVersion, deleteUndefined, paperDimensions, toFilename } from './
 
 const domPurifyJS = fs.readFile(require.resolve('dompurify/dist/purify.min.js'), { encoding: 'utf8' });
 
+export interface PageEnvironment {
+    url:      string;
+    locale:   string;
+    timeZone: string;
+}
+
 export const sanitizeConfig = (fragment: boolean): Config & { RETURN_DOM_FRAGMENT?: false; RETURN_DOM?: false } => ({
     ADD_TAGS:                ['#comment'],
     ALLOW_UNKNOWN_PROTOCOLS: true,
@@ -33,14 +39,22 @@ export class PlaywrightDriver extends TemplateDriver {
     private _error?: GhostlyError;
     private _onGhostlyEvent?: OnGhostlyEvent;
 
-    constructor(public url: string, private _config: EngineConfig) {
+    constructor(private _env: PageEnvironment, private _config: EngineConfig) {
         super();
 
         this._expires = Date.now() + _config.pageMaxAge * 1000;
     }
 
+    matches(env: PageEnvironment): boolean {
+        return env.url === this._env.url && env.locale === this._env.locale && env.timeZone === this._env.timeZone;
+    }
+
     isExpired(): boolean {
         return Date.now() > this._expires;
+    }
+
+    get url(): string {
+        return this._env.url;
     }
 
     private get log(): Console {
@@ -49,7 +63,9 @@ export class PlaywrightDriver extends TemplateDriver {
 
     async initialize(browser: Browser): Promise<this> {
         const context = await browser.newContext({
-            userAgent: `Ghostly/${packageJSON.version} ${browserVersion(browser)}`,
+            locale:     this._env.locale,
+            timezoneId: this._env.timeZone,
+            userAgent:  `Ghostly/${packageJSON.version} ${browserVersion(browser)}`,
         });
 
         context.on('page', (page) => {
