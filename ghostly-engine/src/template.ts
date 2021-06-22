@@ -47,7 +47,7 @@ export class TemplateEngineImpl implements TemplateEngine {
 
             // Find a cached template ...
             const  env = { url: this._url, locale: (locale ?? this._config.locale).toLowerCase(), timeZone: timeZone ?? this._config.timeZone };
-            let driver = worker.pageCache.find((driver) => driver.matches(env));
+            let driver = worker.pageCache.find((driver) => driver?.matches(env));
 
             try {
                 if (driver) {
