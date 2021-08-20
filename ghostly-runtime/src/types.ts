@@ -46,7 +46,7 @@ export interface Template {
     ghostlyEnd?(): void | Promise<void>;
 }
 
-/** The module (data) that should be rendered by the template. */
+/** The model (data) that should be rendered by the template. */
 export interface Model {
     /** The raw document, either as a string or JSON-serializable object. */
     document:    string | object;
