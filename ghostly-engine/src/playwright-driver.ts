@@ -2,7 +2,7 @@ import { parseGhostlyPacket, sendGhostlyMessage, TemplateDriver } from '@divine/
 import { AttachmentInfo, GhostlyError, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, View, ViewportSize } from '@divine/ghostly-runtime/build/src/types'; // Avoid DOM types leaks
 import { ContentType } from '@divine/headers';
 import { Parser } from '@divine/uri';
-import type { sanitize, Config } from 'dompurify';
+import type { Config, sanitize } from 'dompurify';
 import { promises as fs } from 'fs';
 import { Browser, Page } from 'playwright-chromium';
 import packageJSON from '../package.json';
@@ -35,7 +35,7 @@ interface GhostlyWindow extends Window {
 }
 
 export class PlaywrightDriver extends TemplateDriver {
-    private _expires: number;
+    private _created: number;
     private _page!: Page;
     private _error?: GhostlyError;
     private _onGhostlyEvent?: OnGhostlyEvent;
@@ -43,15 +43,15 @@ export class PlaywrightDriver extends TemplateDriver {
     constructor(private _env: PageEnvironment, private _config: EngineConfig) {
         super();
 
-        this._expires = Date.now() + _config.pageMaxAge * 1000;
+        this._created = Date.now();
     }
 
     matches(env: PageEnvironment): boolean {
         return env.url === this._env.url && env.locale === this._env.locale && env.timeZone === this._env.timeZone;
     }
 
-    isExpired(): boolean {
-        return Date.now() > this._expires;
+    isExpired(config: EngineConfig): boolean {
+        return Date.now() > this._created + config.pageMaxAge * 1000;
     }
 
     get url(): string {
@@ -60,6 +60,18 @@ export class PlaywrightDriver extends TemplateDriver {
 
     private get log(): Console {
         return this._config.logger;
+    }
+
+    async withConfig<T>(config: EngineConfig, cb: (driver: this) => T | Promise<T>): Promise<T> {
+        const actual = this._config;
+        this._config = config;
+
+        try {
+            return await cb(this);
+        }
+        finally {
+            this._config = actual;
+        }
     }
 
     async initialize(browser: Browser): Promise<this> {

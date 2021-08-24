@@ -60,20 +60,22 @@ export class TemplateEngineImpl implements TemplateEngine {
                     driver = await new PlaywrightDriver(env, this._config).initialize(worker.browser);
                 }
 
-                // Render all views and attachments
-                result.push(...await driver.renderViews(this._hash, document, contentType, views, !!renderAttachments, onGhostlyEvent));
+                await driver.withConfig(this._config, async () => {
+                    // Render all views and attachments
+                    result.push(...await driver!.renderViews(this._hash, document, contentType, views, !!renderAttachments, onGhostlyEvent));
 
-                // Add events to result, if no onGhostlyEvent handler was provided
-                result.push(...events.map((event) => ({ type: 'event' as const, 'contentType': 'application/json', data: Buffer.from(JSON.stringify(event))})));
+                    // Add events to result, if no onGhostlyEvent handler was provided
+                    result.push(...events.map((event) => ({ type: 'event' as const, 'contentType': 'application/json', data: Buffer.from(JSON.stringify(event))})));
 
-                // Return template to page cache if there were no errors
-                if (this._config.pageCache) {
-                    worker.pageCache.unshift(driver);
-                    driver = worker.pageCache.length > this._config.pageCache ? worker.pageCache.pop() : undefined;
+                    // Return template to page cache if there were no errors
+                    if (this._config.pageCache) {
+                        worker.pageCache.unshift(driver!);
+                        driver = worker.pageCache.length > this._config.pageCache ? worker.pageCache.pop() : undefined;
 
-                    const capacity = Math.round(100 * worker.pageCache.length / this._config.pageCache);
-                    this.log.info(`${this._url}: Returning template to page cache (${capacity}% full).`);
-                }
+                        const capacity = Math.round(100 * worker.pageCache.length / this._config.pageCache);
+                        this.log.info(`${this._url}: Returning template to page cache (${capacity}% full).`);
+                    }
+                });
             }
             finally {
                 if (driver && this._config.pageCache) {
@@ -109,7 +111,7 @@ export class TemplateEngineImpl implements TemplateEngine {
     public static async purgeExpiredPages(workers: Worker[], config: EngineConfig): Promise<void> {
         for (const worker of workers) {
             for (const [index, driver] of worker?.pageCache.entries() ?? []) {
-                if (driver?.isExpired()) {
+                if (driver?.isExpired(config)) {
                     config.logger.info(`${driver.url}: Purging expired template from page cache.`);
                     delete worker!.pageCache[index];
                     await driver.close();
