@@ -160,7 +160,7 @@ export function paperDimensions(paperSize: PaperSize | undefined, dpi: number): 
 }
 
 export function browserVersion(browser: Browser): string {
-    return `${browser.constructor.name}/${browser.version()}`;
+    return `${(browser as any)._name || browser.constructor.name}/${browser.version()}`;
 }
 
 export function deleteUndefined<T extends object>(obj: T): T {
