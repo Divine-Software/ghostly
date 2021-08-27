@@ -9,9 +9,6 @@ const nullConsole = new console.Console(new stream.PassThrough());
 
 /** Ghostly Template configuration. */
 export interface TemplateConfig {
-    /** Override the default browser locale. Defaults to system locale or `en-US`. */
-    locale: string;
-
     /** A `Console` to use for debug logging. */
     logger: Console;
 
@@ -23,9 +20,6 @@ export interface TemplateConfig {
      *  NOTE: Any call by the template to [[ghostly.notify]] will reset the watchdog and start counting from 0 again!
      */
     timeout: number;
-
-    /** Override the default browser time zone. Defaults to system time zone or `UTC`. */
-    timeZone: string;
 }
 
 /** Ghostly Engine configuration. */
@@ -36,6 +30,9 @@ export interface EngineConfig extends TemplateConfig {
     /** Override browser executable path. */
     browserPath: string | null;
 
+    /** Override the default browser locale. Defaults to system locale or `en-US`. */
+    locale: string;
+
     /** If specified, the maximum number of cached templates to keep. */
     pageCache: number;
 
@@ -44,6 +41,9 @@ export interface EngineConfig extends TemplateConfig {
 
     /** A delay (in seconds) to wait before attempting to restart a crashed browser. Defaults to 1 s. */
     relaunchDelay: number;
+
+    /** Override the default browser time zone. Defaults to system time zone or `UTC`. */
+    timeZone: string;
 
     /** The number of browser instances to launch. Defaults to 1. */
     workers: number;
