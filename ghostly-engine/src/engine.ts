@@ -7,8 +7,23 @@ import { browserVersion, deleteUndefined, TemplateEngineImpl, Worker } from './t
 
 const nullConsole = new console.Console(new stream.PassThrough());
 
+/** Ghostly Template configuration. */
+export interface TemplateConfig {
+    /** A `Console` to use for debug logging. */
+    logger: Console;
+
+    /** A regular expression that all template network requests must match, or else they will be forbidden. */
+    templatePattern: RegExp;
+
+    /** Timeout while waiting for a command response from the template. Defaults to 10 s.
+     *
+     *  NOTE: Any call by the template to [[ghostly.notify]] will reset the watchdog and start counting from 0 again!
+     */
+    timeout: number;
+}
+
 /** Ghostly Engine configuration. */
-export interface EngineConfig {
+export interface EngineConfig extends TemplateConfig {
     /** What browser to use for rendering. Defaults to 'chromium'. */
     browser: 'chromium' | 'firefox' | 'webkit';
 
@@ -18,9 +33,6 @@ export interface EngineConfig {
     /** Override the default browser locale. Defaults to system locale or `en-US`. */
     locale: string;
 
-    /** A `Console` to use for debug logging. */
-    logger: Console;
-
     /** If specified, the maximum number of cached templates to keep. */
     pageCache: number;
 
@@ -29,12 +41,6 @@ export interface EngineConfig {
 
     /** A delay (in seconds) to wait before attempting to restart a crashed browser. Defaults to 1 s. */
     relaunchDelay: number;
-
-    /** A regular expression that all template network requests must match, or else they will be forbidden. */
-    templatePattern: RegExp;
-
-    /** Timeout while waiting for a command response from the template. Defaults to 10 s. */
-    timeout: number;
 
     /** Override the default browser time zone. Defaults to system time zone or `UTC`. */
     timeZone: string;
@@ -238,16 +244,19 @@ export class Engine {
     /**
      * Create a [[TemplateEngine]] instance using the specified Ghostly template URL.
      *
-     * @param uri The URL of the Ghostly template to use.
+     * @param uri    The URL of the Ghostly template to use.
+     * @param config Optional [[TemplateConfig]] parameters to override from base [[EngineConfig]].
      */
-    template(uri: string): TemplateEngine {
+    template(uri: string, templateConfig: Partial<TemplateConfig> = {}): TemplateEngine {
+        const config = { ...this._config, ...deleteUndefined(templateConfig) };
+
         uri = url.resolve(`file://${process.cwd()}/`, uri);
 
-        if (!this._config.templatePattern.test(uri)) {
-            throw new GhostlyError(`Template URL is not allowed: ${uri} did not match ${this._config.templatePattern}`);
+        if (!config.templatePattern.test(uri)) {
+            throw new GhostlyError(`Template URL is not allowed: ${uri} did not match ${config.templatePattern}`);
         }
 
-        return new TemplateEngineImpl(this._config, this._workers, uri);
+        return new TemplateEngineImpl(config, this._workers, uri);
     }
 
     /**

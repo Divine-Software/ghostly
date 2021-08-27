@@ -441,16 +441,19 @@ export class HTMLTransforms {
 
                 case 'minimize':
                     svg = svgo.optimize(svg, {
-                        plugins: svgo.extendDefaultPlugins([ // Try to use only a safe subset
-                            { active: false, name: 'cleanupIDs'                 },
-                            { active: false, name: 'convertPathData'            },
-                            { active: false, name: 'convertShapeToPath'         },
-                            { active: false, name: 'convertTransform'           },
-                            { active: false, name: 'moveGroupAttrsToElems'      },
-                            { active: false, name: 'removeUnknownsAndDefaults'  },
-                            { active: false, name: 'removeUselessDefs'          },
-                            { active: false, name: 'removeUselessStrokeAndFill' },
-                            { active: false, name: 'removeViewBox'              },
+                        plugins: [
+                            { name: 'preset-default', params: {  overrides: { // Try to use only a safe subset
+                                    'cleanupIDs':                 false,
+                                    'convertPathData':            false,
+                                    'convertShapeToPath':         false,
+                                    'convertTransform':           false,
+                                    'moveGroupAttrsToElems':      false,
+                                    'removeUnknownsAndDefaults':  false,
+                                    'removeUselessDefs':          false,
+                                    'removeUselessStrokeAndFill': false,
+                                    'removeViewBox':              false,
+                                }
+                            }},
                             { name: 'svgMinifyScript', type: 'perItem', fn: (item) => {
                                 if (item.isElem('script') && !item.hasAttr('href') && (item.children?.[0].type === 'text' || item.children?.[0].type === 'cdata')) {
                                     if (!item.hasAttr('type') || javascriptTypes.includes(item.attributes['type'].toLowerCase())) {
@@ -464,7 +467,7 @@ export class HTMLTransforms {
                                     }
                                 }
                             }},
-                        ]),
+                        ],
                     }).data;
                     break;
 

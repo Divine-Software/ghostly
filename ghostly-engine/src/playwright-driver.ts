@@ -2,7 +2,7 @@ import { parseGhostlyPacket, sendGhostlyMessage, TemplateDriver } from '@divine/
 import { AttachmentInfo, GhostlyError, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, View, ViewportSize } from '@divine/ghostly-runtime/build/src/types'; // Avoid DOM types leaks
 import { ContentType } from '@divine/headers';
 import { Parser } from '@divine/uri';
-import type { sanitize, Config } from 'dompurify';
+import type { Config, sanitize } from 'dompurify';
 import { promises as fs } from 'fs';
 import { Browser, Page } from 'playwright-chromium';
 import packageJSON from '../package.json';
@@ -11,6 +11,7 @@ import { HTMLTransforms } from './html-transforms';
 import { browserVersion, deleteUndefined, paperDimensions, toFilename } from './template';
 
 const domPurifyJS = fs.readFile(require.resolve('dompurify/dist/purify.min.js'), { encoding: 'utf8' });
+const magicEventURL = 'https://__ghostlyEvent__/events'.toLowerCase();
 
 export interface PageEnvironment {
     url:      string;
@@ -34,7 +35,7 @@ interface GhostlyWindow extends Window {
 }
 
 export class PlaywrightDriver extends TemplateDriver {
-    private _expires: number;
+    private _created: number;
     private _page!: Page;
     private _error?: GhostlyError;
     private _onGhostlyEvent?: OnGhostlyEvent;
@@ -42,15 +43,15 @@ export class PlaywrightDriver extends TemplateDriver {
     constructor(private _env: PageEnvironment, private _config: EngineConfig) {
         super();
 
-        this._expires = Date.now() + _config.pageMaxAge * 1000;
+        this._created = Date.now();
     }
 
     matches(env: PageEnvironment): boolean {
         return env.url === this._env.url && env.locale === this._env.locale && env.timeZone === this._env.timeZone;
     }
 
-    isExpired(): boolean {
-        return Date.now() > this._expires;
+    isExpired(config: EngineConfig): boolean {
+        return Date.now() > this._created + config.pageMaxAge * 1000;
     }
 
     get url(): string {
@@ -59,6 +60,18 @@ export class PlaywrightDriver extends TemplateDriver {
 
     private get log(): Console {
         return this._config.logger;
+    }
+
+    async withConfig<T>(config: EngineConfig, cb: (driver: this) => T | Promise<T>): Promise<T> {
+        const actual = this._config;
+        this._config = config;
+
+        try {
+            return await cb(this);
+        }
+        finally {
+            this._config = actual;
+        }
     }
 
     async initialize(browser: Browser): Promise<this> {
@@ -70,14 +83,26 @@ export class PlaywrightDriver extends TemplateDriver {
 
         context.on('page', (page) => {
             /* async */ page.route('**/*', (route, req) => {
-                this.log.debug(`${this.url}: Loading ${req.url()}`);
+                if (req.url().toLowerCase() === magicEventURL) {
+                    try {
+                        this._onGhostlyEvent?.(JSON.parse(req.postData()!));
+                    }
+                    catch (err) {
+                        this.log.error(`${this.url}: PlaywrightDriver failed to propagate event to onGhostlyEvent handler`, err);
+                    }
 
-                if (this._config.templatePattern.test(req.url())) {
-                    route.continue();
+                    route.fulfill({ status: 204 /* No Content */});
                 }
                 else {
-                    this.log.error(`${this.url}: Template accessed a forbidden URL: ${req.url()} did not match ${this._config.templatePattern}`);
-                    route.abort('addressunreachable');
+                    this.log.debug(`${this.url}: Loading ${req.url()}`);
+
+                    if (this._config.templatePattern.test(req.url())) {
+                        route.continue();
+                    }
+                    else {
+                        this.log.error(`${this.url}: Template accessed a forbidden URL: ${req.url()} did not match ${this._config.templatePattern}`);
+                        route.abort('addressunreachable');
+                    }
                 }
             });
 
@@ -261,20 +286,17 @@ export class PlaywrightDriver extends TemplateDriver {
     }
 
     protected async sendMessage(request: GhostlyRequest): Promise<GhostlyTypes> {
-        const response = await ((window: GhostlyWindow) => this._page.evaluate(([request, timeout]) => {
+        const response = await ((window: GhostlyWindow) => this._page.evaluate(([request, timeout, magicEventURL]) => {
             try {
-                const events: object[] = []; // Batch all events since I don't know how to propagate them in real-time
-
-                return window.__ghostly_message_proxy__.sendGhostlyMessage(window, request, (data) => events.push(data), timeout)
-                    .then((packet) => ({ packet, events}));
+                return window.__ghostly_message_proxy__.sendGhostlyMessage(window, request, (event) => {
+                    navigator.sendBeacon(magicEventURL, JSON.stringify(event));
+                }, timeout);
             }
             catch (err) {
                 throw new Error(`${this.url}: Ghostly message proxy not found or it's failing: ${err}`);
             }
-        }, [request, this._config.timeout] as const))(null!);
+        }, [request, this._config.timeout, magicEventURL] as const))(null!);
 
-        response.events.forEach((event) => this._onGhostlyEvent?.(event));
-
-        return parseGhostlyPacket(request, response.packet);
+        return parseGhostlyPacket(request, response);
     }
 }

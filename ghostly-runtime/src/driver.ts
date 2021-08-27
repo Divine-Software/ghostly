@@ -258,7 +258,12 @@ export class PreviewDriver extends TemplateDriver {
                 resetWatchdog();
 
                 if (response[1]) {
-                    onGhostlyEvent?.(response[1]);
+                    try {
+                        onGhostlyEvent?.(response[1]);
+                    }
+                    catch (err) {
+                        console.error(`sendGhostlyMessage() failed to propagate event to onGhostlyEvent() handler`, event, err);
+                    }
                 }
 
                 return;
