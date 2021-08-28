@@ -2,11 +2,33 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://divine-software.github.io/ghostly/blog</id>
     <title>Ghostly Blog</title>
-    <updated>2021-04-22T00:00:00.000Z</updated>
+    <updated>2021-08-27T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://divine-software.github.io/ghostly/blog"/>
     <subtitle>Ghostly Blog</subtitle>
     <icon>https://divine-software.github.io/ghostly/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Version 2.3 released]]></title>
+        <id>Version 2.3 released</id>
+        <link href="https://divine-software.github.io/ghostly/blog/2021/08/27/version-2.3"/>
+        <updated>2021-08-27T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Another month, another minor Ghostly release; Version 2.3 is now available!]]></summary>
+        <author>
+            <name>Martin Blom</name>
+            <uri>https://github.com/LeviticusMB</uri>
+        </author>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Version 2.2 released]]></title>
+        <id>Version 2.2 released</id>
+        <link href="https://divine-software.github.io/ghostly/blog/2021/06/14/version-2.2"/>
+        <updated>2021-06-14T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Version 2.2 is out and adds the ability to specify [locale] and [time zone] the template will use (both as defaults and]]></summary>
+        <author>
+            <name>Martin Blom</name>
+            <uri>https://github.com/LeviticusMB</uri>
+        </author>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Version 2.1 released]]></title>
         <id>Version 2.1 released</id>
