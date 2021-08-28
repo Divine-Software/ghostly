@@ -91,6 +91,8 @@ td,th {
               document.getElementById('ua').innerText     = navigator.userAgent;
               document.getElementById('width').innerText  = window.innerWidth;
               document.getElementById('height').innerText = window.innerHeight;
+              document.getElementById('date').innerText   = new Date();
+              document.getElementById('locale').innerText = navigator.language;
           },
       });
     </script>
@@ -112,6 +114,14 @@ td,th {
         <tr>
             <td>Height</td>
             <td id='height'></td>
+        </tr>
+        <tr>
+            <td>Date</td>
+            <td id='date'></td>
+        </tr>
+        <tr>
+            <td>Locale</td>
+            <td id='locale'></td>
         </tr>
     </table>
 

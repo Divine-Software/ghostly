@@ -2,7 +2,7 @@
 <rss version="2.0">
     <channel>
         <title>Ghostly Blog</title>
-        <link>https://divine-software.github.io/blog</link>
+        <link>https://divine-software.github.io/ghostly/blog</link>
         <description>Ghostly Blog</description>
         <lastBuildDate>Thu, 22 Apr 2021 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
