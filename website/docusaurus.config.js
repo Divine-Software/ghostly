@@ -1,13 +1,17 @@
+const lightCodeTheme = require('prism-react-renderer/themes/github');
+const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+
+/** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports =  {
   title: 'Ghostly',
   tagline: 'A divine template/print formatter engine',
   url: 'https://divine-software.github.io/',
   baseUrl: '/ghostly/',
+  onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'throw',
   favicon: 'img/favicon.ico',
   organizationName: 'Divine-Software',
   projectName: 'ghostly',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
   themeConfig: {
     colorMode: {
       defaultMode: 'dark',
@@ -116,15 +120,17 @@ module.exports =  {
             },
           ]
         }
-    ],
-    copyright: `Copyright © 2016-${new Date().getFullYear()} Martin Blom. A Divine Software™ production.`,
+      ],
+      copyright: `Copyright © 2016-${new Date().getFullYear()} Martin Blom. A Divine Software™ production.`,
+    },
+    prism: {
+      theme: lightCodeTheme,
+      darkTheme: darkCodeTheme,
     },
   },
   plugins: [
     [
-      'docusaurus-plugin-typedoc',
-
-      {
+      'docusaurus-plugin-typedoc', {
         entryPoints: [
           '../ghostly-engine/index.ts',
           '../ghostly-runtime/index.ts',
@@ -133,7 +139,45 @@ module.exports =  {
         excludeInternal: true,
         tsconfig: '../tsconfig.json',
         watch: typeof process !== 'undefined' && process.env.TYPEDOC_WATCH === 'true',
+        readme: 'none',
+        sidebar: {
+          categoryLabel: 'Ghostly APIs',
+          fullNames: false,
+          position: 2,
+          sidebarFile: null,
+        },
       },
+    // [
+    //   'docusaurus-plugin-typedoc', {
+    //     id: 'ghostly-engine',
+    //     out: 'ghostly-engine',
+    //     entryPoints: [ '../ghostly-engine/index.ts' ],
+    //     excludePrivate: true,
+    //     excludeInternal: true,
+    //     tsconfig: '../ghostly-engine/tsconfig.json',
+    //     sidebar: {
+    //       categoryLabel: 'Ghostly Engine API',
+    //       fullNames: false,
+    //       position: 2,
+    //       sidebarFile: null,
+    //     },
+    //   },
+    // ],
+    // [
+    //   'docusaurus-plugin-typedoc', {
+    //     id: 'ghostly-runtime',
+    //     out: 'ghostly-runtime',
+    //     entryPoints: [ '../ghostly-runtime/index.ts' ],
+    //     excludePrivate: true,
+    //     excludeInternal: true,
+    //     tsconfig: '../ghostly-runtime/tsconfig.json',
+    //     sidebar: {
+    //       categoryLabel: 'Ghostly Runtime API',
+    //       fullNames: false,
+    //       position: 3,
+    //       sidebarFile: null,
+    //     },
+    //   },
     ],
   ],
   presets: [

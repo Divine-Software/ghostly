@@ -1,6 +1,6 @@
 import { PreviewDriver } from '@divine/ghostly-runtime';
 import React, { Component } from 'react';
-import styles from './styles.module.css';
+import styles from './index.module.css';
 import config from '../../../docusaurus.config';
 
 export class TemplatePreview extends Component {

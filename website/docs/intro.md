@@ -1,6 +1,8 @@
 ---
-title: Intro
+title: Introduction
 slug: /
+sidebar_label: About
+sidebar_position: 0
 ---
 
 *Ghostly* is a template engine/print formatter that can be used to render HTML or PDF documents, images and other kinds
