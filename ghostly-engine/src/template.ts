@@ -2,7 +2,7 @@ import { GhostlyError, OnGhostlyEvent, PaperSize, View, ViewportSize } from '@di
 import { guessFileExtension } from '@divine/uri';
 import { Browser } from 'playwright-chromium';
 import { EngineConfig, RenderRequest, RenderResult, TemplateEngine } from './engine';
-import { PlaywrightDriver } from './playwright-driver';
+import { FatalError, PlaywrightDriver } from './playwright-driver';
 
 export interface Worker {
     id:        number;
@@ -82,8 +82,16 @@ export class TemplateEngineImpl implements TemplateEngine {
                     this.log.info(`${driver.url}: Evicting template from page cache.`);
                 }
 
-                await driver?.close();
+                /* async */ driver?.close();
             }
+        }
+        catch (err) {
+            if (err instanceof FatalError) {
+                worker.load = Number.POSITIVE_INFINITY;
+                /* async */ worker.browser.close().catch(() => null);
+            }
+
+            throw err;
         }
         finally {
             --worker.load;

@@ -35,6 +35,8 @@ interface GhostlyWindow extends Window {
     __ghostly_message_proxy__: GhostlyProxyWindow
 }
 
+export class FatalError extends Error {}
+
 export class PlaywrightDriver extends TemplateDriver {
     private _created: number;
     private _page!: Page;
@@ -112,7 +114,7 @@ export class PlaywrightDriver extends TemplateDriver {
 
                 // Close page so request terminates directly
                 this._error = new GhostlyError(`${this.url}: Unhandled error in template`, error);
-                /* async */ page.close();
+                /* async */ page.close().catch(() => null);
             });
 
             page.on('dialog', (dialog) => {
@@ -151,7 +153,7 @@ export class PlaywrightDriver extends TemplateDriver {
                         window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>
                             ${domPurifyJS}
                             ${sendGhostlyMessage}
-                            ${async function playwrightIsAlive() {}}
+                            ${async function playwrightIsAlive() { /* Just return */ }}
                         </script>`);
                         window.__ghostly_message_proxy__.document.close();
                     }
@@ -292,7 +294,7 @@ export class PlaywrightDriver extends TemplateDriver {
         const watchdog = async () => {
             while (isWatching) {
                 await Promise.race([
-                    new Promise((_, reject) => setTimeout(() => reject(new Error(`Playwright not responding`)), 15_000)),
+                    new Promise((_, reject) => setTimeout(() => reject(new FatalError(`Playwright not responding`)), 15_000)),
                     ((window: GhostlyWindow) => this._page.evaluate(() => window.__ghostly_message_proxy__.playwrightIsAlive()))(null!)
                 ]);
 
