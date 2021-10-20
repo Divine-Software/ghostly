@@ -274,7 +274,7 @@ export class PlaywrightDriver extends TemplateDriver {
         try {
             return (await Parser.serializeToBuffer(data, ct))[0];
         }
-        catch (err) {
+        catch (err: any) {
             throw info
                     ? new GhostlyError(`${this.url}: ghostlyFetch returned an unexpected object for attachment '${info.name}': ${data}`, err)
                     : new GhostlyError(`${this.url}: ghostlyRender returned an unexpected object for view '${view.contentType}': ${data}`, err)

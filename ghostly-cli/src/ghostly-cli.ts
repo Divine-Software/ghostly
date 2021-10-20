@@ -1,7 +1,7 @@
 import { Engine, EngineConfig, HTMLTransform, View } from '@divine/ghostly-engine';
 import { SysConsole } from '@divine/sysconsole';
 import childProcess from 'child_process';
-import commander from 'commander';
+import { program } from 'commander';
 import daemon from 'daemonize-process';
 import { promises as fs, writeFileSync } from 'fs';
 import http from 'http';
@@ -13,7 +13,7 @@ import packageJSON from '../package.json';
 const sysconsole = new SysConsole({ syslog: false, showFile: false });
 
 function parseArgs() {
-    const cmd = commander
+    const cmd = program
         .usage('[options] [document]')
         .description('Render a Ghostly template or start a Ghostly HTTP server.')
         .version(packageJSON.version);

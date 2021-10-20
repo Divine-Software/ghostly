@@ -306,7 +306,7 @@ export class Engine {
         try {
             result = await this._handleRequest(request, pathName);
         }
-        catch (ex) {
+        catch (ex: any) {
             result = ex instanceof WSResponse ? ex : new WSResponse(500, ex.message || `Unknown error: ${ex}`);
         }
 
@@ -445,7 +445,7 @@ export class Engine {
         try {
             tpl = this.template(template);
         }
-        catch (ex) {
+        catch (ex: any) {
             throw new WSResponse(403, ex.message);
         }
 
@@ -465,7 +465,7 @@ export class Engine {
                 return new WSResponse(200, results);
             }
         }
-        catch (ex) {
+        catch (ex: any) {
             throw new WSResponse(500, ex instanceof GhostlyError ? `${ex.message}: ${JSON.stringify(ex.data)}` : ex.message);
         }
     }

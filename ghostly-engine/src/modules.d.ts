@@ -75,9 +75,8 @@ interface JSAPI {
     error?: string;
 }
 
-declare module 'svgo/lib/svgo/svg2js' {
-    function svg2js(content: string | Buffer): JSAPI;
-    export = svg2js;
+declare module 'svgo/lib/parser' {
+    export function parseSvg(content: string): JSAPI;
 }
 
 declare module 'svgo/lib/svgo/js2svg' {

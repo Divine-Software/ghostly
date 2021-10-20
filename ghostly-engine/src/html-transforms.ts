@@ -17,7 +17,7 @@ import minifyPreset from 'rehype-preset-minify';
 import RelateUrl from 'relateurl';
 import svgo from 'svgo';
 import js2svg from 'svgo/lib/svgo/js2svg';
-import svg2js from 'svgo/lib/svgo/svg2js';
+import { parseSvg } from 'svgo/lib/parser';
 import uglify from 'uglify-js';
 import { Attacher, Preset } from 'unified';
 import visit from 'unist-util-visit';
@@ -41,7 +41,7 @@ export class HTMLTransforms {
         try {
             return await this.processHTML(html, this._url, view.htmlTransforms ?? DEFAULT_TRANSFORMS);
         }
-        catch (err) {
+        catch (err: any) {
             throw new GhostlyError(`${this._url}: ${err.message}`, err);
         }
     }
@@ -403,7 +403,7 @@ export class HTMLTransforms {
                     break;
 
                 case 'inline': {
-                    const root = svg2js(svg);
+                    const root = parseSvg(svg);
 
                     if (root.error) {
                         throw new Error(`Failed to parse SVG document at ${url}: ${root.error}`);
