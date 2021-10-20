@@ -26,6 +26,7 @@ export const sanitizeConfig = (fragment: boolean): Config & { RETURN_DOM_FRAGMEN
 });
 
 interface GhostlyProxyWindow extends Window {
+    playwrightIsAlive(): Promise<void>;
     sendGhostlyMessage: typeof sendGhostlyMessage;
     DOMPurify: { sanitize: typeof sanitize };
 }
@@ -150,6 +151,7 @@ export class PlaywrightDriver extends TemplateDriver {
                         window.__ghostly_message_proxy__.document.open().write(`<script type='text/javascript'>
                             ${domPurifyJS}
                             ${sendGhostlyMessage}
+                            ${async function playwrightIsAlive() {}}
                         </script>`);
                         window.__ghostly_message_proxy__.document.close();
                     }
@@ -286,17 +288,35 @@ export class PlaywrightDriver extends TemplateDriver {
     }
 
     protected async sendMessage(request: GhostlyRequest): Promise<GhostlyTypes> {
-        const response = await ((window: GhostlyWindow) => this._page.evaluate(([request, timeout, magicEventURL]) => {
+        let isWatching = true;
+        const watchdog = async () => {
+            while (isWatching) {
+                await Promise.race([
+                    new Promise((_, reject) => setTimeout(() => reject(new Error(`Playwright not responding`)), 15_000)),
+                    ((window: GhostlyWindow) => this._page.evaluate(() => window.__ghostly_message_proxy__.playwrightIsAlive()))(null!)
+                ]);
+
+                await new Promise((resolve) => setTimeout(resolve, 15_000));
+            }
+        }
+
+        const response = ((window: GhostlyWindow) => this._page.evaluate(([request, timeout, magicEventURL]) => {
             try {
                 return window.__ghostly_message_proxy__.sendGhostlyMessage(window, request, (event) => {
                     navigator.sendBeacon(magicEventURL, JSON.stringify(event));
                 }, timeout);
             }
             catch (err) {
-                throw new Error(`${this.url}: Ghostly message proxy not found or it's failing: ${err}`);
+                throw new Error(`Ghostly message proxy not found or it's failing: ${err}`);
             }
         }, [request, this._config.timeout, magicEventURL] as const))(null!);
 
-        return parseGhostlyPacket(request, response);
+        try {
+            await Promise.race([response, watchdog()]);
+            return parseGhostlyPacket(request, await response);
+        }
+        finally {
+            isWatching = false;
+        }
     }
 }

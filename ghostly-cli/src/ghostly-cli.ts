@@ -59,6 +59,7 @@ function parseArgs() {
         .option('    --relaunch-delay <seconds>',                     'delay in seconds before relaunching a crashed worker [1]', int)
         .option('-t, --template <url>',                               'execute this Ghostly template')
         .option('-T, --template-pattern <regexp>',                    'restrict template URIs to this regular expression')
+        .option('    --timeout <seconds>',                            'template command timeout, in seconds [10]', int)
         .option('    --time-zone <tz>',                               'browser time zone to use')
         .option('-u, --user <user>',                                  'run as this user')
         .option('    --workers <num>',                                'number of worker processes [1]', int)
@@ -117,6 +118,7 @@ export async function main(): Promise<void> {
 
     arg('locale',          String);
     arg('templatePattern', RegExp);
+    arg('timeout',         Number);
     arg('pageCache',       Number);
     arg('pageMaxAge',      Number);
     arg('relaunchDelay',   Number);
