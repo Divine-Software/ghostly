@@ -176,7 +176,7 @@ export function deleteUndefined<T extends object>(obj: T): T {
         if (obj[prop] === undefined) {
             delete obj[prop];
         }
-        else if (typeof obj[prop] === 'object') {
+        else if (typeof obj[prop] === 'object' && obj[prop] && [Object.prototype, Array.prototype].includes(Object.getPrototypeOf(obj[prop]))) {
             deleteUndefined(obj[prop] as unknown as object);
         }
     }
