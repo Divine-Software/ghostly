@@ -1,1 +1,5 @@
-{}
+{
+    "dependencies": {
+        "@divine/ghostly-engine": "link:../ghostly-engine"
+    }
+}

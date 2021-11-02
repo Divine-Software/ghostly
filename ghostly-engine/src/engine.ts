@@ -217,7 +217,7 @@ export class Engine {
 
         this._cleaner = setInterval(() => {
             TemplateEngineImpl.purgeExpiredPages(this._workers, this._config);
-        }, 1000);
+        }, 1000).unref();
 
         return this;
     }

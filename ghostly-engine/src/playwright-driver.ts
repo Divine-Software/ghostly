@@ -294,11 +294,11 @@ export class PlaywrightDriver extends TemplateDriver {
         const watchdog = async () => {
             while (isWatching) {
                 await Promise.race([
-                    new Promise((_, reject) => setTimeout(() => reject(new FatalError(`Playwright not responding`)), 15_000)),
+                    new Promise((_, reject) => setTimeout(() => reject(new FatalError(`Playwright not responding`)), 15_000).unref()),
                     ((window: GhostlyWindow) => this._page.evaluate(() => window.__ghostly_message_proxy__.playwrightIsAlive()))(null!)
                 ]);
 
-                await new Promise((resolve) => setTimeout(resolve, 15_000));
+                await new Promise((resolve) => setTimeout(resolve, 15_000).unref());
             }
         }
 
