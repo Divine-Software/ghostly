@@ -74,14 +74,3 @@ interface JSAPI {
     children?: JSAPI[];
     error?: string;
 }
-
-declare module 'svgo/lib/parser' {
-    export function parseSvg(content: string): JSAPI;
-}
-
-declare module 'svgo/lib/svgo/js2svg' {
-    import { Js2SvgOptions, OptimizedSvg } from 'svgo';
-
-    function js2svg(root: JSAPI, config: Js2SvgOptions): OptimizedSvg;
-    export = js2svg;
-}
