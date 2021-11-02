@@ -25,8 +25,10 @@ publish-docker:
 	docker push divinesoftware/ghostly:$(DOCKER_VERSION)
 	docker push divinesoftware/ghostly:latest
 
-#test::		build
-#	pnpx jest
+lint:
+	-pnpm exec eslint '*/src/**/*.ts'
+
+test::		lint
 
 clean::
 	rm -rf coverage

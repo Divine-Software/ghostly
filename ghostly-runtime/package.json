@@ -1,6 +1,6 @@
 {
     "name": "@divine/ghostly-runtime",
-    "version": "2.3.1",
+    "version": "2.4.0",
     "description": "Ghostly template/print formatter runtime support",
     "keywords": [
         "fop",

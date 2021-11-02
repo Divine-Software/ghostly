@@ -1,7 +1,7 @@
 import { parseGhostlyPacket, sendGhostlyMessage, TemplateDriver } from '@divine/ghostly-runtime';
 import { AttachmentInfo, GhostlyError, GhostlyRequest, GhostlyTypes, OnGhostlyEvent, PaperSize, View, ViewportSize } from '@divine/ghostly-runtime/build/src/types'; // Avoid DOM types leaks
 import { ContentType } from '@divine/headers';
-import { Parser } from '@divine/uri';
+import { Parser, URI } from '@divine/uri';
 import type { Config, sanitize } from 'dompurify';
 import { promises as fs } from 'fs';
 import { Browser, Page } from 'playwright-chromium';
@@ -11,7 +11,7 @@ import { HTMLTransforms } from './html-transforms';
 import { browserVersion, deleteUndefined, paperDimensions, toFilename } from './template';
 
 const domPurifyJS = fs.readFile(require.resolve('dompurify/dist/purify.min.js'), { encoding: 'utf8' });
-const magicEventURL = 'https://__ghostlyEvent__/events'.toLowerCase();
+const ghostlyFileURL = 'https://__ghostly_file__/';
 
 export interface PageEnvironment {
     url:      string;
@@ -85,8 +85,10 @@ export class PlaywrightDriver extends TemplateDriver {
         });
 
         context.on('page', (page) => {
-            /* async */ page.route('**/*', (route, req) => {
-                if (req.url().toLowerCase() === magicEventURL) {
+            /* async */ page.route('**/*', async (route, req) => {
+                let url = req.url();
+
+                if (url === ghostlyFileURL && req.method() === 'POST') {
                     try {
                         this._onGhostlyEvent?.(JSON.parse(req.postData()!));
                     }
@@ -97,13 +99,26 @@ export class PlaywrightDriver extends TemplateDriver {
                     route.fulfill({ status: 204 /* No Content */});
                 }
                 else {
-                    this.log.debug(`${this.url}: Loading ${req.url()}`);
+                    if (url.startsWith(ghostlyFileURL)) { // Convert back to original File URL
+                        url = 'file:///' + url.substr(ghostlyFileURL.length);
+                    }
 
-                    if (this._config.templatePattern.test(req.url())) {
-                        route.continue();
+                    if (this._config.templatePattern.test(url)) {
+                        if (url.startsWith('file:///')) {
+                            try {
+                                route.fulfill({ status: 200 /* OK */, body: await new URI(url).load<Buffer>(ContentType.bytes) })
+                            }
+                            catch (err) {
+                                this.log.error(`${this.url}: Template accessed an invalid URL: ${err}`);
+                                route.fulfill({ status: 404 /* Not Found */, body: String(err) });
+                            }
+                        }
+                        else {
+                            route.continue();
+                        }
                     }
                     else {
-                        this.log.error(`${this.url}: Template accessed a forbidden URL: ${req.url()} did not match ${this._config.templatePattern}`);
+                        this.log.error(`${this.url}: Template accessed a forbidden URL: ${url} did not match ${this._config.templatePattern}`);
                         route.abort('addressunreachable');
                     }
                 }
@@ -143,8 +158,11 @@ export class PlaywrightDriver extends TemplateDriver {
             this._onGhostlyEvent = onGhostlyEvent;
 
             if (!this._template /* ghostlyLoad not yet called */) {
+                // Playwright no longer works with File URLs, so convert to magic HTTP URLs instead and handle in page.route() handler.
+                const url = template.startsWith('file:///') ? ghostlyFileURL + template.substr(8) : template;
+
                 // Always specify fragment on initial load, because otherwise `window.location.hash = ''` will trigger an event
-                await this._page.goto(template, { waitUntil: 'load' });
+                await this._page.goto(url, { waitUntil: 'load' });
 
                 // Create the Ghostly message proxy
                 await (async (window: GhostlyWindow) => this._page.evaluate(([sendGhostlyMessage, domPurifyJS]) => {
@@ -311,7 +329,7 @@ export class PlaywrightDriver extends TemplateDriver {
             catch (err) {
                 throw new Error(`Ghostly message proxy not found or it's failing: ${err}`);
             }
-        }, [request, this._config.timeout, magicEventURL] as const))(null!);
+        }, [request, this._config.timeout, ghostlyFileURL] as const))(null!);
 
         try {
             await Promise.race([response, watchdog()]);
