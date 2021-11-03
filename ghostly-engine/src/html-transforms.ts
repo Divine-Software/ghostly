@@ -16,8 +16,6 @@ import minifyWhitespace from 'rehype-minify-whitespace';
 import minifyPreset from 'rehype-preset-minify';
 import RelateUrl from 'relateurl';
 import svgo from 'svgo';
-import js2svg from 'svgo/lib/svgo/js2svg';
-import { parseSvg } from 'svgo/lib/parser';
 import uglify from 'uglify-js';
 import { Attacher, Preset } from 'unified';
 import visit from 'unist-util-visit';
@@ -403,22 +401,33 @@ export class HTMLTransforms {
                     break;
 
                 case 'inline': {
-                    const root = parseSvg(svg);
+                    const tasks: { href: string, inlined: Promise<string> }[] = [];
 
-                    if (root.error) {
-                        throw new Error(`Failed to parse SVG document at ${url}: ${root.error}`);
-                    }
-
-                    const inliner = async (node: JSAPI) => {
-                        if (node.attributes?.['href']) {
-                            node.attributes['href'] = await this.processLink(node.attributes['href'], base, url, transforms);
+                    svgo.optimize(svg, { plugins: [{
+                        name: 'svgInline1',
+                        type: 'perItem',
+                        fn: (node: JSAPI) => {
+                            if (node.attributes?.['href']) {
+                                tasks.push({ href: node.attributes['href'], inlined: this.processLink(node.attributes['href'], base, url, transforms) });
+                            }
                         }
+                    }]});
 
-                        await Promise.all(node.children?.map(inliner) ?? []);
-                        return node;
+                    const results = await Promise.all(tasks.map((task) => task.inlined.then((inlined) => ({ href: task.href, inlined }))));
+
+                    svg = svgo.optimize(svg, { plugins: [{
+                        name: 'svgInline2',
+                        type: 'perItem',
+                        fn: (node: JSAPI) => {
+                            if (node.attributes?.['href'] && results[0]?.href === node.attributes['href']) {
+                                node.attributes['href'] = results.shift()!.inlined;
+                            }
+                        }
+                    }]}).data;
+
+                    if (results.length) {
+                        throw new Error(`Failed to process all inlined SVG resources`);
                     }
-
-                    svg = js2svg(await inliner(root), {}).data;
                 }
                 break;
 

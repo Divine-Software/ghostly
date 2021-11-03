@@ -1,4 +1,5 @@
-import { Engine } from '@divine/ghostly-engine';
+import engine from '@divine/ghostly-engine';
+const { Engine } = engine;
 
 const TEMPLATE = 'https://divine-software.github.io/ghostly/examples/ghostly-plainjs-template.html';
 const MODEL    = [ null, "one", 2, { "three": [ false, true ] } ];

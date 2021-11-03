@@ -23,7 +23,6 @@ distclean:	clean
 
 publish:	clean build test
 	@[[ -z "$$(git status --porcelain)" ]] || (git status; false)
-	@[[ "`npm --version`" > "7" ]] || (echo Need npm v7+; false)
 	git tag -s $(BASENAME)-v$(VERSION) -m "$(NAME) v$(VERSION)"
 	pnpm publish --access public
 
