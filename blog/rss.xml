@@ -1,18 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0">
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel>
         <title>Ghostly Blog</title>
         <link>https://divine-software.github.io/ghostly/blog</link>
         <description>Ghostly Blog</description>
-        <lastBuildDate>Fri, 27 Aug 2021 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Wed, 03 Nov 2021 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
+        <item>
+            <title><![CDATA[Version 2.4 released]]></title>
+            <link>https://divine-software.github.io/ghostly/blog/2021/11/03/version-2.4</link>
+            <guid>Version 2.4 released</guid>
+            <pubDate>Wed, 03 Nov 2021 00:00:00 GMT</pubDate>
+            <description><![CDATA[Today, we're celebrating höstlov with a small new Ghostly release!]]></description>
+            <content:encoded><![CDATA[<p>Today, we&#x27;re celebrating <em>höstlov</em> with a small new Ghostly release!</p><p>This is just a maintenance release that bumps Ghostly&#x27;s dependencies. In particular, Playwright has been upgraded from
+1.12 to 1.16, which allows it to run correctly on <em>macOS 12</em>.</p><p>Playwright 1.13 and later had a problem with <code>file:</code> URLs, which is why we have stuck with 1.12 for a while now. But
+that problem has finally been addressed in this Ghostly release.</p>]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[Version 2.3 released]]></title>
             <link>https://divine-software.github.io/ghostly/blog/2021/08/27/version-2.3</link>
             <guid>Version 2.3 released</guid>
             <pubDate>Fri, 27 Aug 2021 00:00:00 GMT</pubDate>
             <description><![CDATA[Another month, another minor Ghostly release; Version 2.3 is now available!]]></description>
+            <content:encoded><![CDATA[<p>Another month, another minor Ghostly release; Version 2.3 is now available!</p><p>New in this release is that</p><ul><li>Events are now delivered in real-time, instead of all at once when the rendering has completed; and that</li><li>Some configuration options, notably <a href="/ghostly/docs/api/interfaces/ghostly_engine.TemplateConfig#logger">logger</a> &amp; <a href="/ghostly/docs/api/interfaces/ghostly_engine.TemplateConfig#timeout">timeout</a>, may now be changed <a href="/ghostly/docs/api/classes/ghostly_engine.Engine#template">per-template</a>. This is awesome if, for
+instance, you have a <a href="https://divine-software.github.io/esxx-2/web-service/classes/webrequest.html#log">per-request logger</a> in your web-service, because now all Ghostly logs originating from this
+request can be tagged with a unique reqest ID.</li></ul>]]></content:encoded>
         </item>
         <item>
             <title><![CDATA[Version 2.2 released]]></title>
@@ -20,6 +33,8 @@
             <guid>Version 2.2 released</guid>
             <pubDate>Mon, 14 Jun 2021 00:00:00 GMT</pubDate>
             <description><![CDATA[Version 2.2 is out and adds the ability to specify [locale] and [time zone] the template will use (both as defaults and]]></description>
+            <content:encoded><![CDATA[<p>Version 2.2 is out and adds the ability to specify <a href="/ghostly/docs/api/interfaces/ghostly_engine.EngineConfig#locale">locale</a> and <a href="/ghostly/docs/api/interfaces/ghostly_engine.EngineConfig#timezone">time zone</a> the template will use (both as defaults and
+<a href="/ghostly/docs/api/interfaces/ghostly_engine.TemplateEngine#renderrequest">per-request</a>).</p>]]></content:encoded>
         </item>
         <item>
             <title><![CDATA[Version 2.1 released]]></title>
@@ -27,6 +42,12 @@
             <guid>Version 2.1 released</guid>
             <pubDate>Thu, 22 Apr 2021 00:00:00 GMT</pubDate>
             <description><![CDATA[Today, I'm glad to let you know that Ghostly version 2.1 has been released.]]></description>
+            <content:encoded><![CDATA[<p>Today, I&#x27;m glad to let you know that Ghostly version 2.1 has been released.</p><p>Besides some internal chores—like switching from <a href="https://classic.yarnpkg.com">Yarn</a> to <a href="https://pnpm.io/">pnpm</a>—this version adds an <code>inline</code> transform to the
+<a href="/ghostly/docs/api/interfaces/ghostly_engine.View#htmltransforms">html-transforms</a> pipeline (which is now implemented as a <a href="https://github.com/rehypejs/rehype">rehype</a> pipeline). The inliner is capable of inlining CSS,
+JavaScript and any kind of URL by converting the linked resource to a <code>data:</code> URL. Any inlined resource will be
+processed by the pipeline before it&#x27;s included into the main document.</p><p>Additonally, the default <code>sanitizer</code> transform (using <a href="https://github.com/cure53/DOMPurify">DOMPurify</a>), while still available, has been replaced with a much
+less intrusive <code>noscript</code> transform by default, and <code>minimize</code> is now based on <a href="https://github.com/rehypejs/rehype-minify">rehype-minify</a> instead of
+<a href="https://github.com/kangax/html-minifier">html-minifier</a>.</p>]]></content:encoded>
         </item>
         <item>
             <title><![CDATA[Welcome]]></title>
@@ -34,6 +55,11 @@
             <guid>Welcome</guid>
             <pubDate>Mon, 15 Mar 2021 00:00:00 GMT</pubDate>
             <description><![CDATA[I'm happy to announce that Ghostly v2 is now released! Version 2.0 is an substantial upgrade over last release.]]></description>
+            <content:encoded><![CDATA[<p>I&#x27;m happy to announce that Ghostly v2 is now released! Version 2.0 is an <strong><em>substantial</em></strong> upgrade over last release.</p><p>Both the <a href="https://www.npmjs.com/package/@divine/ghostly-engine">engine</a> and <a href="https://www.npmjs.com/package/@divine/ghostly-runtime">runtime</a> modules (now part of the <em>Divine</em> family of open source software) ships with full
+<em>TypeScript</em> definitions, and Ghostly is now powered by a modern browser (<em>Chromium</em> by default, but you can opt in to
+use <em>Firefox</em> or <em>WebKit</em> instead), thanks to <a href="https://playwright.dev/">Playwright</a>.</p><p>The third major improvement comes in the form of <em>attachments</em> support. A template may now announce that it can produce
+any number of secondary results as part of the model initialization. For instance, a sales report template could attach
+the sales data as a CSV attachment, ready to be imported into a spreadsheet application for further analysis.</p>]]></content:encoded>
         </item>
     </channel>
 </rss>

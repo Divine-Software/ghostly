@@ -1,8 +1,8 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define('@divine/ghostly-runtime', factory) :
-	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, (global['@divine'] = global['@divine'] || {}, global['@divine']['ghostly-runtime'] = factory()));
-}(this, (function () { 'use strict';
+	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, (global["@divine"] = global["@divine"] || {}, global["@divine"]["ghostly-runtime"] = factory()));
+})(this, (function () { 'use strict';
 
 	var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -736,5 +736,5 @@
 
 	return index;
 
-})));
+}));
 //# sourceMappingURL=index.umd.js.map
