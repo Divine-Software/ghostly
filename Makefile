@@ -3,6 +3,10 @@ NODE_MODULES	= node_modules/.modules.yaml \
 		  ghostly-engine/node_modules
 
 DOCKER_VERSION	:= $(shell node -p 'require(`./ghostly-cli/package.json`).version')
+DOCKER_ARCH	:= --platform linux/amd64,linux/arm64
+DOCKER_ARGS	:= --build-arg version=$(DOCKER_VERSION)
+DOCKER_REPO	:= divinesoftware/ghostly
+DOCKER_TAGS	:= -t $(DOCKER_REPO):$(DOCKER_VERSION) -t $(DOCKER_REPO):latest
 
 all:		build
 
@@ -19,11 +23,10 @@ build::		prepare
 	ln -f README.md ghostly-runtime/README.md
 
 build-docker:
-	docker buildx build . -t divinesoftware/ghostly:$(DOCKER_VERSION) -t divinesoftware/ghostly:latest --build-arg version=$(DOCKER_VERSION)
+	docker buildx build . $(DOCKER_ARGS) --load --tag $(DOCKER_REPO):dev
 
 publish-docker:
-	docker push divinesoftware/ghostly:$(DOCKER_VERSION)
-	docker push divinesoftware/ghostly:latest
+	docker buildx --builder docker-container build . $(DOCKER_ARCH) $(DOCKER_ARGS) $(DOCKER_TAGS) --push
 
 lint:
 	-pnpm exec eslint '*/src/**/*.ts'
