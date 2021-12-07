@@ -2,7 +2,7 @@
 title: Docker Image
 ---
 
-To run the Ghostly WS API server, just forward port 80 and run the Docker image without arguments:
+To run the Ghostly WS API server, just forward port 80 and run the [Docker image] without arguments:
 
 ```bash
 docker run -p 8888:80 divinesoftware/ghostly
@@ -29,3 +29,5 @@ docker run -i divinesoftware/ghostly \
 ```
 
 See [Command Line Interface](./cli) for more information.
+
+[Docker image]: https://hub.docker.com/r/divinesoftware/ghostly
