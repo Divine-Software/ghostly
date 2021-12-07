@@ -2,11 +2,24 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://divine-software.github.io/ghostly/blog</id>
     <title>Ghostly Blog</title>
-    <updated>2021-11-03T00:00:00.000Z</updated>
+    <updated>2021-12-07T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://divine-software.github.io/ghostly/blog"/>
     <subtitle>Ghostly Blog</subtitle>
     <icon>https://divine-software.github.io/ghostly/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Version 2.4.1 released]]></title>
+        <id>Version 2.4.1 released</id>
+        <link href="https://divine-software.github.io/ghostly/blog/2021/12/07/version-2.4.1"/>
+        <updated>2021-12-07T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Just a patch release, but this is more than meets the eye ... By bumping Playwright to 1.17.1, this release brings Mac]]></summary>
+        <content type="html"><![CDATA[<p>Just a patch release, but this is more than meets the eye ... By bumping Playwright to 1.17.1, this release brings Mac
+M1 support and multi-arch (amd64 &amp; arm64) Docker builds!</p>]]></content>
+        <author>
+            <name>Martin Blom</name>
+            <uri>https://github.com/LeviticusMB</uri>
+        </author>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Version 2.4 released]]></title>
         <id>Version 2.4 released</id>

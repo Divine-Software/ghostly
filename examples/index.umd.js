@@ -45,7 +45,7 @@
 	        return _this;
 	    }
 	    GhostlyError.prototype.toString = function () {
-	        return "GhostlyError: " + this.message + ": " + (this.data instanceof Error ? String(this.data) : JSON.stringify(this.data));
+	        return "GhostlyError: ".concat(this.message, ": ").concat(this.data instanceof Error ? String(this.data) : JSON.stringify(this.data));
 	    };
 	    return GhostlyError;
 	}(Error));
@@ -159,7 +159,7 @@
 	                                typeof info.name !== 'string' ||
 	                                info.description !== undefined && typeof info.description !== 'string' ||
 	                                info.attachments !== undefined && !Array.isArray(info.attachments)) {
-	                                throw new types_1.GhostlyError(this._template + ": ghostlyInit did not return a valid ResultInfo object", info);
+	                                throw new types_1.GhostlyError("".concat(this._template, ": ghostlyInit did not return a valid ResultInfo object"), info);
 	                            }
 	                            try {
 	                                for (_b = __values((_a = info.attachments) !== null && _a !== void 0 ? _a : []), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -167,7 +167,7 @@
 	                                    if (typeof ai.contentType !== 'string' ||
 	                                        typeof ai.name !== 'string' ||
 	                                        ai.description !== undefined && typeof ai.description !== 'string') {
-	                                        throw new types_1.GhostlyError(this._template + ": ghostlyInit returned an invalid AttachmentInfo record", ai);
+	                                        throw new types_1.GhostlyError("".concat(this._template, ": ghostlyInit returned an invalid AttachmentInfo record"), ai);
 	                                    }
 	                                }
 	                            }
@@ -251,7 +251,7 @@
 	    function PreviewDriver(_target, _onGhostlyEvent) {
 	        var _this = _super.call(this) || this;
 	        _this._target = _target;
-	        _this._onGhostlyEvent = _onGhostlyEvent !== null && _onGhostlyEvent !== void 0 ? _onGhostlyEvent : (function () { return console.info("Event from " + _this._template + ":", event); });
+	        _this._onGhostlyEvent = _onGhostlyEvent !== null && _onGhostlyEvent !== void 0 ? _onGhostlyEvent : (function () { return console.info("Event from ".concat(_this._template, ":"), event); });
 	        return _this;
 	    }
 	    /**
@@ -399,7 +399,7 @@
 	     */
 	    PreviewDriver.prototype.print = function () {
 	        var _this = this;
-	        this.ghostlyPreview({ print: true })["catch"](function (err) { return console.info("Failed to print " + _this._template + ":", err); });
+	        this.ghostlyPreview({ print: true })["catch"](function (err) { return console.info("Failed to print ".concat(_this._template, ":"), err); });
 	    };
 	    /**
 	     * Returns the target IFrame based on the `_target` constructor parameter. May be overridden.
@@ -407,9 +407,9 @@
 	     * @returns The IFrame to preview the template in.
 	     */
 	    PreviewDriver.prototype.target = function () {
-	        var target = document.querySelector("iframe[name = " + this._target + "]");
+	        var target = document.querySelector("iframe[name = ".concat(this._target, "]"));
 	        if (!target) {
-	            throw new types_1.GhostlyError("No iframe named '" + this._target + "' found!");
+	            throw new types_1.GhostlyError("No iframe named '".concat(this._target, "' found!"));
 	        }
 	        return target;
 	    };
@@ -454,7 +454,7 @@
 	            clearTimeout(watchdog);
 	            watchdog = setTimeout(function () {
 	                removeEventListener('message', eventListener);
-	                reject(new RangeError("sendGhostlyMessage: Command " + request[0] + " timed out"));
+	                reject(new RangeError("sendGhostlyMessage: Command ".concat(request[0], " timed out")));
 	            }, (timeout || 10) * 1000);
 	        };
 	        var uint8ArrayToString = function (value) { return Array.from(value).map(function (v) { return String.fromCharCode(v); }).join(''); };
@@ -476,7 +476,7 @@
 	            clearTimeout(watchdog);
 	            removeEventListener('message', eventListener);
 	            if (!Array.isArray(response) || typeof response[0] !== 'string') {
-	                reject(new TypeError("sendGhostlyMessage: Invalid response packet received for command " + request[0] + ": " + response));
+	                reject(new TypeError("sendGhostlyMessage: Invalid response packet received for command ".concat(request[0], ": ").concat(response)));
 	            }
 	            else if (response[1] instanceof Uint8Array) {
 	                // No Uint8Array support in Playwright; encode as string
@@ -518,7 +518,7 @@
 	        return result;
 	    }
 	    else {
-	        throw new types_1.GhostlyError(request[0] + " failed: " + response[0], result);
+	        throw new types_1.GhostlyError("".concat(request[0], " failed: ").concat(response[0]), result);
 	    }
 	}
 	driver.parseGhostlyPacket = parseGhostlyPacket;
@@ -556,7 +556,7 @@
 	}
 	function unknownMethod(method) {
 	    return function () {
-	        throw new types_1.GhostlyError(method + "() is not a known method", 'unknown-method');
+	        throw new types_1.GhostlyError("".concat(method, "() is not a known method"), 'unknown-method');
 	    };
 	}
 	/**
@@ -596,10 +596,10 @@
 	            throw new types_1.GhostlyError('ghostlyInit() must be implemented to initialize the model');
 	        },
 	        ghostlyRender: function (view) {
-	            throw new types_1.GhostlyError("ghostlyRender() must be implemented to render the view '" + view.contentType + "'");
+	            throw new types_1.GhostlyError("ghostlyRender() must be implemented to render the view '".concat(view.contentType, "'"));
 	        },
 	        ghostlyFetch: function (attachmentInfo) {
-	            throw new types_1.GhostlyError("ghostlyFetch() must be implemented to render the attachment " + attachmentInfo.name);
+	            throw new types_1.GhostlyError("ghostlyFetch() must be implemented to render the attachment ".concat(attachmentInfo.name));
 	        },
 	        ghostlyPreview: function (command) {
 	            if (command === void 0) { command = {}; }
@@ -641,7 +641,7 @@
 	                    sender.postMessage(['ghostlyNACK', (_a = transportable(err)) !== null && _a !== void 0 ? _a : null], '*');
 	                }
 	                catch (ex) {
-	                    sender.postMessage(['ghostlyNACK', ex + ": " + err], '*');
+	                    sender.postMessage(['ghostlyNACK', "".concat(ex, ": ").concat(err)], '*');
 	                }
 	            })
 	                .then(function () { return source = null; });
@@ -707,7 +707,7 @@
 	        else if (model.document && typeof model.document === 'object') {
 	            return model.document;
 	        }
-	        throw new types_1.GhostlyError("ghostly.parse: Cannot parse " + typeof model.document + " documents as " + model.contentType, model);
+	        throw new types_1.GhostlyError("ghostly.parse: Cannot parse ".concat(typeof model.document, " documents as ").concat(model.contentType), model);
 	    }
 	    ghostly.parse = parse;
 	})(exports.ghostly || (exports.ghostly = {}));

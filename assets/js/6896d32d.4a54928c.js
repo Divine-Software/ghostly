@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_divine_ghostly_website=self.webpackChunk_divine_ghostly_website||[]).push([[7402],{5095:function(e){e.exports=JSON.parse('{"permalink":"/ghostly/blog","page":1,"postsPerPage":10,"totalPages":1,"totalCount":6,"previousPage":null,"nextPage":null,"blogDescription":"Blog","blogTitle":"Blog"}')}}]);

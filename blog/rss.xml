@@ -4,9 +4,18 @@
         <title>Ghostly Blog</title>
         <link>https://divine-software.github.io/ghostly/blog</link>
         <description>Ghostly Blog</description>
-        <lastBuildDate>Wed, 03 Nov 2021 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Tue, 07 Dec 2021 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
+        <item>
+            <title><![CDATA[Version 2.4.1 released]]></title>
+            <link>https://divine-software.github.io/ghostly/blog/2021/12/07/version-2.4.1</link>
+            <guid>Version 2.4.1 released</guid>
+            <pubDate>Tue, 07 Dec 2021 00:00:00 GMT</pubDate>
+            <description><![CDATA[Just a patch release, but this is more than meets the eye ... By bumping Playwright to 1.17.1, this release brings Mac]]></description>
+            <content:encoded><![CDATA[<p>Just a patch release, but this is more than meets the eye ... By bumping Playwright to 1.17.1, this release brings Mac
+M1 support and multi-arch (amd64 &amp; arm64) Docker builds!</p>]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[Version 2.4 released]]></title>
             <link>https://divine-software.github.io/ghostly/blog/2021/11/03/version-2.4</link>
