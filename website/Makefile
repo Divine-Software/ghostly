@@ -14,7 +14,7 @@ test:
 
 clean:
 	-pnpm run clear
-	rm -rf build
+	rm -rf build docs/api
 
 distclean:	clean
 	rm -rf node_modules
