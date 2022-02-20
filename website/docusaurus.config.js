@@ -68,7 +68,7 @@ module.exports =  {
             },
             {
               label: 'Web Service Framework',
-              href: 'https://divine-software.github.io/esxx-2/',
+              href: 'https://divine-software.github.io/WSF',
             },
           ],
         },
