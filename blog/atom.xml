@@ -41,7 +41,7 @@ that problem has finally been addressed in this Ghostly release.</p>]]></content
         <updated>2021-08-27T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Another month, another minor Ghostly release; Version 2.3 is now available!]]></summary>
         <content type="html"><![CDATA[<p>Another month, another minor Ghostly release; Version 2.3 is now available!</p><p>New in this release is that</p><ul><li>Events are now delivered in real-time, instead of all at once when the rendering has completed; and that</li><li>Some configuration options, notably <a href="/ghostly/docs/api/interfaces/ghostly_engine.TemplateConfig#logger">logger</a> &amp; <a href="/ghostly/docs/api/interfaces/ghostly_engine.TemplateConfig#timeout">timeout</a>, may now be changed <a href="/ghostly/docs/api/classes/ghostly_engine.Engine#template">per-template</a>. This is awesome if, for
-instance, you have a <a href="https://divine-software.github.io/esxx-2/web-service/classes/webrequest.html#log">per-request logger</a> in your web-service, because now all Ghostly logs originating from this
+instance, you have a <a href="https://divine-software.github.io/WSF/docs/api/classes/divine_web_service.WebRequest#log">per-request logger</a> in your web-service, because now all Ghostly logs originating from this
 request can be tagged with a unique reqest ID.</li></ul>]]></content>
         <author>
             <name>Martin Blom</name>
