@@ -28,6 +28,6 @@ docker run -i divinesoftware/ghostly \
     - < model.json > model.pdf
 ```
 
-See [Command Line Interface](./cli) for more information.
+See [Command Line Interface](cli.mdx) for more information.
 
 [Docker image]: https://hub.docker.com/r/divinesoftware/ghostly

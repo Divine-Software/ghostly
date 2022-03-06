@@ -4,8 +4,8 @@
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
-/** @type {import('@docusaurus/types').DocusaurusConfig} */
-module.exports =  {
+/** @type {import('@docusaurus/types').Config} */
+const config = {
   title: 'Ghostly',
   tagline: 'A divine template/print formatter engine',
   url: 'https://divine-software.github.io/',
@@ -15,122 +15,126 @@ module.exports =  {
   favicon: 'img/favicon.ico',
   organizationName: 'Divine-Software',
   projectName: 'ghostly',
-  themeConfig: {
-    colorMode: {
-      defaultMode: 'dark',
-      respectPrefersColorScheme: true,
-    },
-    navbar: {
-      title: 'Ghostly',
-      logo: {
-        alt: 'Ghostly Logo',
-        src: 'img/logo.svg',
+  trailingSlash: true,
+  themeConfig:
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    ({
+      colorMode: {
+        defaultMode: 'light',
+        respectPrefersColorScheme: true,
       },
-      items: [
-        {
-          to: 'blog/',
-          label: 'News',
-          position: 'left'
+      navbar: {
+        title: 'Ghostly',
+        logo: {
+          alt: 'Ghostly Logo',
+          src: 'img/logo.svg',
         },
-        {
-          to: 'docs/',
-          activeBasePath: 'docs',
-          label: 'Documentation',
-          position: 'left',
-        },
-        {
-          to: 'preview',
-          label: 'Template Preview Tool',
-          position: 'left',
-        },
-        {
-          href: 'https://github.com/Divine-Software/ghostly',
-          label: 'Fork me on GitHub!',
-          position: 'right',
-        },
-      ],
-      hideOnScroll: false,
-    },
-    hideableSidebar: true,
-    footer: {
-      style: 'dark',
-      links: [
-        {
-          title: 'More Divine Software™',
-          items: [
-            {
-              label: 'Synchronization Library',
-              to: 'https://github.com/Divine-Software/divine-synchronization',
-            },
-            {
-              label: 'Syslog Console',
-              href: 'https://github.com/Divine-Software/sysconsole',
-            },
-            {
-              label: 'Web Service Framework',
-              href: 'https://divine-software.github.io/WSF',
-            },
-          ],
-        },
-        {
-          title: 'Projects we ❤️',
-          items: [
-            {
-              label: 'Docusaurus',
-              href: 'https://v2.docusaurus.io/',
-            },
-            {
-              label: 'Playwright',
-              href: 'https://playwright.dev/',
-            },
-            {
-              label: 'TypeDoc',
-              href: 'https://typedoc.org/',
-            }
-          ],
-        },
-        {
-          title: 'Templating',
-          items: [
-            {
-              label: 'Angular',
-              href: 'https://angular.io//',
-            },
-            {
-              label: 'lit-html',
-              href: 'https://lit-html.polymer-project.org/',
-            },
-            {
-              label: 'Stencil',
-              href: 'https://stenciljs.com/',
-            },
-          ]
-        },
-        {
-          title: 'Get in touch',
-          items: [
-            {
-              label: 'Ask a question',
-              href: 'https://github.com/Divine-Software/ghostly/discussions'
-            },
-            {
-              label: 'Contribute code or docs',
-              href: 'https://github.com/Divine-Software/ghostly/pulls'
-            },
-            {
-              label: 'Report an issue',
-              href: 'https://github.com/Divine-Software/ghostly/issues'
-            },
-          ]
-        }
-      ],
-      copyright: `Copyright © 2016-${new Date().getFullYear()} Martin Blom. A Divine Software™ production.`,
-    },
-    prism: {
-      theme: lightCodeTheme,
-      darkTheme: darkCodeTheme,
-    },
-  },
+        items: [
+          {
+            to: 'blog/',
+            label: 'News',
+            position: 'left'
+          },
+          {
+            to: 'docs/',
+            activeBasePath: 'docs',
+            label: 'Documentation',
+            position: 'left',
+          },
+          {
+            to: 'preview',
+            label: 'Template Preview Tool',
+            position: 'left',
+          },
+          {
+            href: 'https://github.com/Divine-Software/ghostly',
+            'aria-label': 'Fork me on GitHub!',
+            className: 'header-github-link',
+            position: 'right',
+          },
+        ],
+        hideOnScroll: false,
+      },
+      hideableSidebar: true,
+      footer: {
+        style: 'dark',
+        links: [
+          {
+            title: 'More Divine Software™',
+            items: [
+              {
+                label: 'Synchronization Library',
+                to: 'https://github.com/Divine-Software/divine-synchronization',
+              },
+              {
+                label: 'Syslog Console',
+                href: 'https://github.com/Divine-Software/sysconsole',
+              },
+              {
+                label: 'Web Service Framework',
+                href: 'https://divine-software.github.io/WSF/',
+              },
+            ],
+          },
+          {
+            title: 'Projects we ❤️',
+            items: [
+              {
+                label: 'Docusaurus',
+                href: 'https://v2.docusaurus.io/',
+              },
+              {
+                label: 'Playwright',
+                href: 'https://playwright.dev/',
+              },
+              {
+                label: 'TypeDoc',
+                href: 'https://typedoc.org/',
+              }
+            ],
+          },
+          {
+            title: 'Templating',
+            items: [
+              {
+                label: 'Angular',
+                href: 'https://angular.io//',
+              },
+              {
+                label: 'lit-html',
+                href: 'https://lit-html.polymer-project.org/',
+              },
+              {
+                label: 'Stencil',
+                href: 'https://stenciljs.com/',
+              },
+            ]
+          },
+          {
+            title: 'Get in touch',
+            items: [
+              {
+                label: 'Ask a question',
+                href: 'https://github.com/Divine-Software/ghostly/discussions'
+              },
+              {
+                label: 'Contribute code or docs',
+                href: 'https://github.com/Divine-Software/ghostly/pulls'
+              },
+              {
+                label: 'Report an issue',
+                href: 'https://github.com/Divine-Software/ghostly/issues'
+              },
+            ]
+          }
+        ],
+        copyright: `Copyright © 2016-${new Date().getFullYear()} Martin Blom. A Divine Software™ production.`,
+      },
+      prism: {
+        theme: lightCodeTheme,
+        darkTheme: darkCodeTheme,
+      },
+    }),
   plugins: [
     [
       'docusaurus-plugin-typedoc', {
@@ -185,22 +189,26 @@ module.exports =  {
   ],
   presets: [
     [
-      '@docusaurus/preset-classic',
-      {
+      'classic',
+      /** @type {import('@docusaurus/preset-classic').Options} */
+      ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl:
-            'https://github.com/Divine-Software/ghostly/edit/master/website/',
+          editUrl: 'https://github.com/Divine-Software/ghostly/edit/master/website/',
         },
         blog: {
           showReadingTime: true,
-          editUrl:
-            'https://github.com/Divine-Software/ghostly/edit/master/website/blog/',
+          editUrl: 'https://github.com/Divine-Software/ghostly/edit/master/website/blog/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
-      },
+        gtag: {
+          trackingID: 'G-DHBGLTPRG7',
+        },
+      }),
     ],
   ],
 };
+
+module.exports = config;
