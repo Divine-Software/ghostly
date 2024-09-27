@@ -94,8 +94,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       dompurify:
-        specifier: ^2.3.3
-        version: 2.3.3
+        specifier: ^2.5.4
+        version: 2.5.4
       hast-util-from-string:
         specifier: ^1.0.4
         version: 1.0.4
@@ -1115,8 +1115,8 @@ packages:
     resolution: {integrity: sha512-fC0aXNQXqKSFTr2wDNZDhsEYjCiYsDWl3D01kwt25hm1YIPyDGHvvi3rw+PLqHAl/m71MaiF7d5zvBr0p5UB2g==}
     engines: {node: '>= 4'}
 
-  dompurify@2.3.3:
-    resolution: {integrity: sha512-dqnqRkPMAjOZE0FogZ+ceJNM2dZ3V/yNOuFB7+39qpO93hHhfRpHw3heYQC7DPK9FqbQTfBKUJhiSfz4MvXYwg==}
+  dompurify@2.5.4:
+    resolution: {integrity: sha512-l5NNozANzaLPPe0XaAwvg3uZcHtDBnziX/HjsY1UcDj1MxTK8Dd0Kv096jyPK5HRzs/XM5IMj20dW8Fk+HnbUA==}
 
   domutils@2.8.0:
     resolution: {integrity: sha512-w96Cjofp72M5IIhpjgobBimYEfoPjx1Vx0BSX9P30WBdZW2WIKU0T1Bd0kz2eNZ9ikjKgHbEyKx8BB6H1L3h3A==}
@@ -3895,7 +3895,7 @@ snapshots:
     dependencies:
       domelementtype: 2.2.0
 
-  dompurify@2.3.3: {}
+  dompurify@2.5.4: {}
 
   domutils@2.8.0:
     dependencies:
