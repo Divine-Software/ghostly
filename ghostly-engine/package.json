@@ -42,7 +42,7 @@
         "@divine/headers": "^2.0.0",
         "@divine/uri": "~0.4.1",
         "csso": "^4.2.0",
-        "dompurify": "^2.5.4",
+        "dompurify": "^3.2.4",
         "hast-util-from-string": "^1.0.4",
         "hast-util-has-property": "^1.0.4",
         "hast-util-is-css-link": "^1.0.5",
